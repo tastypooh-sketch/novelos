@@ -9,6 +9,8 @@
 
 The editor maximizes screen real estate, allowing text to flow naturally across a cinematic dual-pane view, while the underlying intelligence actively cross-links every element of your manuscript. As you draft, Novelos analyzes chapters to dynamically update character profiles, visualize pacing heatmaps, and detect plot holes in real-time. It bridges the gap between immersive writing and structural engineering, offering a brainstorming partner that understands the interconnected DNA of your story.
 
+**Note on AI Costs: Novelos uses a "Bring Your Own Key" model. Most authors stay entirely within Google's generous Free Tier, meaning you can likely write and analyze your entire novel for $0.00.**
+
 Built with **React**, **Electron**, and **Google Gemini 2.5/3.0**.
 
 ---

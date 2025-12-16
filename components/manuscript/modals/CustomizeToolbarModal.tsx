@@ -2,8 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { produce } from 'immer';
 import { Modal } from './Modal';
-import type { EditorSettings, ToolbarVisibility } from '../../../types';
-import { TrashIconOutline, SpinnerIcon } from '../../common/Icons';
+import type { EditorSettings, ToolbarVisibility, INovelState } from '../../../types';
+import { TrashIconOutline, SpinnerIcon, ShareIcon } from '../../common/Icons';
+import { exportDistributionNoveli } from '../../../utils/manuscriptUtils';
+import { generateId } from '../../../utils/common';
 
 interface CustomizeToolbarModalProps {
     settings: EditorSettings;
@@ -132,11 +134,13 @@ export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ se
                     </div>
                 </div>
 
-                {/* Reset Section */}
-                <div className="pt-4 mt-4 border-t" style={{ borderColor: settings.toolbarInputBorderColor }}>
+                {/* Advanced / Reset Section */}
+                <div className="pt-4 mt-4 border-t space-y-3" style={{ borderColor: settings.toolbarInputBorderColor }}>
+                    <h3 className="font-semibold text-xs opacity-50 uppercase tracking-wider">Advanced</h3>
+
                     <button
                         onClick={handleFactoryReset}
-                        className="w-full px-4 py-2 rounded-md text-sm border flex items-center justify-center gap-2 transition-colors"
+                        className="w-full px-4 py-2 rounded-md text-sm border flex items-center justify-center gap-2 transition-colors mt-4"
                         style={{ 
                             borderColor: settings.dangerColor, 
                             color: settings.dangerColor,
@@ -148,7 +152,6 @@ export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ se
                         <TrashIconOutline className="h-4 w-4" />
                         Reset All Settings to Default
                     </button>
-                    <p className="text-[10px] opacity-50 mt-1 text-center">Resets visuals and gallery. Preserves manuscript data.</p>
                 </div>
             </div>
         </Modal>

@@ -1,3 +1,4 @@
+
 **FOR IMMEDIATE RELEASE**
 
 **Novelos Partners with Writers' Centres to Deliver "Voice-First" AI Tools for the Modern Storyteller**
@@ -13,26 +14,29 @@ Novelos offers features that align perfectly with the curriculum of creative wri
 *   **The Craft Coach (Manuscript Mode):** Instead of auto-completing text, the integrated AI analyzes a writer's draft to provide feedback on specific craft elements. Members can run a "Show, Don't Tell" check, analyze their pacing, or review dialogue authenticity. It’s like having a tutor available 24/7 to reinforce lessons learned in seminars.
 *   **The Beta Reader Simulator:** For writers who can't afford professional assessments, Novelos simulates feedback from diverse reader personas (e.g., "The Cynical Critic," "The Genre Purist"). This helps emerging writers toughen their skin and spot weaknesses before submission.
 
+**The "Own Your Tools" Philosophy**
+
+In an era of endless subscriptions, Novelos takes a stand for author independence.
+*   **One-Time License ($79):** Novelos is software you own, not a service you rent. There are no monthly fees.
+*   **Bring Your Own Key (BYOK):** Users connect their own Google Gemini API key. This ensures authors pay only for what they use (often pennies per novel) directly to the provider, rather than an inflated subscription markup.
+*   **Privacy First:** Novelos stores data locally or on the user's own cloud drive. No training data is harvested.
+
 **Structuring Success: From Idea to Industry-Ready**
 
 For Centres offering "Plotting" or "Novel in a Year" courses, **Assembly Mode** serves as a powerful organizational companion:
-*   **Interactive Outlining:** Writers can test character arcs and plot beats against industry standards (Hero's Journey, Save the Cat) using the Pacing Heatmap.
+*   **Interactive Outlining:** Writers can test character arcs and plot beats against industry standards using the Pacing Heatmap.
 *   **The "Crucible" for World-Building:** A dedicated space to organize messy workshop notes into a coherent story bible.
 *   **Professional Polish:** The Synopsis and Marketing tools help members prepare professional query packages, bridging the gap between art and industry.
 
 **Workshop-Ready Portability**
 
-Recognizing that many Writers' Centres utilize shared computer labs or have members working across different devices, Novelos includes **Noveli**—a portable, single-file word processor.
+Recognizing that many Writers' Centres utilize shared computer labs or have members working across different devices, Novelos includes **Noveli**—a portable, single-file word processor included with every license.
 *   **Zero Installation:** Runs in any browser from a USB stick.
 *   **Privacy First:** No data is stored on shared machines.
 *   **Take It Home:** Members can start work in a centre's computer lab and continue seamlessly at home without expensive software licenses.
 
-**Empowering the Next Generation of Authors**
-
-Novelos provides Writers' Centres with a forward-thinking solution to the "AI problem," turning a potential threat into a powerful ally for education. By focusing on *voice-awareness*, Novelos ensures that the technology serves the writer, preserving the human element that makes literature vital.
-
 **About Novelos:**
-Novelos is a comprehensive writing platform combining a distraction-free environment with intelligent, educational AI tools. It is available for Writers' Centres to integrate into their digital labs and member benefits packages.
+Novelos is a comprehensive writing platform combining a distraction-free environment with intelligent, educational AI tools. It is available for $79 USD.
 
 **Contact:**
 [Name/Press Contact]

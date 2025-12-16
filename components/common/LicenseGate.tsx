@@ -122,10 +122,10 @@ export const LicenseGate: React.FC<LicenseGateProps> = ({ children, settings }) 
                     </button>
                 </form>
 
-                <div className="mt-6 text-center text-xs opacity-50">
-                    {/* @ts-ignore */}
-                    {!window.electronAPI && <p className="mb-2 text-yellow-500">Preview Mode: Activation unavailable in browser.</p>}
-                    <p>Don't have a key? <a href="#" className="underline hover:opacity-100">Purchase Novelos</a></p>
+                <div className="mt-6 text-center text-xs opacity-60">
+                    <p className="mb-2 font-medium">Important: AI features require your own Google API Key.</p>
+                    <p className="text-[10px] opacity-75">(Google's Free Tier is generous. Most authors pay $0.00.)</p>
+                    <p className="mt-4">Don't have a license? <a href="#" className="underline hover:opacity-100">Purchase Novelos</a></p>
                 </div>
             </div>
         </div>

@@ -441,6 +441,50 @@ export const exportForNoveli = async (fullState: INovelState, settings: EditorSe
     }
 };
 
+/**
+ * Creates a clean Noveli zip file for distribution (e.g., store upload).
+ * It contains an empty project state.
+ */
+export const exportDistributionNoveli = async (cleanState: INovelState, defaultSettings: EditorSettings) => {
+    const zip = new JSZip();
+    
+    // 1. Generate Clean HTML
+    // Default goals for a new user
+    const goals: WritingGoals = { manuscriptGoal: 50000, dailyGoal: 1000 };
+    const noveliHtml = generateNoveliHTML(cleanState, defaultSettings, goals);
+    
+    // 2. Add ONLY the HTML file. No Project_Data folder needed for a fresh start.
+    zip.file("Noveli.html", noveliHtml);
+
+    // 3. Generate Zip
+    const content = await zip.generateAsync({ type: "blob" });
+    const filename = "Noveli_Portable_Distribution.zip";
+    
+    // 4. Save
+    // @ts-ignore
+    if (window.electronAPI) {
+        try {
+            const arrayBuffer = await content.arrayBuffer();
+            // @ts-ignore
+            await window.electronAPI.saveFile({ 
+                name: filename, 
+                content: new Uint8Array(arrayBuffer) 
+            });
+            alert("Distribution copy created successfully!");
+        } catch (e) {
+            console.error("Electron save failed:", e);
+            alert("Failed to save via Electron dialog.");
+        }
+    } else {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(content);
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+};
+
 export const parseNoveliSync = async (file: File): Promise<{ state: INovelState, settings?: EditorSettings } | null> => {
     if (file.name.endsWith('.zip')) {
         try {

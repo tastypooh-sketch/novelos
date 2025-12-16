@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { API_KEY_ERROR } from '../../utils/ai';
 
@@ -22,12 +21,13 @@ export const AIError: React.FC<AIErrorProps> = ({ message, className = "text-red
         <div className={`${className} bg-red-900/20 border border-red-500/30 rounded p-2`}>
             {isKeyError ? (
                 <div className="flex flex-col items-center gap-1 text-center">
-                    <p>AI features require a free Google API.</p>
+                    <p>AI features require a Google API Key.</p>
+                    <p className="text-xs opacity-80">(Google's Free Tier is usually sufficient.)</p>
                     <a 
                         href="https://aistudio.google.com/app/apikey" 
                         target="_blank" 
                         rel="noopener noreferrer" 
-                        className="underline font-bold hover:text-red-300"
+                        className="underline font-bold hover:text-red-300 mt-1"
                     >
                         Get one here
                     </a>
