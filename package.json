@@ -1,0 +1,93 @@
+{
+  "name": "novelos-desktop",
+  "version": "6.8.0",
+  "description": "Novelos Desktop App",
+  "main": "electron/main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tastypooh-sketch/novelos"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "electron:dev": "concurrently -k \"vite\" \"wait-on tcp:5173 && electron .\"",
+    "electron:build": "vite build && electron-builder",
+    "electron:build:mac": "vite build && electron-builder --mac",
+    "electron:build:linux": "vite build && electron-builder --linux",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "keywords": [],
+  "author": "Novelos",
+  "license": "ISC",
+  "dependencies": {
+    "@google/genai": "*",
+    "docx": "^8.5.0",
+    "immer": "^10.1.3",
+    "jszip": "^3.10.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "use-debounce": "^10.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.13",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.19",
+    "concurrently": "^8.2.2",
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.4",
+    "typescript": "^5.5.3",
+    "vite": "^5.3.1",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.novelos.app",
+    "productName": "Novelos",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "tastypooh-sketch",
+        "repo": "novelos"
+      }
+    ],
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "public/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "public/icon.icns",
+      "category": "public.app-category.productivity",
+      "identity": null
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "public/icon.png",
+      "category": "Office",
+      "synopsis": "A minimalist novel writing app"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Novelos",
+      "installerIcon": "public/icon.ico",
+      "uninstallerIcon": "public/icon.ico"
+    }
+  }
+}
