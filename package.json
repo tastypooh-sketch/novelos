@@ -1,6 +1,6 @@
 {
   "name": "novelos-desktop",
-  "version": "6.8.6",
+  "version": "6.8.7",
   "description": "Novelos Desktop App",
   "main": "electron/main.js",
   "repository": {
@@ -73,8 +73,7 @@
     },
     "linux": {
       "target": [
-        "AppImage",
-        "deb"
+        "AppImage"
       ],
       "icon": "public/icon.png",
       "category": "Office",
