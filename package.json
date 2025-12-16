@@ -1,6 +1,6 @@
 {
   "name": "novelos-desktop",
-  "version": "6.8.5",
+  "version": "6.8.6",
   "description": "Novelos Desktop App",
   "main": "electron/main.js",
   "repository": {

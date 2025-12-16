@@ -31,12 +31,12 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      # Linux-specific setup to prevent exit code 100 (often due to missing snapcraft/graphics libs)
+      # Linux-specific setup: Add graphics and archive tools often needed by electron-builder
       - name: Install Linux Dependencies
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libarchive-tools
+          sudo apt-get install -y libarchive-tools libicns-dev graphicsmagick xz-utils rpm
 
       - name: Build & Release
         run: npm run electron:build
