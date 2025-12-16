@@ -1,3 +1,4 @@
+# Novelos Build Workflow - Windows and Mac Only
 name: Build/Release
 
 on:
@@ -13,8 +14,10 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     strategy:
+      fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        # STRICTLY ONLY MAC AND WINDOWS
+        os: [macos-latest, windows-latest]
 
     steps:
       - name: Check out Git repository
@@ -27,13 +30,6 @@ jobs:
 
       - name: Install Dependencies
         run: npm install
-
-      # Linux specific setup for graphics libraries required by Electron
-      - name: Install Linux Deps
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libicns-utils graphicsmagick
 
       - name: Build & Release
         run: npm run electron:build
