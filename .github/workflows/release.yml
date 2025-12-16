@@ -1,4 +1,4 @@
-# Novelos Build Workflow - Windows and Mac Only
+# Novelos Build Workflow
 name: Build/Release
 
 on:
@@ -16,8 +16,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # STRICTLY ONLY MAC AND WINDOWS
-        os: [macos-latest, windows-latest]
+        # Restoring Linux (ubuntu-latest) now that Win/Mac are secured
+        os: [macos-latest, windows-latest, ubuntu-latest]
 
     steps:
       - name: Check out Git repository
@@ -30,6 +30,13 @@ jobs:
 
       - name: Install Dependencies
         run: npm install
+
+      # Linux-specific setup to prevent exit code 100 (often due to missing snapcraft/graphics libs)
+      - name: Install Linux Dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libarchive-tools
 
       - name: Build & Release
         run: npm run electron:build
