@@ -41,7 +41,7 @@ const safeEncode = (data: any) => {
     }
 };
 
-export const generateNoveliHTML = (state: INovelState, settings: EditorSettings, writingGoals: WritingGoals): string => {
+export const generateNoveliHTML = (state: INovelState, settings: EditorSettings, writingGoals: WritingGoals, faviconBase64: string = ""): string => {
     // Prepare settings object for injection
     const exportedSettings = {
         fontFamily: settings.fontFamily,
@@ -68,7 +68,7 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
         dropdownBg: settings.dropdownBg,
         backgroundImage: settings.backgroundImage,
         backgroundImageOpacity: settings.backgroundImageOpacity,
-        showBookSpine: settings.showBookSpine ?? true
+        showBookSpine: settings.showBookSpine ?? false // CHANGED: Default to false
     };
 
     // Use Base64 encoding for robust data injection
@@ -83,6 +83,7 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Noveli: Portable Manuscript</title>
+    ${faviconBase64 ? `<link rel="icon" href="${faviconBase64}" />` : ''}
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -886,7 +887,7 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
             return (
                 <div className="flex-grow relative min-h-0 overflow-hidden">
                     <div ref={editorContainerRef} className="absolute inset-0 overflow-x-auto overflow-y-hidden focus:outline-none no-scrollbar" onWheel={handleWheel} onScroll={handleScroll} onClick={() => setTimeout(checkAndEnforceCaretVisibility, 10)} style={{ overflowAnchor: 'none' }}>
-                        {layout.columns === 2 && (settings.showBookSpine !== false) && <div className="book-spine-effect" />}
+                        {layout.columns === 2 && (settings.showBookSpine === true) && <div className="book-spine-effect" />}
                         <div ref={editorRef} contentEditable suppressContentEditableWarning spellCheck={isSpellcheckEnabled} className="editor-content outline-none" style={editorStyle} onBeforeInput={handleBeforeInput} onInput={handleInput} onKeyDown={handleKeyDown} onKeyUp={handleKeyUp} onBlur={checkAndEnforceCaretVisibility} />
                     </div>
                     <div className="absolute bottom-4 right-8 z-10 text-xs font-sans pointer-events-none select-none transition-opacity duration-300 backdrop-blur-sm px-2 py-1 rounded" style={{ color: settings.textColor, opacity: 0.6, backgroundColor: settings.toolbarBg ? \`\${settings.toolbarBg}40\` : 'transparent' }}>
@@ -949,7 +950,7 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
                                     <label className="flex items-center cursor-pointer select-none">
                                         <input
                                             type="checkbox"
-                                            checked={settings.showBookSpine !== false}
+                                            checked={settings.showBookSpine === true}
                                             onChange={(e) => onSettingsChange({ showBookSpine: e.target.checked })}
                                             className="mr-2 h-4 w-4 rounded cursor-pointer"
                                             style={{accentColor: settings.accentColor}}

@@ -92,6 +92,178 @@ export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ se
         }
     };
 
+    const handleCreateStoreCopy = async () => {
+        if (!window.confirm("Create Store-Ready Copy?\n\nThis will generate a ZIP file containing a pristine, empty copy of Noveli.html suitable for distribution or sale (e.g. uploading to Lemon Squeezy).\n\nIt will NOT contain any of your current chapters, characters, or notes.")) {
+            return;
+        }
+
+        const cleanState: INovelState = {
+            characters: [{
+                id: generateId(),
+                name: 'New Character',
+                photo: null,
+                rawNotes: '',
+                tagline: '',
+                summary: '',
+                profile: '',
+                keywords: [],
+                imageColor: '#6b7280',
+                accentStyle: 'left-top-ingress',
+                isPhotoLocked: false,
+                isPrimary: false,
+            }],
+            chapters: [{
+                id: generateId(), 
+                title: 'Chapter', 
+                chapterNumber: 1, 
+                content: '<div><br></div>', 
+                notes: '',
+                rawNotes: '',
+                summary: '',
+                outline: '',
+                analysis: '',
+                photo: null,
+                imageColor: '#6b7280',
+                isPhotoLocked: false,
+                tagline: '',
+                keywords: [],
+                location: '',
+                conflict: '',
+                chapterGoal: '',
+                accentStyle: 'left-top-ingress',
+                linkedSnippetIds: [],
+                betaFeedback: '',
+                betaFeedbackSummary: '',
+                wordCount: 0,
+            }],
+            snippets: [],
+            worldItems: [],
+            mapLocations: [],
+            globalNotes: 'This is where you can keep global notes for your entire project. They will be saved as part of your project file.',
+            socialMediaState: {
+                isLoading: false,
+                error: null,
+                selectedChapterId: null,
+                excerpts: [],
+                selectedExcerptId: null,
+                generatedImagePrompt: null,
+                generatedImageUrl: null,
+                generatedInstagramPost: null,
+                generatedTiktokPost: null,
+                postVariations: null,
+                variationPlatform: null,
+            },
+            activeAssemblyPanel: 'chapters',
+            assemblyState: {
+                selectedCharacterIds: [],
+                selectedChapterIds: [],
+                expandedCharacterId: null,
+                expandedChapterId: null,
+                isChapterLinkPanelOpen: false,
+                worldPanelView: 'crucible',
+                worldCrucibleText: '',
+                expandedWorldItemId: null,
+                pacingAnalysis: null,
+                isGeneratingPacingAnalysis: false,
+                mapState: {
+                    pan: { x: 0, y: 0 },
+                    zoom: 1,
+                },
+            },
+            plotBrainstormState: {
+                pacingAndStructureAnalysis: null,
+                characterAnalysis: null,
+                opportunityAnalysis: null,
+                isGeneratingPacingAndStructure: false,
+                isGeneratingCharacters: false,
+                isGeneratingOpportunities: false,
+                error: null,
+                selectedCharacter1IdForRelationship: null,
+                selectedCharacter2IdForRelationship: null,
+                isGeneratingRelationshipAnalysis: false,
+                relationshipAnalysis: null,
+                isGeneratingThemes: false,
+                thematicAnalysis: null,
+                selectedTheme: null,
+                isGeneratingChekhovsGuns: false,
+                chekhovsGuns: null,
+                selectedCharacterIdForArcTest: null,
+                isGeneratingArcTest: false,
+                arcTestResult: null,
+            },
+            synopsisState: {
+                marketAnalysis: null,
+                promotionalContent: null,
+                synopsis: null,
+                isGeneratingMarketAnalysis: false,
+                isGeneratingPromotionalContent: false,
+                isGeneratingSynopsis: false,
+                error: null,
+            },
+            whatIfState: {
+                isOpen: false,
+                isLoading: false,
+                originalText: null,
+                suggestions: null,
+                error: null,
+                position: null,
+            },
+        };
+
+        const defaultSettings: EditorSettings = {
+            fontFamily: 'Lora',
+            fontSize: 1.4,
+            lineHeight: 1.8,
+            backgroundColor: '#111827',
+            textColor: '#FFFFFF',
+            textAlign: 'left',
+            backgroundImage: null,
+            backgroundImageOpacity: 0.5,
+            toolbarBg: '#1F2937',
+            toolbarText: '#FFFFFF',
+            toolbarButtonBg: '#374151',
+            toolbarButtonHoverBg: '#4B5563',
+            toolbarInputBorderColor: '#4B5563',
+            accentColor: '#2563eb',
+            accentColorHover: '#1d4ed8',
+            successColor: '#16a34a',
+            successColorHover: '#15803d',
+            dangerColor: '#be123c',
+            dangerColorHover: '#9f1239',
+            dropdownBg: '#374151',
+            transitionStyle: 'scroll',
+            toolbarVisibility: {
+                stats: true,
+                notes: true,
+                findReplace: true,
+                shortcuts: true,
+                spellcheck: true,
+                sound: true,
+                fullscreen: true,
+                focus: true,
+                pageTransition: true,
+                readAloud: true,
+                designGallery: true,
+                history: true,
+                alignment: true,
+                lineHeight: true,
+                userGuide: true,
+            },
+            assemblyTileStyle: 'solid',
+            assemblyFontFamily: 'Inter',
+            narratorVoice: 'Kore',
+            ttsAccent: 'en-GB',
+            ttsSpeed: 1.2,
+            ttsVolume: 0.6,
+            soundVolume: 0.75,
+            isSoundEnabled: false,
+            galleryStartupBehavior: 'fixed',
+            showBookSpine: false,
+        };
+
+        await exportDistributionNoveli(cleanState, defaultSettings);
+    };
+
     const footerContent = (
         <button
             onClick={handleSaveAndReload}
@@ -151,6 +323,21 @@ export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ se
                     >
                         <TrashIconOutline className="h-4 w-4" />
                         Reset All Settings to Default
+                    </button>
+
+                    <button
+                        onClick={handleCreateStoreCopy}
+                        className="w-full px-4 py-2 rounded-md text-sm border flex items-center justify-center gap-2 transition-colors mt-2"
+                        style={{ 
+                            borderColor: settings.accentColor, 
+                            color: settings.accentColor,
+                            backgroundColor: 'transparent'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = `${settings.accentColor}15`}
+                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                        <ShareIcon className="h-4 w-4" />
+                        Create Store-Ready Copy (Distribution)
                     </button>
                 </div>
             </div>

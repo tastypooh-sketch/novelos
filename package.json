@@ -1,6 +1,6 @@
 {
   "name": "novelos-desktop",
-  "version": "6.9.0",
+  "version": "6.9.1",
   "description": "Novelos Desktop App",
   "main": "electron/main.js",
   "repository": {
@@ -13,7 +13,7 @@
     "preview": "vite preview",
     "electron:dev": "concurrently -k \"vite\" \"wait-on tcp:5173 && electron .\"",
     "electron:build": "vite build && electron-builder",
-    "electron:build:mac": "vite build && electron-builder --mac",
+    "electron:build:mac": "vite build && electron-builder --mac --universal",
     "electron:build:linux": "vite build && electron-builder --linux",
     "postinstall": "electron-builder install-app-deps"
   },
@@ -63,13 +63,15 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "public/icon.ico"
+      "icon": "public/icon.ico",
+      "artifactName": "${productName}_Windows_${version}.${ext}"
     },
     "mac": {
       "target": "dmg",
       "icon": "public/icon.icns",
       "category": "public.app-category.productivity",
-      "identity": null
+      "identity": null,
+      "artifactName": "${productName}_macOS_${version}.${ext}"
     },
     "linux": {
       "target": [
@@ -77,7 +79,8 @@
       ],
       "icon": "public/icon.png",
       "category": "Office",
-      "synopsis": "A minimalist novel writing app"
+      "synopsis": "A minimalist novel writing app",
+      "artifactName": "${productName}_Linux_${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,

@@ -1,4 +1,5 @@
 
+
 import { Packer, Document, Paragraph, TextRun, HeadingLevel, ImageRun, AlignmentType, ExternalHyperlink } from 'docx';
 import JSZip from 'jszip';
 import type { IChapter, INovelState, EditorSettings, ICharacter, ISnippet, WritingGoals } from '../types';
@@ -42,6 +43,28 @@ export const parseTimestampFromFilename = (filename: string): Date | null => {
         }
     }
     return null;
+};
+
+const getFaviconBase64 = async (): Promise<string> => {
+    try {
+        // Try fetching the icon from the public root
+        // In Vite dev: /icon.png
+        // In Prod (Electron): ./icon.png relative to index.html
+        let response = await fetch('./icon.png');
+        if (!response.ok) response = await fetch('./icon.ico');
+        
+        if (response.ok) {
+            const blob = await response.blob();
+            return await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.readAsDataURL(blob);
+            });
+        }
+    } catch (e) {
+        console.warn("Failed to load favicon for Noveli export", e);
+    }
+    return "";
 };
 
 export const createProjectZip = async (state: INovelState, settings: EditorSettings): Promise<Blob> => {
@@ -394,8 +417,11 @@ export const markdownToDocxParagraphs = (markdown: string | undefined): Paragrap
 export const exportForNoveli = async (fullState: INovelState, settings: EditorSettings, writingGoals: WritingGoals) => {
     const zip = new JSZip();
     
+    // Fetch favicon
+    const favicon = await getFaviconBase64();
+
     // 1. Generate Standalone Application HTML
-    const noveliHtml = generateNoveliHTML(fullState, settings, writingGoals);
+    const noveliHtml = generateNoveliHTML(fullState, settings, writingGoals, favicon);
     zip.file("Noveli.html", noveliHtml);
 
     // 2. Add raw data files
@@ -448,10 +474,13 @@ export const exportForNoveli = async (fullState: INovelState, settings: EditorSe
 export const exportDistributionNoveli = async (cleanState: INovelState, defaultSettings: EditorSettings) => {
     const zip = new JSZip();
     
+    // Fetch favicon
+    const favicon = await getFaviconBase64();
+
     // 1. Generate Clean HTML
     // Default goals for a new user
     const goals: WritingGoals = { manuscriptGoal: 50000, dailyGoal: 1000 };
-    const noveliHtml = generateNoveliHTML(cleanState, defaultSettings, goals);
+    const noveliHtml = generateNoveliHTML(cleanState, defaultSettings, goals, favicon);
     
     // 2. Add ONLY the HTML file. No Project_Data folder needed for a fresh start.
     zip.file("Noveli.html", noveliHtml);
