@@ -1,6 +1,6 @@
 {
   "name": "novelos-desktop",
-  "version": "6.9.3",
+  "version": "6.9.4",
   "description": "Novelos Desktop App",
   "main": "electron/main.js",
   "repository": {
@@ -14,7 +14,9 @@
     "electron:dev": "concurrently -k \"vite\" \"wait-on tcp:5173 && electron .\"",
     "electron:build": "vite build && electron-builder",
     "electron:build:mac": "vite build && electron-builder --mac --universal",
+    "electron:build:win": "vite build && electron-builder --win",
     "electron:build:linux": "vite build && electron-builder --linux",
+    "electron:build:all": "vite build && electron-builder -mwl",
     "postinstall": "electron-builder install-app-deps"
   },
   "keywords": [],
