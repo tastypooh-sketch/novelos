@@ -267,7 +267,10 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
                             colorCounts[key].count++;
                         }
                         const sorted = Object.keys(colorCounts).sort((a, b) => colorCounts[b].count - colorCounts[a].count);
-                        if (sorted.length === 0) { resolve(null); return; }
+                        if (sorted.length === 0) { 
+                             resolve({ backgroundColor: '#202020', textColor: '#E8E8E8', toolbarBg: '#1E1E1E', toolbarButtonBg: '#333333', toolbarButtonHoverBg: '#454545', accentColor: '#4A90E2', toolbarInputBorderColor: '#454545', dropdownBg: '#333333' });
+                             return; 
+                        }
                         
                         const [r, g, b] = colorCounts[sorted[0]].original;
                         const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
@@ -1089,7 +1092,8 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
                 if (sel && !sel.isCollapsed) document.execCommand('insertText', false, replaceText);
             };
 
-            const handleUpgrade = () => window.open('https://novelos.app', '_blank');
+            const handleUpgrade = () => window.open('https://novelos.lemonsqueezy.com/', '_blank');
+            const handleDonate = () => window.open('https://buymeacoffee.com/doovenism', '_blank');
 
             const handleAddChapter = () => {
                 const newId = 'chap_' + Date.now();
@@ -1156,7 +1160,7 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
                                 <div className="p-4 border-b font-bold text-sm uppercase tracking-wider flex items-center justify-between" style={{borderColor: settings.toolbarButtonBg}}><span>Notes</span><button onClick={() => setNotesOpen(false)}><Icons.Close /></button></div>
                                 <div className="p-4 flex-grow overflow-y-auto space-y-4">
                                     <div className="flex-grow flex flex-col h-full"><textarea className="w-full border-none text-sm resize-none flex-grow focus:ring-0 bg-transparent" style={{color: settings.textColor}} placeholder="Jot down ideas..." defaultValue={activeChapter.rawNotes || ""} onChange={(e) => { const newNotes = e.target.value; setChapters(chapters.map(c => c.id === activeChapter.id ? { ...c, rawNotes: newNotes } : c)); }} /></div>
-                                    <div className="mt-auto pt-4 border-t" style={{borderColor: settings.toolbarButtonBg}}><div className="p-3 rounded-lg text-center" style={{backgroundColor: settings.backgroundColor + '80'}}><p className="text-xs opacity-70 mb-2">Need AI tools?</p><button onClick={handleUpgrade} className="w-full py-1.5 rounded text-xs font-bold text-white shadow-sm hover:opacity-90 transition-opacity" style={{backgroundColor: settings.accentColor}}>Upgrade to Novelos</button></div></div>
+                                    <div className="mt-auto pt-4 border-t" style={{borderColor: settings.toolbarButtonBg}}><div className="p-3 rounded-lg text-center" style={{backgroundColor: settings.backgroundColor + '80'}}><p className="text-xs opacity-70 mb-2">Need AI tools?</p><button className="w-full py-1.5 rounded text-xs font-bold text-white shadow-sm hover:opacity-90 transition-opacity cursor-not-allowed opacity-50" disabled style={{backgroundColor: settings.accentColor}}>Available in Novelos Desktop</button></div></div>
                                 </div>
                             </div>
                         )}
@@ -1200,6 +1204,8 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
                             )}
                             <button onClick={toggleFullscreen} className="p-2 rounded hover:opacity-80 transition-colors" style={isFullscreen ? activeBtnStyle : btnStyle}>{isFullscreen ? <Icons.ExitFullscreen /> : <Icons.EnterFullscreen />}</button>
                             <button onClick={() => setIsFocusMode(!isFocusMode)} className="p-2 rounded hover:opacity-80 transition-colors" style={isFocusMode ? activeBtnStyle : btnStyle}><Icons.Focus /></button>
+                            <button onClick={handleDonate} className="p-2 rounded hover:opacity-80 transition-colors" style={{...btnStyle, color: '#ef4444'}} title="Donate"><Icons.Heart /></button>
+                            <button onClick={handleUpgrade} className="px-3 py-1.5 rounded text-sm transition-colors hover:opacity-90" style={{backgroundColor: settings.accentColor, color: '#FFF'}}>Upgrade</button>
                             <button onClick={() => handlePortableSave(false)} className="flex items-center gap-2 px-4 py-1.5 rounded text-sm font-medium transition-colors hover:opacity-90" style={{backgroundColor: settings.accentColor, color: '#FFF'}}><Icons.Save /> Save</button>
                         </div>
                     </div>
