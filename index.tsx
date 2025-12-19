@@ -17,7 +17,7 @@ const getInitialSettings = () => {
         dangerColor: '#be123c',
         fontFamily: 'Lora',
         fontSize: 1.4,
-        showBookSpine: true,
+        showBookSpine: false,
     };
     return saved ? { ...defaults, ...JSON.parse(saved) } : defaults;
 };

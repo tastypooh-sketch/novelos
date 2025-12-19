@@ -1,5 +1,3 @@
-
-
 import type { INovelState, EditorSettings, WritingGoals } from '../types';
 
 // Default backgrounds from App.tsx to ensure consistency
@@ -68,7 +66,7 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
         dropdownBg: settings.dropdownBg,
         backgroundImage: settings.backgroundImage,
         backgroundImageOpacity: settings.backgroundImageOpacity,
-        showBookSpine: settings.showBookSpine ?? false // CHANGED: Default to false
+        showBookSpine: settings.showBookSpine ?? false
     };
 
     // Use Base64 encoding for robust data injection
@@ -1168,7 +1166,7 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
                     </div>
                     <div className={\`flex-shrink-0 flex flex-wrap items-center justify-center sm:justify-between gap-y-2 px-4 shadow-lg z-20 transition-all duration-300 \${isFocusMode ? 'max-h-0 py-0 opacity-0 pointer-events-none border-none overflow-hidden' : 'max-h-48 py-2 opacity-100 border-t'}\`} style={{backgroundColor: settings.toolbarBg, borderColor: settings.toolbarButtonBg}}>
                         <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-center sm:justify-start w-full sm:w-auto">
-                            <h1 className="text-xl font-serif font-bold tracking-wider" style={{color: settings.textColor}}>Novel<span style={{color: settings.accentColor}}>i</span></h1>
+                            <a href="https://www.thomascorfield.com" target="_blank" rel="noopener noreferrer" className="text-xl font-serif font-bold tracking-wider hover:opacity-80 transition-opacity" style={{color: settings.textColor}}>Novel<span style={{color: settings.accentColor}}>i</span></a>
                             <select value={activeChapterId} onChange={(e) => setActiveChapterId(e.target.value)} className="text-sm border rounded px-2 py-1 focus:outline-none" style={{backgroundColor: settings.toolbarButtonBg, color: settings.textColor, borderColor: settings.toolbarButtonBg}}>{chapters.map(c => <option key={c.id} value={c.id}>{c.chapterNumber}. {c.title}</option>)}</select>
                             <button onClick={handleAddChapter} className="p-1 rounded hover:opacity-80 transition-colors" style={{backgroundColor: settings.toolbarButtonBg, color: settings.textColor}}><Icons.Plus /></button>
                             <div className="flex items-center gap-2">

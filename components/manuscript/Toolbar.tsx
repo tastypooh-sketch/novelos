@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import type { IChapter, EditorSettings, Palette, WritingGoals, ToolbarVisibility } from '../../types';
 import { 
@@ -157,11 +156,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             borderColor: settings.toolbarInputBorderColor
         }}
     >
-      <div 
-        className={`h-8 mr-2 flex items-center font-['Lora'] font-bold text-2xl tracking-tight select-none ${isSaving ? 'save-flash' : ''}`}
+      <a 
+        href="https://www.thomascorfield.com" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className={`h-8 mr-2 flex items-center font-['Lora'] font-bold text-2xl tracking-tight select-none hover:opacity-80 transition-opacity ${isSaving ? 'save-flash' : ''}`}
+        style={{ color: 'inherit' }}
       >
         Novel<span style={{ color: settings.accentColor }}>o</span>s
-      </div>
+      </a>
       <div className="flex items-center">
         <select id="chapterSelect" value={activeChapterId} onChange={e => onSelectChapter(e.target.value)} 
             className="px-2 py-1 border rounded"

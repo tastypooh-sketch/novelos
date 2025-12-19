@@ -234,15 +234,18 @@ const SplashScreen: React.FC<{ visible: boolean; settings: EditorSettings }> = (
             style={{ backgroundColor: settings.backgroundColor || '#111827' }}
         >
              <div className="flex flex-col items-center animate-pulse select-none">
-                <h1 
-                    className="text-8xl font-bold tracking-[0.2em]"
+                <a 
+                    href="https://www.thomascorfield.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-8xl font-bold tracking-[0.2em] hover:opacity-80 transition-opacity"
                     style={{ 
                         fontFamily: 'Lora, serif', 
                         color: settings.textColor,
                     }}
                 >
                     Novel<span style={{ color: settings.accentColor }}>o</span>s<span className="text-2xl align-top ml-1 opacity-50 font-sans font-normal tracking-normal">TM</span>
-                </h1>
+                </a>
              </div>
         </div>
     );
@@ -309,6 +312,7 @@ const App: React.FC = () => {
         soundVolume: 0.75, // Default volume set to 75%
         isSoundEnabled: false, // Default audio off
         galleryStartupBehavior: 'fixed',
+        showBookSpine: false,
     });
 
     useEffect(() => {

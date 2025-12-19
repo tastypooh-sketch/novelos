@@ -13,25 +13,29 @@ interface ErrorBoundaryState {
   errorInfo: ErrorInfo | null;
 }
 
+// FIX: Explicitly use React.Component and ensure state is correctly initialized to resolve property existence errors.
 export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  override state: ErrorBoundaryState = {
+    hasError: false,
+    error: null,
+    errorInfo: null
+  };
+
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = {
-      hasError: false,
-      error: null,
-      errorInfo: null
-    };
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error, errorInfo: null };
   }
 
+  // FIX: lifecycle method correctly uses this.setState inherited from React.Component.
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
     this.setState({ errorInfo });
   }
 
+  // FIX: handleEmergencySave correctly accesses this.props and this.state.
   private handleEmergencySave = () => {
     try {
         const backupData = JSON.stringify(this.props.state, null, 2);
@@ -57,6 +61,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   };
 
   render(): ReactNode {
+    // FIX: Render correctly accesses this.state.hasError and other state/props members.
     if (this.state.hasError) {
       return (
         <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gray-900 text-white p-8 text-center font-sans">
