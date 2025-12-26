@@ -271,7 +271,8 @@ export const FindReplaceModal: React.FC<FindReplaceModalProps> = ({
                             className={`p-2 rounded cursor-pointer mb-1 text-sm border border-transparent ${selectedResultId === result.id ? 'ring-1' : 'hover:bg-black/5'}`}
                             style={{ 
                                 backgroundColor: selectedResultId === result.id ? settings.toolbarButtonBg : 'transparent',
-                                ringColor: settings.accentColor
+                                // FIX: 'ringColor' is not a standard CSS property. Using '--tw-ring-color' as a custom property cast to any.
+                                ['--tw-ring-color' as any]: settings.accentColor
                             }}
                         >
                             {scope === 'manuscript' && (

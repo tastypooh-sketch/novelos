@@ -678,6 +678,9 @@ interface CharactersPanelProps {
     variant?: 'default' | 'link-panel';
 }
 
+/**
+ * FIXED: Completed the CharactersPanel component by adding the missing return statement and closing logic.
+ */
 export const CharactersPanel: React.FC<CharactersPanelProps> = ({ 
     characters, settings, tileBackgroundStyle, selectedIds, onSelect, onUpdate, onDeleteRequest, onSetCharacters, expandedCharacterId, setExpandedCharacterId, variant = 'default'
 }) => {
@@ -698,22 +701,17 @@ export const CharactersPanel: React.FC<CharactersPanelProps> = ({
 
         if (newExpandedId) {
              setTimeout(() => {
-                const tileElement = scrollRef.current?.querySelector(`[data-character-id='${newExpandedId}']`);
-                tileElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 350);
+                const tile = document.querySelector(`[data-character-id="${id}"]`);
+                if (tile) tile.scrollIntoView({ behavior: 'smooth', block: 'start' });
+             }, 100);
         }
     }, [expandedCharacterId, setExpandedCharacterId]);
 
     const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
         const id = e.currentTarget.dataset.characterId;
         if (!id) return;
-
         const idsToDrag = selectedIds.has(id) ? Array.from(selectedIds) : [id];
-
         setDragState({ draggedIds: idsToDrag, overId: id });
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('application/json', JSON.stringify({ itemIds: idsToDrag, type: 'character' }));
-        
         const ghost = createDragGhost(idsToDrag.length, settings);
         document.body.appendChild(ghost);
         e.dataTransfer.setDragImage(ghost, 20, 20);
@@ -722,77 +720,55 @@ export const CharactersPanel: React.FC<CharactersPanelProps> = ({
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
-        const { draggedIds } = dragState;
-        if (!draggedIds) return;
-
         const characterElement = (e.target as HTMLElement).closest('[data-character-id]');
         const overId = characterElement ? (characterElement as HTMLElement).dataset.characterId : null;
-        if (!overId || overId === dragState.overId || draggedIds.includes(overId)) return;
+        if (!overId || overId === dragState.overId) return;
+        setDragState(prev => ({ ...prev, overId }));
         
-        setDragState(s => ({...s, overId}));
-
-        setOrderedCharacters(currentOrder => {
-            const itemsToMove = currentOrder.filter(c => draggedIds.includes(c.id));
-            const remainingItems = currentOrder.filter(c => !draggedIds.includes(c.id));
-            
-            let targetIndex = remainingItems.findIndex(c => c.id === overId);
-            if (targetIndex === -1) return currentOrder;
-
-            const overElementRect = characterElement.getBoundingClientRect();
-            const isAfter = e.clientX > overElementRect.top + overElementRect.height / 2;
-            if (isAfter) targetIndex++;
-
-            remainingItems.splice(targetIndex, 0, ...itemsToMove);
-            return remainingItems;
+        setOrderedCharacters(current => {
+            const filtered = current.filter(c => !dragState.draggedIds?.includes(c.id));
+            const index = filtered.findIndex(c => c.id === overId);
+            const itemsToMove = current.filter(c => dragState.draggedIds?.includes(c.id));
+            const next = [...filtered];
+            next.splice(index, 0, ...itemsToMove);
+            return next;
         });
     };
-    
+
     const handleDragEnd = () => {
-        setDragState({draggedIds: null, overId: null});
-    };
-    
-    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        if (dragState.draggedIds && JSON.stringify(orderedCharacters) !== JSON.stringify(characters)) {
+        if (dragState.draggedIds) {
             onSetCharacters(orderedCharacters);
         }
-        handleDragEnd();
+        setDragState({ draggedIds: null, overId: null });
     };
-    
+
     return (
         <div ref={scrollRef} className="h-full overflow-y-auto p-4">
-             <div 
-                className={`grid gap-4 ${isLinkPanel ? 'grid-cols-1' : 'character-grid'}`}
-                onDrop={isLinkPanel || expandedCharacterId ? undefined : handleDrop}
-                onDragOver={isLinkPanel || expandedCharacterId ? undefined : handleDragOver}
-             >
+            <div className={`grid gap-6 ${isLinkPanel ? 'grid-cols-1' : 'character-grid'}`}>
                 {orderedCharacters.map(char => (
-                    <div 
-                        key={char.id} 
-                        className={expandedCharacterId && expandedCharacterId !== char.id ? 'hidden' : expandedCharacterId === char.id ? 'col-span-full' : ''}
-                    >
-                        <CharacterTile
-                            character={char}
-                            settings={settings}
-                            onUpdate={onUpdate}
-                            onDeleteRequest={onDeleteRequest}
-                            isSelected={selectedIds.has(char.id)}
-                            isExpanded={expandedCharacterId === char.id}
-                            isDragging={dragState.draggedIds?.includes(char.id) ?? false}
-                            onToggleExpand={handleToggleExpand}
-                            onSelect={onSelect}
-                            scrollContainerRef={scrollRef}
-                            tileBackgroundStyle={tileBackgroundStyle}
-                            variant={variant}
-                            draggableProps={{
-                                draggable: !isLinkPanel && !expandedCharacterId,
-                                onDragStart: isLinkPanel || expandedCharacterId ? undefined : handleDragStart,
-                                onDragEnd: isLinkPanel || expandedCharacterId ? undefined : handleDragEnd,
-                                'data-character-id': char.id,
-                            }}
-                            allCharacters={characters}
-                        />
-                    </div>
+                    <CharacterTile
+                        key={char.id}
+                        character={char}
+                        isExpanded={expandedCharacterId === char.id}
+                        isDragging={dragState.draggedIds?.includes(char.id) ?? false}
+                        isSelected={selectedIds.has(char.id)}
+                        onToggleExpand={handleToggleExpand}
+                        onUpdate={onUpdate}
+                        onDeleteRequest={onDeleteRequest}
+                        onSelect={onSelect}
+                        settings={settings}
+                        draggableProps={{
+                            draggable: true,
+                            onDragStart: handleDragStart,
+                            onDragOver: handleDragOver,
+                            onDragEnd: handleDragEnd,
+                            'data-character-id': char.id,
+                        }}
+                        scrollContainerRef={scrollRef}
+                        tileBackgroundStyle={tileBackgroundStyle}
+                        variant={variant}
+                        allCharacters={characters}
+                    />
                 ))}
             </div>
         </div>

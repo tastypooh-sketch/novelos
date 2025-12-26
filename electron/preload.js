@@ -17,6 +17,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Alias for compatibility with Manuscript.tsx which calls importNoveliFile
   importNoveliFile: () => ipcRenderer.invoke('open-file-dialog'),
 
+  // Version Check
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+
   // Licensing
   activateLicense: (key) => ipcRenderer.invoke('activate-license', key),
   checkLicense: () => ipcRenderer.invoke('check-license'),

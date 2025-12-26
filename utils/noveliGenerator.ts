@@ -1,3 +1,4 @@
+
 import type { INovelState, EditorSettings, WritingGoals } from '../types';
 
 // Default backgrounds from App.tsx to ensure consistency
@@ -28,7 +29,6 @@ const DEFAULT_BACKGROUNDS = [
 const safeEncode = (data: any) => {
     try {
         const json = JSON.stringify(data);
-        // Use btoa for Base64 encoding. Handle unicode characters by escaping them first.
         return btoa(encodeURIComponent(json).replace(/%([0-9A-F]{2})/g,
             function toSolidBytes(match, p1) {
                 return String.fromCharCode(parseInt(p1, 16));
@@ -40,7 +40,6 @@ const safeEncode = (data: any) => {
 };
 
 export const generateNoveliHTML = (state: INovelState, settings: EditorSettings, writingGoals: WritingGoals, faviconBase64: string = ""): string => {
-    // Prepare settings object for injection
     const exportedSettings = {
         fontFamily: settings.fontFamily,
         fontSize: settings.fontSize,
@@ -69,7 +68,6 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
         showBookSpine: settings.showBookSpine ?? false
     };
 
-    // Use Base64 encoding for robust data injection
     const encodedState = safeEncode(state);
     const encodedSettings = safeEncode(exportedSettings);
     const encodedGoals = safeEncode(writingGoals);
@@ -83,20 +81,15 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
     <title>Noveli: Portable Manuscript</title>
     ${faviconBase64 ? `<link rel="icon" href="${faviconBase64}" />` : ''}
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&family=Inter:wght@100..900&family=Lora:ital,wght@0,400..700;1,400..700&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
-    <script type="importmap">
-    {
-      "imports": {
-        "react": "https://aistudiocdn.com/react@^19.2.0",
-        "react-dom/client": "https://aistudiocdn.com/react-dom@^19.2.0/client"
-      }
-    }
-    </script>
     <style>
         body, html { overflow: hidden; height: 100%; width: 100%; margin: 0; padding: 0; }
-        /* Minimalist Scrollbar */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.5); border-radius: 4px; }
@@ -154,14 +147,13 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
         }
         .save-flash { animation: flash-green-glow 1.5s ease-out forwards; }
 
-        /* Book Spine Effect */
         .book-spine-effect {
             position: fixed;
             top: 0;
             bottom: 0;
             left: 50%;
-            width: 60px; /* Width of the gutter */
-            margin-left: -30px; /* Center it */
+            width: 60px;
+            margin-left: -30px;
             background: linear-gradient(to right, 
                 rgba(0,0,0,0) 0%, 
                 rgba(0,0,0,0.15) 35%, 
@@ -178,9 +170,9 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
 <body class="h-screen w-screen flex flex-col transition-colors duration-300 overflow-hidden" id="body-root">
     <div id="root" class="h-full w-full"></div>
 
-    <script type="text/babel" data-type="module">
-        import React, { useState, useEffect, useRef, useMemo, useCallback, useLayoutEffect } from 'react';
-        import ReactDOM from 'react-dom/client';
+    <script type="text/babel">
+        // --- REACT GLOBALS ---
+        const { useState, useEffect, useRef, useMemo, useCallback, useLayoutEffect } = React;
 
         // --- DATA DECODING ---
         const safeDecode = (str) => {
@@ -241,7 +233,7 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
         };
 
         const getImageColors = (imageUrl) => {
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve) => {
                 const img = new Image();
                 img.crossOrigin = 'Anonymous';
                 img.onload = () => {
@@ -330,7 +322,7 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
 
         const Icons = {
             Save: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>,
-            Sparkles: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.898 20.562L16.25 22.5l-.648-1.938a2.25 2.25 0 01-1.473-1.473L12.25 18l1.938-.648a2.25 2.25 0 011.473 1.473L16.25 20.5l.648-1.938a2.25 2.25 0 011.473-1.473L20.25 16.5l-1.938.648a2.25 2.25 0 01-1.473 1.473z" /></svg>,
+            Sparkles: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09-3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.898 20.562L16.25 22.5l-.648-1.938a2.25 2.25 0 01-1.473-1.473L12.25 18l1.938-.648a2.25 2.25 0 011.473 1.473L16.25 20.5l.648-1.938a2.25 2.25 0 011.473-1.473L20.25 16.5l-1.938.648a2.25 2.25 0 01-1.473 1.473z" /></svg>,
             Note: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>,
             Spinner: () => <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>,
             Justify: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>,
@@ -361,7 +353,7 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
             useEffect(() => {
                 if (enabled && !audioContextRef.current) {
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    audioContextRef.current = new AudioContext();
+                    if (AudioContext) audioContextRef.current = new AudioContext();
                 }
             }, [enabled]);
             
@@ -451,6 +443,71 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
             </div>
         );
 
+        const UserGuideModal = ({ onClose, settings }) => {
+            const guideContent = [
+                {
+                    level: 1, title: "GETTING STARTED", children: [
+                        { level: 2, title: "Welcome to Noveli Portable", content: ["Noveli is a zero-installation, private, and ultra-portable word processor designed for long-form fiction. You can write anywhere with just a browser."] },
+                        { level: 2, title: "The Infinite Spread", content: ["Noveli uses a landscape-oriented dual-pane layout. As you fill one page, the text naturally flows to the next spread. This eliminates the fatigue of infinite vertical scrolling and mimics the experience of reading a physical book."] },
+                        { level: 2, title: "Navigation", content: ["Use your mouse wheel to scroll through spreads. On touchscreens, swipe left and right. You can also use Page Up and Page Down keys to flip entire spreads instantly."] }
+                    ]
+                },
+                {
+                    level: 1, title: "WRITING TOOLS", children: [
+                        { level: 2, title: "Focus Mode", content: ["Click the Eye Icon or press Escape to hide all toolbars and UI elements. Combined with browser Fullscreen (Ctrl+F11), this transforms your device into a dedicated writing appliance."] },
+                        { level: 2, title: "Design & Ambiance", content: ["Use the Design Gallery (Brush Icon) to change themes like Midnight, Sepia, or Paperback. You can also upload custom background images. Toggle Typewriter Sounds (Speaker Icon) for rhythmic auditory feedback."] },
+                        { level: 2, title: "Chapter Management", content: ["Add new chapters via the Plus icon in the toolbar. Switch between chapters using the dropdown menu. Note: These changes only persist once you perform a Save/Export."] }
+                    ]
+                },
+                {
+                    level: 1, title: "SAVING & SYNCING", children: [
+                        { level: 2, title: "How Saving Works", content: ["Browsers cannot directly overwrite files on your computer. When you click 'Save', Noveli packages your manuscript and settings into a timestamped ZIP file. Save this ZIP to your hard drive, cloud folder, or USB stick."] },
+                        { level: 2, title: "Back to Novelos", content: ["To resume work in the full Novelos Desktop application, use the 'Import from Noveli' button and select your latest ZIP file. Everything—including your design choices—will be synchronized."] }
+                    ]
+                },
+                {
+                    level: 1, title: "FREQUENTLY ASKED QUESTIONS", children: [
+                        { level: 2, title: "Is my data private?", content: ["Absolutely. Noveli runs entirely on your local machine. No data is sent to our servers. Your words live inside the HTML file and the ZIP snapshots you create."] },
+                        { level: 2, title: "Can I use it offline?", content: ["Yes. Once you have the Noveli.html file, you do not need an internet connection to write or save snapshots."] },
+                        { level: 2, title: "Why a ZIP file instead of a Word doc?", content: ["The ZIP protocol is our 'Save' method. It allows us to bundle the structural data needed for syncing back to Novelos alongside human-readable RTF backups of every chapter."] },
+                        { level: 2, title: "Where are my characters and world notes?", content: ["The portable Noveli editor focuses on pure writing. While Noveli is the perfect tool for distraction-free drafting on any device, the heavy lifting of structural analysis and world management happens in the full Novelos suite.", "Think of Noveli as your agile satellite and Novelos as your powerful mothership. When you return to your desktop, Novelos unlocks a universe of features: the AI-powered Pacing Heatmap, full character relationship graphs, the World-Building Crucible, and the Social Media Studio to automate your marketing. By separating drafting from structural engineering, you maintain creative flow while ensuring your story bible is always just a sync away."] }
+                    ]
+                }
+            ];
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4" onClick={onClose}>
+                    <div className="w-full max-w-4xl m-4 rounded-lg shadow-2xl flex flex-col overflow-hidden h-[85vh]" style={{backgroundColor: settings.toolbarBg, color: settings.textColor, borderColor: settings.toolbarInputBorderColor}} onClick={e => e.stopPropagation()}>
+                        <div className="p-4 border-b flex justify-between items-center bg-black/10" style={{borderColor: settings.toolbarButtonBg}}>
+                            <h3 className="font-bold text-lg">Noveli User Guide & FAQ</h3>
+                            <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10"><Icons.Close /></button>
+                        </div>
+                        <div className="p-8 overflow-y-auto flex-grow space-y-10 text-sm leading-relaxed scroll-smooth">
+                            {guideContent.map(section => (
+                                <div key={section.title}>
+                                    <h3 className="text-2xl font-bold mb-6 tracking-tight border-b pb-2 uppercase text-opacity-80" style={{borderColor: settings.toolbarInputBorderColor, color: settings.accentColor}}>{section.title}</h3>
+                                    <div className="space-y-8 pl-2">
+                                        {section.children.map(child => (
+                                            <div key={child.title}>
+                                                <h4 className="text-lg font-semibold mb-3">{child.title}</h4>
+                                                <div className="space-y-3 opacity-90 text-base">
+                                                    {child.content.map((p, i) => <p key={i}>{p}</p>)}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                            
+                            <div className="pt-10 mt-10 border-t text-center opacity-40 text-xs" style={{borderColor: settings.toolbarInputBorderColor}}>
+                                <p>Noveli v6.9 Portable &mdash; Part of the Novelos Ecosystem</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         const StatsModal = ({ onClose, settings, totalWordCount, sessionWordCount, goals, onGoalsChange, chapters }) => {
             const [daily, setDaily] = useState(goals.dailyGoal.toString());
             const [manuscript, setManuscript] = useState(goals.manuscriptGoal.toString());
@@ -539,7 +596,7 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
                         const end = Math.min(text.length, match.index + match[0].length + 20);
                         let context = text.substring(start, end);
                         if(start > 0) context = '...' + context;
-                        if(end < text.length) context = context + '...';
+                        if(end < text.length) context = context + "...";
                         newResults.push({ id: Math.random().toString(), chapterId: ch.id, chapterName: ch.title, index: match.index, length: match[0].length, context: context });
                     }
                 });
@@ -658,7 +715,7 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
                     const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null);
                     let currentIndex = 0;
                     let node;
-                    while(node = walker.nextNode()) {
+                    while((node = walker.nextNode())) {
                         const nodeLen = node.textContent.length;
                         if (currentIndex + nodeLen > searchTarget.index) {
                             const start = searchTarget.index - currentIndex;
@@ -679,7 +736,7 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
                         currentIndex += nodeLen;
                     }
                 }
-            }, [searchTarget, layout, chapter.id]);
+            }, [searchTarget, layout, chapter.id, snapToSpread]);
 
             const updatePageInfo = useCallback(() => {
                 if (!editorContainerRef.current || layout.stride === 0) return;
@@ -736,7 +793,7 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
                 if (columnIndex >= currentScrollIndex + layout.columns) snapToSpread(columnIndex - (layout.columns - 1), false);
                 else if (columnIndex < currentScrollIndex) snapToSpread(columnIndex, false);
                 updatePageInfo();
-            }, [layout, snapToSpread]);
+            }, [layout, snapToSpread, updatePageInfo]);
 
             const handleBeforeInput = useCallback(() => {
                 if (editorContainerRef.current && layout.stride > 0) {
@@ -945,7 +1002,7 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
                             <div className="border-t pt-4" style={{borderColor: settings.toolbarButtonBg}}>
                                 <h4 className="font-semibold mb-3 opacity-80">Display Options</h4>
                                 <div className="flex items-center gap-4 p-2 rounded-md" style={{backgroundColor: settings.backgroundColor}}>
-                                    <label className="flex items-center cursor-pointer select-none">
+                                    <label className="flex items-center select-none cursor-pointer">
                                         <input
                                             type="checkbox"
                                             checked={settings.showBookSpine === true}
@@ -964,14 +1021,15 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
         };
 
         const NoveliApp = () => {
-            const [chapters, setChapters] = useState(initialState.chapters);
-            const [activeChapterId, setActiveChapterId] = useState(initialState.chapters[0]?.id || '');
+            const [chapters, setChapters] = useState(initialState?.chapters || []);
+            const [activeChapterId, setActiveChapterId] = useState(initialState?.chapters[0]?.id || '');
             const [notesOpen, setNotesOpen] = useState(false);
             const [isFocusMode, setIsFocusMode] = useState(false);
             const [isFullscreen, setIsFullscreen] = useState(false);
             const [isGalleryOpen, setIsGalleryOpen] = useState(false);
             const [isStatsOpen, setIsStatsOpen] = useState(false);
             const [isFindReplaceOpen, setIsFindReplaceOpen] = useState(false);
+            const [isUserGuideOpen, setIsUserGuideOpen] = useState(false);
             const [isSpellcheckEnabled, setIsSpellcheckEnabled] = useState(false);
             const [pageInfo, setPageInfo] = useState({ current: 1, total: 1 });
             const [isSaving, setIsSaving] = useState(false);
@@ -985,12 +1043,11 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
             const [sessionCount, setSessionCount] = useState(0);
             const fontOptions = ["Lora", "Merriweather", "Times New Roman", "Bookman Old Style", "Georgia", "Roboto", "Open Sans", "Arial", "Inter", "Inconsolata"];
 
-            const activeChapter = chapters.find(c => c.id === activeChapterId) || chapters[0];
-            const activeChapterWordCount = useMemo(() => getWordCount(activeChapter.content), [activeChapter.content]);
+            const activeChapter = chapters.find(c => c.id === activeChapterId) || chapters[0] || { content: '' };
+            const activeChapterWordCount = useMemo(() => activeChapter ? getWordCount(activeChapter.content) : 0, [activeChapter?.content]);
             const playSound = useTypewriterSound(settings.isSoundEnabled, settings.soundVolume);
             const totalWordCount = useMemo(() => chapters.reduce((acc, c) => acc + getWordCount(c.content), 0), [chapters]);
 
-            // Audio Context Resumer
             useEffect(() => {
                 const unlockAudio = () => {
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -1054,8 +1111,8 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
                 if (!settings.backgroundImage) return 'none';
                 const overlayOpacity = 1 - (settings.backgroundImageOpacity ?? 0.5);
                 const color = settings.backgroundColor || '#111827';
-                const result = /^#?([a-f\\d]{2})([a-f\\d]{2})([a-f\\d]{2})$/i.exec(color);
-                const rgb = result ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)] : [0,0,0];
+                const result = hexToRgb(color);
+                const rgb = result ? [result[0], result[1], result[2]] : [0,0,0];
                 return \`linear-gradient(rgba(\${rgb[0]}, \${rgb[1]}, \${rgb[2]}, \${overlayOpacity}), rgba(\${rgb[0]}, \${rgb[1]}, \${rgb[2]}, \${overlayOpacity})), url(\${settings.backgroundImage})\`;
             }, [settings.backgroundImage, settings.backgroundImageOpacity, settings.backgroundColor]);
 
@@ -1068,6 +1125,7 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
             }, [settings.backgroundColor, settings.textColor, bgImageWithOverlay]);
 
             const handleContentChange = (newContent) => {
+                if (!activeChapter) return;
                 const updatedChapters = chapters.map(c => c.id === activeChapter.id ? { ...c, content: newContent } : c);
                 setChapters(updatedChapters);
             };
@@ -1104,7 +1162,7 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
                 setIsSaving(true);
                 const syncData = { chapters: chapters, settings: settings, timestamp: new Date().toISOString(), source: 'Noveli' };
                 try {
-                    const zip = new JSZip();
+                    const zip = new jszip();
                     zip.file("project_data.json", JSON.stringify(syncData, null, 2));
                     const rtfFolder = zip.folder("RTF_Backups");
                     chapters.forEach(ch => {
@@ -1148,6 +1206,8 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
             const btnStyle = { backgroundColor: settings.toolbarButtonBg, color: settings.textColor };
             const activeBtnStyle = { backgroundColor: settings.accentColor, color: '#FFF' };
 
+            if (!activeChapter) return <div className="p-8 text-center">Loading Manuscript...</div>;
+
             return (
                 <div className="flex flex-col h-screen font-sans overflow-hidden transition-colors duration-300 bg-transparent">
                     {notification && <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-[9999] px-6 py-2 rounded-full shadow-xl toast-enter flex items-center gap-2 backdrop-blur-md border border-white/20" style={{ backgroundColor: settings.successColor, color: '#FFFFFF' }}><span className="font-bold text-sm">{notification}</span></div>}
@@ -1168,24 +1228,23 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
                         <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-center sm:justify-start w-full sm:w-auto">
                             <a href="https://www.thomascorfield.com" target="_blank" rel="noopener noreferrer" className="text-xl font-serif font-bold tracking-wider hover:opacity-80 transition-opacity" style={{color: settings.textColor}}>Novel<span style={{color: settings.accentColor}}>i</span></a>
                             <select value={activeChapterId} onChange={(e) => setActiveChapterId(e.target.value)} className="text-sm border rounded px-2 py-1 focus:outline-none" style={{backgroundColor: settings.toolbarButtonBg, color: settings.textColor, borderColor: settings.toolbarButtonBg}}>{chapters.map(c => <option key={c.id} value={c.id}>{c.chapterNumber}. {c.title}</option>)}</select>
-                            <button onClick={handleAddChapter} className="p-1 rounded hover:opacity-80 transition-colors" style={{backgroundColor: settings.toolbarButtonBg, color: settings.textColor}}><Icons.Plus /></button>
+                            <button onClick={handleAddChapter} className="p-1 rounded hover:opacity-80 transition-colors" style={{backgroundColor: settings.toolbarButtonBg, color: settings.textColor}} title="Add New Chapter"><Icons.Plus /></button>
                             <div className="flex items-center gap-2">
                                 <select value={settings.fontFamily} onChange={e => handleSettingsChange({ fontFamily: e.target.value })} className="text-sm border rounded px-2 py-1 focus:outline-none" style={{backgroundColor: settings.toolbarButtonBg, color: settings.textColor, borderColor: settings.toolbarButtonBg}}>{fontOptions.map(font => <option key={font} value={font}>{font}</option>)}</select>
-                                <div className="flex items-center"><button onClick={() => handleSettingsChange({ fontSize: Math.max(0.7, settings.fontSize - 0.1) })} className="rounded-l px-2 py-1 border" style={{ backgroundColor: settings.toolbarButtonBg, borderColor: settings.toolbarButtonBg, color: settings.textColor }}>-</button><span className="px-2 py-1 border-t border-b text-sm" style={{ backgroundColor: settings.toolbarBg, borderColor: settings.toolbarButtonBg }}>{settings.fontSize.toFixed(1)}em</span><button onClick={() => handleSettingsChange({ fontSize: Math.min(2.5, settings.fontSize + 0.1) })} className="rounded-r px-2 py-1 border" style={{ backgroundColor: settings.toolbarButtonBg, borderColor: settings.toolbarButtonBg, color: settings.textColor }}>+</button></div>
+                                <div className="flex items-center"><button onClick={() => handleSettingsChange({ fontSize: Math.max(0.7, settings.fontSize - 0.1) })} className="rounded-l px-2 py-1 border" style={{ backgroundColor: settings.toolbarButtonBg, borderColor: settings.toolbarButtonBg, color: settings.textColor }} title="Decrease Font Size">-</button><span className="px-2 py-1 border-t border-b text-sm" style={{ backgroundColor: settings.toolbarBg, borderColor: settings.toolbarButtonBg }}>{settings.fontSize.toFixed(1)}em</span><button onClick={() => handleSettingsChange({ fontSize: Math.min(2.5, settings.fontSize + 0.1) })} className="rounded-r px-2 py-1 border" style={{ backgroundColor: settings.toolbarButtonBg, borderColor: settings.toolbarButtonBg, color: settings.textColor }} title="Increase Font Size">+</button></div>
                             </div>
                         </div>
                         <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-end w-full sm:w-auto">
                             <div className="flex items-center gap-3 mr-2 hidden md:flex"><div className="text-right" style={{ color: settings.toolbarText ? \`\${settings.toolbarText}B3\` : '#A0AEC0' }}><div className="text-xs">Chapter: {activeChapterWordCount.toLocaleString()}</div><div className="text-xs">Session: {sessionCount.toLocaleString()}</div></div></div>
-                            <button onClick={() => setSettings(s => ({...s, textAlign: s.textAlign === 'left' ? 'justify' : 'left'}))} className="p-2 rounded hover:opacity-80 transition-colors" style={settings.textAlign === 'justify' ? activeBtnStyle : btnStyle}><Icons.Justify /></button>
-                            <button onClick={() => handleSettingsChange({ lineHeight: settings.lineHeight === 1.2 ? 1.8 : 1.2 })} className="p-2 rounded hover:opacity-80 transition-colors" style={settings.lineHeight === 1.2 ? activeBtnStyle : btnStyle}><Icons.LineHeight /></button>
-                            <button onClick={() => setIsGalleryOpen(true)} className="p-2 rounded hover:opacity-80 transition-colors" style={btnStyle}><Icons.Brush /></button>
-                            <div className="w-px h-6 bg-gray-600 mx-2 opacity-30 hidden sm:block"></div>
-                            <button onClick={() => setIsStatsOpen(true)} className="p-2 rounded hover:opacity-80 transition-colors" style={btnStyle}><Icons.Stats /></button>
-                            <button onClick={() => setNotesOpen(!notesOpen)} className="p-2 rounded hover:opacity-80 transition-colors" style={notesOpen ? activeBtnStyle : btnStyle}><Icons.Note /></button>
-                            <button onClick={() => setIsFindReplaceOpen(true)} className="p-2 rounded hover:opacity-80 transition-colors" style={btnStyle}><Icons.Search /></button>
-                            <button onClick={() => setSettings(s => ({...s, transitionStyle: s.transitionStyle === 'scroll' ? 'fade' : 'scroll'}))} className="p-2 rounded hover:opacity-80 transition-colors" style={btnStyle}><Icons.Transition /></button>
-                            <button onClick={() => setIsSpellcheckEnabled(!isSpellcheckEnabled)} className="p-2 rounded hover:opacity-80 transition-colors" style={isSpellcheckEnabled ? activeBtnStyle : btnStyle}><Icons.Spellcheck /></button>
-                            <button onClick={() => setSettings(s => ({...s, isSoundEnabled: !s.isSoundEnabled}))} className="p-2 rounded hover:opacity-80 transition-colors" style={settings.isSoundEnabled ? activeBtnStyle : btnStyle}>{settings.isSoundEnabled ? <Icons.SoundOn /> : <Icons.SoundOff />}</button>
+                            <button onClick={() => setSettings(s => ({...s, textAlign: s.textAlign === 'left' ? 'justify' : 'left'}))} className="p-2 rounded hover:opacity-80 transition-colors" style={settings.textAlign === 'justify' ? activeBtnStyle : btnStyle} title="Toggle Text Alignment"><Icons.Justify /></button>
+                            <button onClick={() => handleSettingsChange({ lineHeight: settings.lineHeight === 1.2 ? 1.8 : 1.2 })} className="p-2 rounded hover:opacity-80 transition-colors" style={settings.lineHeight === 1.2 ? activeBtnStyle : btnStyle} title="Toggle Line Spacing"><Icons.LineHeight /></button>
+                            <button onClick={() => setIsGalleryOpen(true)} className="p-2 rounded hover:opacity-80 transition-colors" style={btnStyle} title="Design Gallery"><Icons.Brush /></button>
+                            <button onClick={() => setIsStatsOpen(true)} className="p-2 rounded hover:opacity-80 transition-colors" style={btnStyle} title="Writing Statistics & Goals"><Icons.Stats /></button>
+                            <button onClick={() => setNotesOpen(!notesOpen)} className="p-2 rounded hover:opacity-80 transition-colors" style={notesOpen ? activeBtnStyle : btnStyle} title="Chapter Notes"><Icons.Note /></button>
+                            <button onClick={() => setIsFindReplaceOpen(true)} className="p-2 rounded hover:opacity-80 transition-colors" style={btnStyle} title="Find and Replace"><Icons.Search /></button>
+                            <button onClick={() => setSettings(s => ({...s, transitionStyle: s.transitionStyle === 'scroll' ? 'fade' : 'scroll'}))} className="p-2 rounded hover:opacity-80 transition-colors" style={btnStyle} title="Toggle Page Transition"><Icons.Transition /></button>
+                            <button onClick={() => setIsSpellcheckEnabled(!isSpellcheckEnabled)} className="p-2 rounded hover:opacity-80 transition-colors" style={isSpellcheckEnabled ? activeBtnStyle : btnStyle} title="Toggle Spell Check"><Icons.Spellcheck /></button>
+                            <button onClick={() => setSettings(s => ({...s, isSoundEnabled: !s.isSoundEnabled}))} className="p-2 rounded hover:opacity-80 transition-colors" style={settings.isSoundEnabled ? activeBtnStyle : btnStyle} title="Toggle Typewriter Sounds">{settings.isSoundEnabled ? <Icons.SoundOn /> : <Icons.SoundOff />}</button>
                             {settings.isSoundEnabled && (
                                 <div className="flex items-center ml-1">
                                     <input
@@ -1201,16 +1260,18 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
                                     />
                                 </div>
                             )}
-                            <button onClick={toggleFullscreen} className="p-2 rounded hover:opacity-80 transition-colors" style={isFullscreen ? activeBtnStyle : btnStyle}>{isFullscreen ? <Icons.ExitFullscreen /> : <Icons.EnterFullscreen />}</button>
-                            <button onClick={() => setIsFocusMode(!isFocusMode)} className="p-2 rounded hover:opacity-80 transition-colors" style={isFocusMode ? activeBtnStyle : btnStyle}><Icons.Focus /></button>
+                            <button onClick={toggleFullscreen} className="p-2 rounded hover:opacity-80 transition-colors" style={isFullscreen ? activeBtnStyle : btnStyle} title="Toggle Fullscreen">{isFullscreen ? <Icons.ExitFullscreen /> : <Icons.EnterFullscreen />}</button>
+                            <button onClick={() => setIsFocusMode(!isFocusMode)} className="p-2 rounded hover:opacity-80 transition-colors" style={isFocusMode ? activeBtnStyle : btnStyle} title="Focus Mode (Esc)"><Icons.Focus /></button>
                             <button onClick={handleDonate} className="p-2 rounded hover:opacity-80 transition-colors" style={{...btnStyle, color: '#ef4444'}} title="Donate"><Icons.Heart /></button>
-                            <button onClick={handleUpgrade} className="px-3 py-1.5 rounded text-sm transition-colors hover:opacity-90" style={{backgroundColor: settings.accentColor, color: '#FFF'}}>Upgrade</button>
-                            <button onClick={() => handlePortableSave(false)} className="flex items-center gap-2 px-4 py-1.5 rounded text-sm font-medium transition-colors hover:opacity-90" style={{backgroundColor: settings.accentColor, color: '#FFF'}}><Icons.Save /> Save</button>
+                            <button onClick={() => setIsUserGuideOpen(true)} className="p-2 rounded hover:opacity-80 transition-colors" style={btnStyle} title="User Guide"><Icons.Help /></button>
+                            <button onClick={handleUpgrade} className="px-3 py-1.5 rounded text-sm transition-colors hover:opacity-90" style={{backgroundColor: settings.accentColor, color: '#FFF'}} title="Upgrade to Novelos Desktop">Upgrade</button>
+                            <button onClick={() => handlePortableSave(false)} className="flex items-center gap-2 px-4 py-1.5 rounded text-sm font-medium transition-colors hover:opacity-90" style={{backgroundColor: settings.accentColor, color: '#FFF'}} title="Save Project Snapshot (Ctrl+S)"><Icons.Save /> Save</button>
                         </div>
                     </div>
-                    <DesignGalleryModal isOpen={isGalleryOpen} onClose={() => setIsGalleryOpen(false)} settings={settings} onSettingsChange={handleSettingsChange} />
+                    {isGalleryOpen && <DesignGalleryModal isOpen={isGalleryOpen} onClose={() => setIsGalleryOpen(false)} settings={settings} onSettingsChange={handleSettingsChange} />}
                     {isStatsOpen && <StatsModal onClose={() => setIsStatsOpen(false)} settings={settings} totalWordCount={totalWordCount} sessionWordCount={sessionCount} goals={writingGoals} onGoalsChange={setWritingGoals} chapters={chapters} />}
-                    {isFocusMode && <button onClick={() => setIsFocusMode(false)} className="absolute top-4 right-4 p-2 rounded-full bg-black/20 hover:bg-black/40 text-white transition-colors z-50"><Icons.Unfocus /></button>}
+                    {isUserGuideOpen && <UserGuideModal onClose={() => setIsUserGuideOpen(false)} settings={settings} />}
+                    {isFocusMode && <button onClick={() => setIsFocusMode(false)} className="absolute top-4 right-4 p-2 rounded-full bg-black/20 hover:bg-black/40 text-white transition-colors z-50" title="Exit Focus Mode"><Icons.Unfocus /></button>}
                 </div>
             );
         };

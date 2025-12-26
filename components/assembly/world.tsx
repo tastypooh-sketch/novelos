@@ -237,7 +237,7 @@ const WorldItemCard: React.FC<{
     onToggleExpand: () => void;
 }> = ({ item, settings, isExpanded, onToggleExpand }) => {
     const dispatch = useNovelDispatch();
-    const { onRefineWorldItem, onConsolidateWorldItem, isGeneratingWorldItem, error, onSetError } = useAssemblyAI();
+    const { onRefineWorldItem, onConsolidateWorldItem, isGeneratingWorldItem, errorMessage, errorId, onSetError } = useAssemblyAI();
     const isGenerating = isGeneratingWorldItem === item.id;
     
     const [localName, setLocalName] = useState(item.name);
@@ -350,7 +350,7 @@ const WorldItemCard: React.FC<{
 export const WorldPanel: React.FC<{ settings: EditorSettings }> = ({ settings }) => {
     const { worldItems, assemblyState } = useNovelState();
     const dispatch = useNovelDispatch();
-    const { onDistillWorldNotes, isDistillingWorld, error, onSetError } = useAssemblyAI();
+    const { onDistillWorldNotes, isDistillingWorld, errorMessage, errorId, onSetError } = useAssemblyAI();
 
     const { worldPanelView, worldCrucibleText, expandedWorldItemId } = assemblyState;
 
@@ -409,6 +409,9 @@ export const WorldPanel: React.FC<{ settings: EditorSettings }> = ({ settings })
                         >
                             <textarea
                                 value={worldCrucibleText}
+                                /**
+                                 * FIXED: setCrucibleText expects a string, not a functional updater.
+                                 */
                                 onChange={e => setCrucibleText(e.target.value)}
                                 placeholder="This is your world-building braindump. Add any and all notes, ideas, and snippets about your world here. When you're ready, the AI will distill them into organized entries."
                                 className="w-full p-2 rounded border-0 resize-none bg-transparent"
@@ -428,9 +431,9 @@ export const WorldPanel: React.FC<{ settings: EditorSettings }> = ({ settings })
                             {isDistillingWorld ? <SpinnerIcon /> : <SparklesIconOutline />}
                             {isDistillingWorld ? 'Distilling...' : 'Distill Notes'}
                         </button>
-                         {error === 'distill' && (
+                         {errorId === 'distill' && (
                             <div className="text-red-400 text-sm text-center mt-2">
-                                <p>Sorry, something went wrong while distilling your notes. Please check the content and try again.</p>
+                                <p>{errorMessage || "Sorry, something went wrong while distilling your notes. Please check the content and try again."}</p>
                                 <button onClick={() => onSetError(null)} className="underline ml-2">Dismiss</button>
                             </div>
                         )}

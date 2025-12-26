@@ -74,6 +74,57 @@ ipcMain.on('window-maximize', () => {
 });
 ipcMain.on('window-close', () => mainWindow?.destroy());
 
+/**
+ * AUTOMATED VERSION CHECK
+ */
+ipcMain.handle('check-for-updates', async () => {
+    return new Promise((resolve) => {
+        const request = net.request({
+            method: 'GET',
+            protocol: 'https:',
+            hostname: 'api.github.com',
+            path: '/repos/tastypooh-sketch/novelos/releases/latest',
+            headers: {
+                'User-Agent': 'Novelos-Desktop-App'
+            }
+        });
+        
+        request.on('response', (response) => {
+            let data = '';
+            response.on('data', (chunk) => { data += chunk; });
+            response.on('end', () => {
+                if (response.statusCode !== 200) {
+                    resolve({ error: `GitHub API returned ${response.statusCode}` });
+                    return;
+                }
+
+                try {
+                    const release = JSON.parse(data);
+                    const currentVersion = app.getVersion();
+                    const latestVersion = release.tag_name.replace(/^v/, '');
+                    const cleanCurrent = currentVersion.replace(/^v/, '');
+
+                    resolve({
+                        currentVersion: cleanCurrent,
+                        latestVersion: latestVersion,
+                        releaseNotes: release.body,
+                        updateUrl: 'https://app.lemonsqueezy.com/my-orders',
+                        isNewer: latestVersion !== cleanCurrent 
+                    });
+                } catch (e) {
+                    resolve({ error: 'Failed to parse GitHub response' });
+                }
+            });
+        });
+        
+        request.on('error', (err) => {
+            resolve({ error: 'Network error checking for updates' });
+        });
+        
+        request.end();
+    });
+});
+
 // 1. Export Zip (Save As Dialog)
 ipcMain.handle('save-file', async (event, { name, content }) => {
     if (!mainWindow) return false;
@@ -117,9 +168,7 @@ ipcMain.handle('write-zip-to-folder', async (event, folderPath, fileName, conten
 ipcMain.handle('scan-for-latest-zip', async (event, folderPath) => {
     try {
         const files = fs.readdirSync(folderPath);
-        // Regex for Name_DD_MMM_HH_mm.zip
         const regex = /_(\d{2})_([A-Za-z]{3})_(\d{2})_(\d{2})\.zip$/;
-        
         const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
         const zipFiles = files
@@ -129,38 +178,19 @@ ipcMain.handle('scan-for-latest-zip', async (event, folderPath) => {
                 if (!match) return null;
                 const [_, dd, mmm, hh, mm] = match;
                 const monthIndex = months.findIndex(m => m.toLowerCase() === mmm.toLowerCase());
-                
                 if (monthIndex === -1) return null;
-                
-                // Construct Date object. Use file mtime as fallback or secondary sort if needed, 
-                // but filename is the protocol source of truth.
                 const now = new Date();
                 const date = new Date(now.getFullYear(), monthIndex, parseInt(dd), parseInt(hh), parseInt(mm));
-                
-                // Simple heuristics for year boundary: if date is in future relative to now, assume previous year
-                // (e.g. now is Jan, file is Dec -> file was last year)
-                if (date > now) {
-                    date.setFullYear(date.getFullYear() - 1);
-                }
-
-                return {
-                    name: f,
-                    path: path.join(folderPath, f),
-                    date: date
-                };
+                if (date > now) { date.setFullYear(date.getFullYear() - 1); }
+                return { name: f, path: path.join(folderPath, f), date: date };
             })
             .filter(f => f !== null)
-            .sort((a, b) => b.date - a.date); // Descending
+            .sort((a, b) => b.date - a.date);
 
         if (zipFiles.length > 0) {
             const latest = zipFiles[0];
             const content = fs.readFileSync(latest.path);
-            return {
-                name: latest.name,
-                path: latest.path,
-                date: latest.date.getTime(), // Return timestamp for transfer
-                content: content
-            };
+            return { name: latest.name, path: latest.path, date: latest.date.getTime(), content: content };
         }
         return null;
     } catch (e) {
@@ -179,10 +209,7 @@ ipcMain.handle('open-file-dialog', async () => {
     if (canceled || filePaths.length === 0) return null;
     try {
         const content = fs.readFileSync(filePaths[0]);
-        return {
-            name: path.basename(filePaths[0]),
-            content: content
-        };
+        return { name: path.basename(filePaths[0]), content: content };
     } catch (e) {
         console.error("Read failed", e);
         return null;
@@ -190,17 +217,8 @@ ipcMain.handle('open-file-dialog', async () => {
 });
 
 // 6. LICENSE ACTIVATION (LEMON SQUEEZY)
+// Removed "DEV-MODE" bypass for public repository security.
 ipcMain.handle('activate-license', async (event, licenseKey) => {
-    // DEV BYPASS FOR TESTING PRODUCTION BUILDS
-    if (licenseKey === 'DEV-MODE') {
-        fs.writeFileSync(getLicensePath(), JSON.stringify({
-            key: 'DEV-MODE',
-            activated: true,
-            meta: { type: 'developer_bypass', timestamp: new Date().toISOString() }
-        }));
-        return { success: true };
-    }
-
     try {
         const response = await fetch('https://api.lemonsqueezy.com/v1/licenses/activate', {
             method: 'POST',
@@ -234,7 +252,6 @@ ipcMain.handle('activate-license', async (event, licenseKey) => {
 
 // 7. CHECK LICENSE (OFFLINE FRIENDLY)
 ipcMain.handle('check-license', async () => {
-    // AUTOMATIC BYPASS IN DEV ENVIRONMENT
     if (!app.isPackaged) return true;
 
     try {

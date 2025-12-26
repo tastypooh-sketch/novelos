@@ -1,9 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { produce } from 'immer';
 import { Modal } from './Modal';
-import type { EditorSettings, ToolbarVisibility } from '../../../types';
-import { TrashIconOutline, SpinnerIcon } from '../../common/Icons';
+import type { EditorSettings, ToolbarVisibility, AppUpdate } from '../../../types';
+import { TrashIconOutline, SpinnerIcon, SparklesIconOutline, RefreshIcon } from '../../common/Icons';
+import MarkdownRenderer from '../../common/MarkdownRenderer';
 
 interface CustomizeToolbarModalProps {
     settings: EditorSettings;
@@ -12,6 +13,7 @@ interface CustomizeToolbarModalProps {
     onClose: () => void;
     onSaveProject: () => Promise<boolean>;
     hasContent: boolean;
+    appUpdate?: AppUpdate | null;
 }
 
 const ALL_TOOLBAR_ITEMS: { key: keyof ToolbarVisibility; label: string }[] = [
@@ -32,10 +34,12 @@ const ALL_TOOLBAR_ITEMS: { key: keyof ToolbarVisibility; label: string }[] = [
     { key: 'userGuide', label: 'User Guide' },
 ];
 
-export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ settings, currentVisibility, onSave, onClose, onSaveProject, hasContent }) => {
+export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ settings, currentVisibility, onSave, onClose, onSaveProject, hasContent, appUpdate: initialUpdate }) => {
     const [visibility, setVisibility] = useState(currentVisibility);
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<string | null>(null);
+    const [checkingUpdate, setCheckingUpdate] = useState(false);
+    const [activeUpdate, setActiveUpdate] = useState<AppUpdate | null>(initialUpdate || null);
 
     const handleToggle = (key: keyof ToolbarVisibility) => {
         setVisibility(produce(draft => {
@@ -43,28 +47,40 @@ export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ se
         }));
     };
 
+    const handleCheckUpdate = async () => {
+        // @ts-ignore
+        if (window.electronAPI && window.electronAPI.checkForUpdates) {
+            setCheckingUpdate(true);
+            try {
+                // @ts-ignore
+                const result = await window.electronAPI.checkForUpdates();
+                setActiveUpdate(result && result.isNewer ? result : null);
+                if (result && !result.isNewer) {
+                    alert("You are on the latest version of Novelos!");
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setCheckingUpdate(false);
+            }
+        }
+    };
+
     const handleSaveAndReload = async () => {
-        // Save Settings locally
         onSave(visibility as ToolbarVisibility);
         
-        // Save Project if needed
         if (hasContent) {
             setIsSaving(true);
             setSaveStatus("Saving Project...");
             try {
-                // This triggers the folder selection dialog if no path is set
-                // or just saves if path exists.
-                // The new auto-reload logic in App.tsx will pick up the saved path.
                 const success = await onSaveProject();
                 
                 if (success) {
                     setSaveStatus("Saved! Reloading...");
-                    // Short delay to let the user see the success message
                     setTimeout(() => window.location.reload(), 1500);
                 } else {
                     setSaveStatus(null);
                     setIsSaving(false);
-                    // If save cancelled or failed, ask user if they want to proceed anyway
                     if (confirm("Project could not be saved automatically. Reload anyway? Any unsaved changes will be lost.")) {
                         window.location.reload();
                     }
@@ -76,7 +92,6 @@ export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ se
                 alert("An error occurred while saving.");
             }
         } else {
-            // Empty project, just reload
             setSaveStatus("Reloading...");
             setTimeout(() => window.location.reload(), 500);
         }
@@ -111,9 +126,53 @@ export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ se
     );
 
     return (
-        <Modal onClose={onClose} settings={settings} title="Settings & Toolbar" className="max-w-md" footer={footerContent}>
-            <div className="space-y-6">
+        <Modal onClose={onClose} settings={settings} title="Settings & Toolbar" className="max-w-xl" footer={footerContent}>
+            <div className="space-y-8">
                 
+                {/* App Update Section */}
+                {activeUpdate ? (
+                    <div className="p-4 rounded-lg border-2 animate-in slide-in-from-top duration-500" style={{ backgroundColor: `${settings.accentColor}15`, borderColor: settings.accentColor }}>
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                                <SparklesIconOutline className="h-5 w-5" style={{ color: settings.accentColor }} />
+                                <h3 className="font-bold text-lg">Update Recommended</h3>
+                            </div>
+                            <span className="text-xs font-mono px-2 py-1 rounded bg-black/20">{activeUpdate.currentVersion} → {activeUpdate.latestVersion}</span>
+                        </div>
+                        
+                        <div className="text-sm space-y-2 mb-4 opacity-90 max-h-40 overflow-y-auto pr-2 bg-black/10 p-3 rounded border border-white/5">
+                            <h4 className="font-bold text-xs uppercase opacity-50 mb-1">Release Notes</h4>
+                            <MarkdownRenderer source={activeUpdate.releaseNotes} settings={settings} />
+                        </div>
+
+                        <a 
+                            href={activeUpdate.updateUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block w-full text-center py-2.5 rounded-md text-white font-bold shadow-lg transition-transform active:scale-95 mb-2"
+                            style={{ backgroundColor: settings.accentColor }}
+                        >
+                            Download from Lemon Squeezy
+                        </a>
+                        <p className="text-[10px] text-center opacity-50 italic">Updates are provided as full installers. Your novel and settings will stay safe.</p>
+                    </div>
+                ) : (
+                    <div className="flex items-center justify-between p-4 rounded-lg border border-dashed" style={{ borderColor: settings.toolbarInputBorderColor }}>
+                        <div className="flex flex-col">
+                            <span className="text-xs opacity-50 uppercase font-bold tracking-widest">System Status</span>
+                            <span className="text-sm font-medium">Novelos is up to date (v7.0.9)</span>
+                        </div>
+                        <button 
+                            onClick={handleCheckUpdate}
+                            disabled={checkingUpdate}
+                            className="flex items-center gap-2 px-3 py-1.5 rounded bg-black/20 hover:bg-black/40 text-xs transition-colors disabled:opacity-50"
+                        >
+                            {checkingUpdate ? <SpinnerIcon className="h-3 w-3" /> : <RefreshIcon className="h-3 w-3" />}
+                            Check for Updates
+                        </button>
+                    </div>
+                )}
+
                 <div>
                     <h3 className="font-semibold text-sm mb-3">Toolbar Visibility</h3>
                     <div className="grid grid-cols-2 gap-3">
@@ -132,10 +191,9 @@ export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ se
                     </div>
                 </div>
 
-                {/* Advanced / Reset Section */}
                 <div className="pt-4 mt-4 border-t space-y-3" style={{ borderColor: settings.toolbarInputBorderColor }}>
                     <h3 className="font-semibold text-xs opacity-50 uppercase tracking-wider">Advanced</h3>
-
+                    
                     <button
                         onClick={handleFactoryReset}
                         className="w-full px-4 py-2 rounded-md text-sm border flex items-center justify-center gap-2 transition-colors mt-4"
@@ -148,7 +206,7 @@ export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ se
                         onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
                         <TrashIconOutline className="h-4 w-4" />
-                        Reset All Settings to Default
+                        Reset All UI Settings
                     </button>
                 </div>
             </div>

@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useCallback, useRef, useMemo, useLayoutEffect } from 'react';
-import type { IChapter, EditorSettings, Shortcut, WritingGoals, GalleryItem, INovelState, SearchResult } from '../../types';
+import type { IChapter, EditorSettings, Shortcut, WritingGoals, GalleryItem, INovelState, SearchResult, AppUpdate } from '../../types';
 import { useDebouncedCallback } from 'use-debounce';
 import { useNovelDispatch, useNovelState } from '../../NovelContext';
 import { getAI } from '../../utils/ai';
@@ -20,6 +21,7 @@ import { ReadAloudModal } from './modals/ReadAloudModal';
 import { PlayIcon, PauseIcon, StopIcon, UnfocusIcon } from '../common/Icons';
 import { DesignGalleryModal } from './modals/DesignGalleryModal';
 import { SpellCheckModal } from './modals/SpellCheckModal';
+import { UserGuideModal } from './modals/UserGuideModal';
 
 interface ManuscriptProps {
     settings: EditorSettings;
@@ -43,7 +45,8 @@ interface ManuscriptProps {
     onSaveToFolder: () => Promise<boolean>;
 }
 
-type ModalType = 'shortcuts' | 'stats' | 'customizeToolbar' | 'history' | 'voiceSettings' | 'designGallery' | 'readAloud' | 'spellCheck';
+// FIX: Added 'findReplace' to ModalType to resolve type errors when calling onToggleModal from Toolbar.
+type ModalType = 'findReplace' | 'shortcuts' | 'stats' | 'customizeToolbar' | 'history' | 'voiceSettings' | 'designGallery' | 'readAloud' | 'spellCheck' | 'userGuide';
 type TTSStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'error';
 
 // Helper to create a WAV file from raw PCM data so it can be played by HTMLAudioElement
@@ -83,7 +86,6 @@ const useTypewriterSound = (enabled: boolean, volume: number = 0.75) => {
     useEffect(() => {
         if (!enabled) return;
 
-        // Robust initialization for Strict Mode
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (!AudioContext) return;
 
@@ -91,7 +93,6 @@ const useTypewriterSound = (enabled: boolean, volume: number = 0.75) => {
         audioContextRef.current = ctx;
 
         return () => {
-            // Robust cleanup
             if (ctx.state !== 'closed') {
                 ctx.close().catch(e => console.warn("Failed to close audio context", e));
             }
@@ -105,7 +106,6 @@ const useTypewriterSound = (enabled: boolean, volume: number = 0.75) => {
         
         const vol = volume;
 
-        // Auto-resume if suspended (browser policy)
         if (ctx.state === 'suspended') {
             ctx.resume().catch(e => console.warn("Audio resume failed", e));
         }
@@ -113,7 +113,6 @@ const useTypewriterSound = (enabled: boolean, volume: number = 0.75) => {
         const t = ctx.currentTime;
 
         if (type === 'enter') {
-            // Synthesis for Enter Thud
             const osc1 = ctx.createOscillator();
             const gain1 = ctx.createGain();
             osc1.type = 'sine';
@@ -134,7 +133,6 @@ const useTypewriterSound = (enabled: boolean, volume: number = 0.75) => {
             osc2.connect(gain2); gain2.connect(ctx.destination);
             osc2.start(t); osc2.stop(t + 0.8);
 
-            // Noise burst
             if (!enterThudBufferRef.current) {
                 const bufferSize = ctx.sampleRate * 0.05;
                 const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
@@ -153,7 +151,6 @@ const useTypewriterSound = (enabled: boolean, volume: number = 0.75) => {
             noise.connect(noiseFilter); noiseFilter.connect(noiseGain); noiseGain.connect(ctx.destination);
             noise.start(t);
         } else {
-            // Synthesis for Key Click
             const gain = ctx.createGain();
             const filter = ctx.createBiquadFilter();
             if (!keyClickBufferRef.current) {
@@ -195,8 +192,8 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
     const [isNotesPanelOpen, setIsNotesPanelOpen] = useState<boolean>(false);
     const [notesPanelWidth, setNotesPanelWidth] = useState(320);
     const [activeModal, setActiveModal] = useState<ModalType | null>(null);
-    const [previousModal, setPreviousModal] = useState<ModalType | null>(null); // Track history for back navigation
-    const [isFindReplaceOpen, setIsFindReplaceOpen] = useState(false); // Managed separately to be non-modal
+    const [previousModal, setPreviousModal] = useState<ModalType | null>(null); 
+    const [isFindReplaceOpen, setIsFindReplaceOpen] = useState(false); 
     
     const [isSaving, setIsSaving] = useState(isSavingProp);
     const [isSpellcheckEnabled, setIsSpellcheckEnabled] = useState(false);
@@ -205,6 +202,7 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [isToolbarAnimating, setIsToolbarAnimating] = useState(false);
     const [notification, setNotification] = useState<string | null>(null);
+    const [availableUpdate, setAvailableUpdate] = useState<AppUpdate | null>(null);
     
     // Context Menu State
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number; actions: { label: string; onSelect: () => void }[] } | null>(null);
@@ -216,8 +214,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
     const [ttsStatus, setTtsStatus] = useState<TTSStatus>('idle');
     const ttsAudioElementRef = useRef<HTMLAudioElement | null>(null);
     
-    // Audio Context for Typewriter Sounds - now handled by hook
-    // Use persistent setting
     const isSoundEnabled = settings.isSoundEnabled || false;
     const playTypewriterSound = useTypewriterSound(isSoundEnabled, settings.soundVolume);
 
@@ -229,15 +225,12 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
     const noveliImportInputRef = useRef<HTMLInputElement>(null);
     const isLocalUpdate = useRef(false);
     
-    // Search Pending Ref
     const pendingSearchRef = useRef<SearchResult | null>(null);
     
-    // Scroll Stability Refs
     const isTyping = useRef(false);
     const stableScrollLeft = useRef(0);
     const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     
-    // Layout Geometry - MAXIMIZED LANDSCAPE SETTINGS
     const GAP_PX = 60; 
     const SIDE_MARGIN_PX = 40;
     const [layout, setLayout] = useState({ colWidth: 0, stride: 0, gap: GAP_PX, sideMargin: SIDE_MARGIN_PX, columns: 2 });
@@ -254,7 +247,32 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
         setIsSaving(isSavingProp);
     }, [isSavingProp]);
 
-    const activeChapter = useMemo(() => chapters.find(ch => ch.id === activeChapterId) ?? chapters[0], [chapters, activeChapterId]);
+    // --- Update Checking Logic ---
+    useEffect(() => {
+        const checkUpdates = async () => {
+            // @ts-ignore
+            if (window.electronAPI && window.electronAPI.checkForUpdates) {
+                try {
+                    // @ts-ignore
+                    const result = await window.electronAPI.checkForUpdates();
+                    if (result && result.isNewer) {
+                        setAvailableUpdate(result);
+                    }
+                } catch (e) {
+                    console.warn("Update check failed", e);
+                }
+            }
+        };
+        // Wait a few seconds after launch to not bog down initial render
+        const timer = setTimeout(checkUpdates, 5000);
+        return () => clearTimeout(timer);
+    }, []);
+
+    /**
+     * FIXED: Mixed logical operators and refined typing for activeChapter.
+     * Guaranteed presence via NovelProvider defaults.
+     */
+    const activeChapter = useMemo(() => (chapters.find(ch => ch.id === activeChapterId) || chapters[0]) as IChapter, [chapters, activeChapterId]);
     
     const shortcutsMap = useMemo(() => {
         const map = new Map<string, string>();
@@ -276,10 +294,9 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
 
     const hasContent = useMemo(() => {
         if (chapters.length > 1) return true;
-        // Check chapter 1 for content
         const c1 = chapters[0];
         if (!c1) return false;
-        if (c1.content.length > 30) return true; // arbitrary simple length check
+        if (c1.content.length > 30) return true;
         return false;
     }, [chapters]);
 
@@ -321,7 +338,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
         }
     }, [isSaving, onSaveToFolder]);
 
-    // --- Keyboard Shortcut for Save ---
     useEffect(() => {
         const handleKeyDown = (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 's') {
@@ -369,7 +385,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
         if (!editorRef.current) return;
         const editor = editorRef.current;
         
-        // Use a TreeWalker to find the text node at index
         const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null);
         let currentIndex = 0;
         let node: Node | null = null;
@@ -377,13 +392,8 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
         while(node = walker.nextNode()) {
             const nodeLen = node.textContent?.length || 0;
             if (currentIndex + nodeLen > index) {
-                // Found the start node
                 const startOffset = index - currentIndex;
                 const range = document.createRange();
-                
-                // Handling matches that span multiple nodes is complex. 
-                // For this implementation, we assume the match is within the node or we select to end of node.
-                // A more robust implementation would traverse subsequent nodes.
                 const endOffset = Math.min(startOffset + length, nodeLen); 
                 
                 range.setStart(node, startOffset);
@@ -394,12 +404,10 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
                     sel.removeAllRanges();
                     sel.addRange(range);
                     
-                    // Scroll into view
                     const rect = range.getBoundingClientRect();
                     const container = editorContainerRef.current;
                     if (container && rect) {
                         const relativeX = rect.left - container.getBoundingClientRect().left + container.scrollLeft;
-                        // Calculate spread
                         const targetSpread = Math.floor(Math.max(0, relativeX - layout.sideMargin) / layout.stride);
                         container.scrollTo({ left: targetSpread * layout.stride, behavior: 'smooth' });
                     }
@@ -410,10 +418,8 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
         }
     }, [layout]);
 
-    // Handle Pending Search after Chapter Load
     useEffect(() => {
         if (pendingSearchRef.current && pendingSearchRef.current.chapterId === activeChapterId) {
-            // Slight delay to allow DOM render
             setTimeout(() => {
                 if (pendingSearchRef.current) {
                     highlightTextInEditor(pendingSearchRef.current.index, pendingSearchRef.current.length);
@@ -425,7 +431,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
 
     const handleNavigateMatch = useCallback(async (result: SearchResult) => {
         if (result.chapterId !== activeChapterId) {
-            // Data Integrity Protocol: Force Save before switching
             setIsSaving(true);
             setNotification("Saving before navigation...");
             await onSaveToFolder();
@@ -440,28 +445,15 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
     }, [activeChapterId, onSaveToFolder, onActiveChapterIdChange, highlightTextInEditor]);
 
     const handleFindReplaceUpdate = (result: SearchResult, newText: string) => {
-        // Only works for current chapter for now to be safe
         if (result.chapterId !== activeChapterId) {
-            handleNavigateMatch(result); // Switch to it first
+            handleNavigateMatch(result); 
             return;
         }
         
-        // Simple replace for now - replace the specific occurrence? 
-        // Or re-run find on content string.
-        // For robustness, since we have index, we could try string manipulation, but HTML makes it hard.
-        // We will stick to global replace for the context or a unique identifier approach if possible.
-        // Fallback: Use string replacement on content.
-        
-        // Create regex from context to locate unique spot (risky) or just the word.
-        // Let's use the Selection Range if it is highlighted
         const sel = window.getSelection();
         if (sel && !sel.isCollapsed && sel.toString() === result.context.substring(result.context.length/2 - result.length/2, result.context.length/2 + result.length/2)) { // Basic check
              document.execCommand('insertText', false, newText);
         } else {
-             // Fallback: Global replace of text (risky for duplicates)
-             // or precise replacement if we had exact HTML offset.
-             // We'll trust the user to have navigated to it and highlighted it via handleNavigateMatch.
-             // If highlighted:
              document.execCommand('insertText', false, newText);
         }
     };
@@ -473,7 +465,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
              const newContent = activeChapter.content.replace(regex, replace);
              handleChapterDetailsChange(activeChapter.id, { content: newContent });
         } else {
-             // Iterate all chapters
              chapters.forEach(ch => {
                  if (ch.content.match(regex)) {
                      const newContent = ch.content.replace(regex, replace);
@@ -518,8 +509,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
     }, [onGenerateWhatIf]);
 
 
-    // --- Layout & Geometry Engine ---
-
     const calculateLayout = useCallback(() => {
         if (!editorContainerRef.current) return;
         
@@ -543,14 +532,10 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
         
         const scrollLeft = editorContainerRef.current.scrollLeft;
         
-        // Spread Counting Logic
         const currentColumnIndex = stride > 0 ? Math.round(scrollLeft / stride) : 0;
         const contentWidth = editorContainerRef.current.scrollWidth - (2 * SIDE_MARGIN_PX);
         const totalColumns = stride > 0 ? Math.ceil((contentWidth + GAP_PX) / stride) : 1;
 
-        // User Requirements:
-        // 1. Page readout must be "Page X and Y of Z" (where Z is total page count).
-        // 2. Total page count is 1 less than actual count (due to spacer), but minimum 2.
         const actualPageCount = Math.max(2, totalColumns - 1);
         const currentLeftPage = currentColumnIndex + 1;
 
@@ -576,15 +561,12 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
         };
     }, [calculateLayout, isNotesPanelOpen, notesPanelWidth, isFocusMode, settings.fontSize, settings.fontFamily, restoreSelection, isVisible]);
 
-    // --- Discrete Scroll & Snap Logic ---
-
     const snapToSpread = useCallback((targetSpreadIndex: number, useTransition: boolean = true) => {
         if (!editorContainerRef.current || layout.stride === 0) return;
         
-        // Ensure we can scroll to the spacer if needed
         const contentWidth = editorContainerRef.current.scrollWidth - (2 * SIDE_MARGIN_PX);
         const totalColumns = Math.ceil((contentWidth + GAP_PX) / layout.stride);
-        const totalSpreads = totalColumns; // Allow scrolling to the very end
+        const totalSpreads = totalColumns; 
         const clampedIndex = Math.max(0, Math.min(targetSpreadIndex, totalSpreads));
 
         const targetScrollLeft = clampedIndex * layout.stride;
@@ -629,7 +611,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
         }
     }, [layout, snapToSpread]);
 
-    // Move updatePageInfo up to be accessible by handleScroll
     const updatePageInfo = useCallback(() => {
         if (!editorContainerRef.current || layout.stride === 0) return;
         
@@ -638,7 +619,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
         const contentWidth = editorContainerRef.current.scrollWidth - (2 * SIDE_MARGIN_PX);
         const totalColumns = Math.ceil((contentWidth + GAP_PX) / layout.stride);
 
-        // Updated Logic per user requirements
         const actualPageCount = Math.max(2, totalColumns - 1);
         const currentLeftPage = currentColumnIndex + 1;
         
@@ -650,7 +630,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
         
         updatePageInfo();
 
-        // Only snap if we are not currently typing to avoid fighting with scroll lock
         if (!isTyping.current) {
             const currentScroll = editorContainerRef.current.scrollLeft;
             const nearestSpread = Math.round(currentScroll / layout.stride);
@@ -658,32 +637,25 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
         }
     }, 150);
 
-    // --- Aggressive Scroll Locking for Input ---
-    
     useEffect(() => {
         const container = editorContainerRef.current;
         if (!container) return;
 
         const handleNativeScroll = () => {
             if (isTyping.current) {
-                // If the user is typing, we strictly enforce the scroll position
                 const diff = Math.abs(container.scrollLeft - stableScrollLeft.current);
                 if (diff > 5) { 
                     container.scrollLeft = stableScrollLeft.current;
                 }
             } else {
-                // If not typing, this is a valid user scroll. Update stable reference.
                 stableScrollLeft.current = container.scrollLeft;
             }
         };
 
-        // Passive: false is required to potentially interfere with scroll (though scroll is non-cancellable, property assignment works)
         container.addEventListener('scroll', handleNativeScroll, { passive: false });
         return () => container.removeEventListener('scroll', handleNativeScroll);
     }, []);
 
-
-    // --- Caret Visibility Enforcement ---
 
     const checkAndEnforceCaretVisibility = useCallback(() => {
         const container = editorContainerRef.current;
@@ -720,7 +692,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
     const handleBeforeInput = useCallback(() => {
         if (editorContainerRef.current && layout.stride > 0) {
             isTyping.current = true;
-            // SNAP: Ensure the baseline we lock to is a perfect spread multiple
             const currentScroll = editorContainerRef.current.scrollLeft;
             const nearestSpread = Math.round(currentScroll / layout.stride);
             stableScrollLeft.current = nearestSpread * layout.stride;
@@ -779,15 +750,12 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
         }
         handleContentChange(editor.innerHTML);
 
-        // Immediate Caret Check for Page Turns
-        // We do this synchronously to update stableScrollLeft before the next scroll event tries to revert it
         if (sel && sel.rangeCount > 0 && editorContainerRef.current && layout.stride > 0) {
              const range = sel.getRangeAt(0);
              if (editorRef.current?.contains(range.commonAncestorContainer)) {
                  const caretRect = range.getBoundingClientRect();
                  const containerRect = editorContainerRef.current.getBoundingClientRect();
                  
-                 // Valid caret?
                  if (caretRect.width !== 0 || caretRect.height !== 0 || caretRect.x !== 0) {
                      const relativeCaretX = (caretRect.left - containerRect.left) + editorContainerRef.current.scrollLeft;
                      const adjustedCaretX = Math.max(0, relativeCaretX - layout.sideMargin);
@@ -797,11 +765,9 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
                      
                      let targetSpread = currentScrollIndex;
                      
-                     // If caret is ahead of view
                      if (columnIndex >= currentScrollIndex + layout.columns) {
                          targetSpread = columnIndex - (layout.columns - 1);
                      } 
-                     // If caret is behind view
                      else if (columnIndex < currentScrollIndex) {
                          targetSpread = columnIndex;
                      }
@@ -818,7 +784,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
     }, [handleContentChange, shortcutsMap, layout]);
 
     const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
-        // Redundant backup to handleBeforeInput for key-based changes (e.g. Backspace)
         if (editorContainerRef.current && layout.stride > 0) {
             isTyping.current = true;
             const currentScroll = editorContainerRef.current.scrollLeft;
@@ -827,59 +792,44 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
             if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
         }
 
-        // Backspace: Indentation Removal at Start of Paragraph
         if (e.key === 'Backspace') {
             const sel = window.getSelection();
             if (sel && sel.rangeCount > 0 && sel.isCollapsed) {
                 const range = sel.getRangeAt(0);
                 const node = range.startContainer;
-                // Find parent div (paragraph)
-                let p = node.nodeType === Node.ELEMENT_NODE ? node as HTMLElement : node.parentElement;
+                let p = node.nodeType === Node.TEXT_NODE ? node.parentElement : node as HTMLElement;
                 while (p && p.nodeName !== 'DIV' && p.parentElement !== e.currentTarget) {
                     p = p.parentElement;
                 }
 
                 if (p && p.parentElement === e.currentTarget) {
-                    // Check if caret is at the start of the block
-                    // For text nodes: must be offset 0 and be the first text node (or first relevant child)
-                    // For element nodes (empty paragraph <br>): startOffset is usually 0
                     const isAtStart = (range.startOffset === 0) && (node === p || node === p.firstChild || (node.parentNode === p && node === p.firstChild));
 
                     if (isAtStart) {
-                        // Check indentation state. 
-                        // Default CSS applies indent. Inline style text-indent: '0px' removes it.
-                        // If it is NOT explicitly '0px', it is indented. We want to remove indent.
                         if (!p.style.textIndent || p.style.textIndent !== '0px') {
                             e.preventDefault();
                             p.style.textIndent = '0px';
-                            // Trigger content change update
                             handleContentChange(e.currentTarget.innerHTML);
                             return; 
                         }
-                        // If it IS '0px', we let default Backspace happen (merge lines).
                     }
                 }
             }
         }
 
-        // Enter: Force new paragraph to have default indentation (remove 0px override)
         if (e.key === 'Enter') {
             e.preventDefault();
-            // Standardize paragraph creation
             document.execCommand('insertParagraph', false);
             
             const selection = window.getSelection();
             if (selection && selection.rangeCount > 0) {
                 let node = selection.anchorNode;
-                // Walk up to find the block element (DIV)
                 while (node && (node.nodeType !== Node.ELEMENT_NODE || node.nodeName !== 'DIV') && node.parentNode !== e.currentTarget) {
                     node = node.parentNode;
                 }
                 
-                // If we found a paragraph div and it has the un-indent style, remove it
                 if (node && node.nodeName === 'DIV' && (node as HTMLElement).style.textIndent === '0px') {
                     (node as HTMLElement).style.removeProperty('text-indent');
-                    // Clean up empty style attribute
                     if (!(node as HTMLElement).getAttribute('style')) {
                         (node as HTMLElement).removeAttribute('style');
                     }
@@ -921,7 +871,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
         if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
         typingTimeoutRef.current = setTimeout(() => {
             isTyping.current = false;
-            // Update stable scroll to where we ended up, just in case
             if (editorContainerRef.current && layout.stride > 0) {
                 const currentScroll = editorContainerRef.current.scrollLeft;
                 const nearestSpread = Math.round(currentScroll / layout.stride);
@@ -1044,25 +993,16 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
     }, []);
 
     useLayoutEffect(() => {
-        // Optimized: Only update innerHTML if different.
-        // Also capture local status before potentially resetting it.
         const wasLocal = isLocalUpdate.current;
 
         if (editorRef.current && activeChapter.content && editorRef.current.innerHTML !== activeChapter.content) {
-            // Only update if it's not a local input event to prevent cursor jumping
             if (!wasLocal) {
                 editorRef.current.innerHTML = activeChapter.content;
             }
         }
         
-        // Reset flag
         isLocalUpdate.current = false;
 
-        // CRITICAL OPTIMIZATION:
-        // Do NOT recalculate layout on local updates (typing).
-        // The browser handles text reflow within existing columns automatically.
-        // Forcing a layout calculation reads DOM properties (e.g. clientWidth), forcing a synchronous reflow
-        // which fights with the browser's scroll anchoring during rapid typing.
         if (!wasLocal) {
             calculateLayout();
         }
@@ -1081,7 +1021,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
                 
                 const existingIds = new Set(fullState.chapters.map(c => c.id));
 
-                // 1. Update existing chapters
                 const updatedChapters = fullState.chapters.map(existing => {
                     const incoming = newState.chapters.find(c => c.id === existing.id);
                     if (incoming) {
@@ -1090,11 +1029,9 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
                     return existing;
                 });
 
-                // 2. Identify new chapters created in Noveli
                 const newChapters = newState.chapters
                     .filter(c => !existingIds.has(c.id))
                     .map(c => ({
-                        // Provide sensible defaults for fields Noveli might not have set
                         notes: '',
                         rawNotes: '',
                         summary: '',
@@ -1112,7 +1049,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
                         ...c
                     }));
 
-                // 3. Merge and Sort
                 const finalChapters = [...updatedChapters, ...newChapters].sort((a, b) => a.chapterNumber - b.chapterNumber);
 
                 dispatch({ type: 'SET_CHAPTERS', payload: finalChapters });
@@ -1135,19 +1071,16 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
     const handleImportNoveliClick = useCallback(async () => {
         // @ts-ignore
         if (window.electronAPI) {
-            // Electron Path: Use native dialog for improved access and validation
             try {
                 // @ts-ignore
                 const result = await window.electronAPI.importNoveliFile();
-                if (!result) return; // User canceled
+                if (!result) return; 
 
-                // Check for warning from main process
                 if (result.warning) {
                     const proceed = window.confirm(`${result.warning}\n\nDo you still want to import this older file?`);
                     if (!proceed) return;
                 }
 
-                // Convert Node Buffer to File for existing parser logic
                 const file = new File([result.content], result.name, { type: 'application/zip' });
                 await processImport(file);
 
@@ -1156,12 +1089,10 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
                 alert("Failed to import file via Electron.");
             }
         } else {
-            // Web Path: Fallback to standard input
             noveliImportInputRef.current?.click();
         }
     }, [fullState.chapters, dispatch, onSettingsChange]);
 
-    // Standard HTML input handler (fallback for web)
     const handleImportNoveliFile = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -1181,7 +1112,7 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
         textAlign: settings.textAlign === 'justify' ? 'justify' : 'left',
         hyphens: settings.textAlign === 'justify' ? 'auto' : 'manual',
         WebkitHyphens: settings.textAlign === 'justify' ? 'auto' : 'manual',
-        height: 'calc(100% - 6rem)', // Subtract top/bottom padding (3rem + 3rem) from height to prevent overflow
+        height: 'calc(100% - 6rem)', 
         columnFill: 'auto',
         columnGap: `${layout.gap}px`,
         columnWidth: `${layout.colWidth}px`,
@@ -1196,11 +1127,9 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
         widows: 2,
         opacity: isTransitioning ? 0 : 1,
         transition: 'opacity 0.15s ease-in-out',
-        // Force GPU layer to help with painting issues during scroll/reflow
         transform: 'translateZ(0)'
     };
 
-    // Toolbar visibility logic to allow popups but keep animation
     useEffect(() => {
         setIsToolbarAnimating(true);
         const timer = setTimeout(() => setIsToolbarAnimating(false), 300);
@@ -1240,14 +1169,13 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
                 .toast-enter {
                     animation: slide-in-top 0.3s ease-out forwards;
                 }
-                /* Spine Effect for 2-column mode */
                 .book-spine-effect {
                     position: fixed;
                     top: 0;
                     bottom: 0;
                     left: 50%;
-                    width: 60px; /* Width of the gutter */
-                    margin-left: -30px; /* Center it */
+                    width: 60px; 
+                    margin-left: -30px; 
                     background: linear-gradient(to right, 
                         rgba(0,0,0,0) 0%, 
                         rgba(0,0,0,0.15) 35%, 
@@ -1261,7 +1189,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
                 }
             `}</style>
             
-            {/* Toast Notification */}
             {notification && (
                 <div 
                     className="fixed top-6 left-1/2 transform -translate-x-1/2 z-[9999] px-6 py-2 rounded-full shadow-xl toast-enter flex items-center gap-2 backdrop-blur-md border border-white/20"
@@ -1272,7 +1199,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
             )}
 
             <div className="flex-grow flex flex-col min-w-0 h-full relative">
-                {/* Editor Viewport */}
                 <div className="flex-grow relative min-h-0 overflow-hidden">
                     <div 
                         id="editorContainer" 
@@ -1284,7 +1210,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
                         onKeyUp={handleKeyUp}
                         style={{ overflowAnchor: 'none' }} 
                     >
-                        {/* Book Spine Visualization (Only show in 2-column mode AND if enabled) */}
                         {layout.columns === 2 && (settings.showBookSpine !== false) && <div className="book-spine-effect" />}
 
                         <div 
@@ -1306,7 +1231,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
                         />
                     </div>
 
-                    {/* NEW: Leave Focus Mode Button */}
                     {isFocusMode && (
                         <button
                             onClick={onToggleFocusMode}
@@ -1321,7 +1245,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
                         </button>
                     )}
 
-                    {/* Floating TTS Controls */}
                     {(ttsStatus === 'playing' || ttsStatus === 'paused') && activeModal !== 'readAloud' && (
                         <div 
                             className="absolute bottom-16 left-1/2 -translate-x-1/2 z-50 rounded-full shadow-lg flex items-center px-3 py-2 gap-3 border backdrop-blur-md transition-all duration-300 ease-in-out"
@@ -1349,7 +1272,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
                         </div>
                     )}
 
-                    {/* NEW INDICATOR - Spread/Page Information */}
                     <div 
                         className="absolute bottom-4 right-8 z-10 text-xs font-sans pointer-events-none select-none transition-opacity duration-300 backdrop-blur-sm px-2 py-1 rounded"
                         style={{ 
@@ -1366,7 +1288,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
                     </div>
                 </div>
 
-                {/* Toolbar */}
                 <div className={toolbarContainerClasses}>
                     <Toolbar 
                         settings={settings} 
@@ -1379,8 +1300,8 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
                         sessionWordCount={sessionWordCount}
                         writingGoals={writingGoals}
                         onSaveToFolder={() => {
-                            if (isSavingProp) return Promise.resolve(false); // Prevent double trigger
-                            return onSaveToFolder().then(() => true); // Route toolbar click through prop handler
+                            if (isSavingProp) return Promise.resolve(false); 
+                            return onSaveToFolder().then(() => true); 
                         }}
                         onDownloadRtf={() => { const rtf = generateRtfForChapters(chapters); downloadFile('novel.rtf', rtf, 'application/rtf'); }}
                         isFocusMode={isFocusMode}
@@ -1407,11 +1328,11 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
                         ttsStatus={ttsStatus}
                         onExportNoveli={handleExportNoveli}
                         onImportNoveli={handleImportNoveliClick}
+                        updateAvailable={!!availableUpdate}
                     />
                 </div>
             </div>
 
-            {/* Side Panels & Modals */}
             {isNotesPanelOpen && (
                 <div 
                     className="flex-shrink-0 h-full relative border-l" 
@@ -1460,6 +1381,7 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
                     onClose={() => setActiveModal(null)} 
                     onSaveProject={onSaveToFolder}
                     hasContent={hasContent}
+                    appUpdate={availableUpdate}
                 />
              )}
              {activeModal === 'designGallery' && <DesignGalleryModal settings={settings} onClose={() => setActiveModal(null)} galleryItems={galleryItems} onGalleryItemsChange={onGalleryItemsChange} onSettingsChange={onSettingsChange} />}
@@ -1505,6 +1427,13 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
                     chapter={activeChapter} 
                     onClose={() => setActiveModal(null)} 
                     onUpdateContent={(newContent) => handleChapterDetailsChange(activeChapter.id, { content: newContent })} 
+                />
+             )}
+
+             {activeModal === 'userGuide' && (
+                <UserGuideModal
+                    settings={settings}
+                    onClose={() => setActiveModal(null)}
                 />
              )}
 

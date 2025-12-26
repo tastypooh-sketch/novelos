@@ -1,4 +1,4 @@
-import React, { ErrorInfo, ReactNode } from 'react';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { INovelState } from '../../types';
 import { RefreshIcon, SaveIcon } from './Icons';
 
@@ -13,29 +13,29 @@ interface ErrorBoundaryState {
   errorInfo: ErrorInfo | null;
 }
 
-// FIX: Explicitly use React.Component and ensure state is correctly initialized to resolve property existence errors.
+/**
+ * ErrorBoundary component to catch rendering errors and provide a rescue backup option.
+ */
+// FIX: Using React.Component explicitly to ensure that props and setState are correctly inherited and recognized by the compiler.
 export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  override state: ErrorBoundaryState = {
+  // FIX: Explicitly typed state property for the component.
+  public state: ErrorBoundaryState = {
     hasError: false,
     error: null,
     errorInfo: null
   };
 
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-  }
-
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error, errorInfo: null };
   }
 
-  // FIX: lifecycle method correctly uses this.setState inherited from React.Component.
+  // FIX: Accessing setState from the inherited React.Component class.
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
     this.setState({ errorInfo });
   }
 
-  // FIX: handleEmergencySave correctly accesses this.props and this.state.
+  // FIX: handleEmergencySave now correctly accesses this.props within its scope to generate a backup of the current novel state.
   private handleEmergencySave = () => {
     try {
         const backupData = JSON.stringify(this.props.state, null, 2);
@@ -52,7 +52,10 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     } catch (e) {
         alert("Failed to generate backup file. Please check console for data.");
         console.error("Backup failed:", e);
-        console.log("Current State:", this.props.state);
+        // FIX: Safely check for props availability before logging.
+        if (this.props && this.props.state) {
+            console.log("Current State:", this.props.state);
+        }
     }
   };
 
@@ -61,7 +64,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   };
 
   render(): ReactNode {
-    // FIX: Render correctly accesses this.state.hasError and other state/props members.
+    // FIX: Using this.state and this.props which are members of React.Component.
     if (this.state.hasError) {
       return (
         <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gray-900 text-white p-8 text-center font-sans">
@@ -101,6 +104,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       );
     }
 
+    // FIX: Correctly return children from props for normal rendering flow.
     return this.props.children;
   }
 }

@@ -530,7 +530,7 @@ const ExpandedChapterView: React.FC<{
                                         <button
                                             onClick={() => setIsEditingAnalysis(p => !p)}
                                             className="text-xs px-2 py-0.5 rounded"
-                                            style={{ backgroundColor: settings.toolbarButtonBg, color: settings.toolbarText, }}
+                                            style={{ backgroundColor: settings.toolbarBg, color: settings.toolbarText, }}
                                             onMouseEnter={e => e.currentTarget.style.backgroundColor = settings.toolbarButtonHoverBg || ''}
                                             onMouseLeave={e => e.currentTarget.style.backgroundColor = settings.toolbarButtonBg || ''}
                                         >

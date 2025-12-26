@@ -3,7 +3,8 @@ import React, { useCallback, useContext, useEffect, useState, useRef } from 'rea
 import type { EditorSettings, IChapter, ICharacter, Excerpt, SocialPost } from '../../types';
 import { useNovelState, useNovelDispatch } from '../../NovelContext';
 import { useAssemblyAI } from './AssemblyAIContext';
-import { SpinnerIcon, SparklesIconOutline, RefreshIcon, ShareIcon, CameraIcon, UserCircleIcon, PhoneIcon } from '../common/Icons';
+// FIX: Removed non-existent PhoneIcon from imports.
+import { SpinnerIcon, SparklesIconOutline, RefreshIcon, ShareIcon, CameraIcon, UserCircleIcon } from '../common/Icons';
 import AutosizeTextarea from '../common/AutosizeTextarea';
 import { PostDisplay } from '../social/PostDisplay';
 import { PostVariationsModal } from '../social/PostVariationsModal';

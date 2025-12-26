@@ -1,9 +1,18 @@
 
 
+
 export interface Shortcut {
   id: string;
   key: string;
   value: string;
+}
+
+export interface AppUpdate {
+    currentVersion: string;
+    latestVersion: string;
+    releaseNotes: string;
+    updateUrl: string;
+    isNewer: boolean;
 }
 
 export interface IChapter {

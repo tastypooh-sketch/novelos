@@ -1,12 +1,13 @@
+
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import type { IChapter, EditorSettings, Palette, WritingGoals, ToolbarVisibility } from '../../types';
 import { 
     HistoryIcon, StatsIcon, NoteIcon, SearchIcon, KeyboardIcon, PageTransitionIcon, SpellcheckIcon, 
     SpeakerOnIcon, SpeakerOffIcon, ExitFullscreenIcon, EnterFullscreenIcon, UnfocusIcon, FocusIcon, CogIcon, EarIcon,
-    BrushIcon, JustifyIcon, HelpIcon, ProofreadIcon, ImportIcon, SaveIcon, LineHeightIcon
+    BrushIcon, JustifyIcon, BookOpenIcon, ProofreadIcon, ImportIcon, SaveIcon, LineHeightIcon
 } from '../common/Icons';
 
-type ModalType = 'findReplace' | 'shortcuts' | 'stats' | 'customizeToolbar' | 'history' | 'voiceSettings' | 'designGallery' | 'readAloud' | 'spellCheck';
+type ModalType = 'findReplace' | 'shortcuts' | 'stats' | 'customizeToolbar' | 'history' | 'voiceSettings' | 'designGallery' | 'readAloud' | 'spellCheck' | 'userGuide';
 type TTSStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'error';
 
 
@@ -90,6 +91,7 @@ interface ToolbarProps {
   ttsStatus: TTSStatus;
   onExportNoveli: () => void;
   onImportNoveli: () => void;
+  updateAvailable?: boolean;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({ 
@@ -101,7 +103,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     isSoundEnabled, onToggleSound, isFullscreen, onToggleFullscreen,
     isSinglePageView, isSpellcheckEnabled, onToggleSpellcheck, onToggleTransitionStyle,
     hasDirectory, onToggleReadAloud, ttsStatus,
-    onExportNoveli, onImportNoveli
+    onExportNoveli, onImportNoveli, updateAvailable = false
 }) => {
   const fontOptions = ["Lora", "Merriweather", "Times New Roman", "Bookman Old Style", "Georgia", "Roboto", "Open Sans", "Arial", "Inter", "Inconsolata"];
   
@@ -121,8 +123,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
   const useHoverStyle = (baseBg: string, hoverBg: string) => {
     return useMemo(() => ({
-        onMouseEnter: (e: React.MouseEvent<HTMLButtonElement>) => e.currentTarget.style.backgroundColor = hoverBg,
-        onMouseLeave: (e: React.MouseEvent<HTMLButtonElement>) => e.currentTarget.style.backgroundColor = baseBg,
+        onMouseEnter: (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.backgroundColor = hoverBg; },
+        onMouseLeave: (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.backgroundColor = baseBg; },
     }), [baseBg, hoverBg]);
   };
 
@@ -133,16 +135,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       const target = e.target as HTMLElement;
       if (!['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName)) {
         e.preventDefault();
-      }
-  };
-
-  const handleOpenUserGuide = () => {
-      // @ts-ignore
-      if (window.electronAPI) {
-          // @ts-ignore
-          window.electronAPI.openPath('C:\\Users\\Thomas\\Box Sync\\Novelos\\docs\\Novelos_User_Guide.pdf');
-      } else {
-          window.open('file:///C:/Users/Thomas/Box%20Sync/Novelos/docs/Novelos_User_Guide.pdf', '_blank');
       }
   };
 
@@ -282,11 +274,22 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         <ToolbarButton title={isFullscreen ? "Exit Full Screen" : "Enter Full Screen"} onClick={onToggleFullscreen} settings={settings} isVisible={settings.toolbarVisibility?.fullscreen} isActive={isFullscreen}>{isFullscreen ? <ExitFullscreenIcon /> : <EnterFullscreenIcon />}</ToolbarButton>
         <ToolbarButton title="Toggle Focus Mode (Esc)" onClick={onToggleFocusMode} settings={settings} isVisible={settings.toolbarVisibility?.focus} isActive={isFocusMode}>{isFocusMode ? <UnfocusIcon /> : <FocusIcon />}</ToolbarButton>
         
-        {/* Final Tools */}
-        <ToolbarButton title="Customize Toolbar" onClick={() => onToggleModal('customizeToolbar')} settings={settings}><CogIcon /></ToolbarButton>
-        <ToolbarButton title="User Guide" onClick={handleOpenUserGuide} settings={settings} isVisible={settings.toolbarVisibility?.userGuide}><HelpIcon /></ToolbarButton>
+        {/* Settings Button with Update Badge */}
+        <div className="relative">
+            <ToolbarButton title="Customize Toolbar" onClick={() => onToggleModal('customizeToolbar')} settings={settings}>
+                <CogIcon />
+            </ToolbarButton>
+            {updateAvailable && (
+                <span 
+                    className="absolute top-0 right-0 w-3 h-3 rounded-full border-2 animate-pulse" 
+                    style={{ backgroundColor: settings.accentColor, borderColor: settings.toolbarBg }}
+                    title="Update Available"
+                />
+            )}
+        </div>
+        
+        <ToolbarButton title="User Guide" onClick={() => onToggleModal('userGuide')} settings={settings} isVisible={settings.toolbarVisibility?.userGuide}><BookOpenIcon /></ToolbarButton>
 
-        {/* Separator */}
         <div className="w-px h-6 bg-gray-600 mx-2 opacity-30 hidden sm:block"></div>
 
         <div className="relative" ref={saveMenuRef}>
