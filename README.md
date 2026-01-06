@@ -1,13 +1,12 @@
-
 # NOVELOS 
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Version](https://img.shields.io/badge/version-7.1.3-green.svg)
+![Version](https://img.shields.io/badge/version-7.1.4-green.svg)
 ![Status](https://img.shields.io/badge/status-stable-success.svg)
 
 **Novelos** redefines digital storytelling by fusing a distraction-free, horizontal "infinite spread" interface with a deeply integrated, context-aware AI engine.
 
-### 🌟 Version 7.1.3 New Features
+### 🌟 Version 7.1.4 New Features
 *   **Android Build:** Official support for mobile drafting via Capacitor.
 *   **Performance:** Optimized editor memory usage for large manuscripts.
 *   **Cross-Platform Sync:** Improved ZIP snapshot reliability between Noveli and Novelos.
