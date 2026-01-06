@@ -1,7 +1,8 @@
+
 {
   "name": "novelos-desktop",
-  "version": "7.1.4",
-  "description": "Novelos Desktop & Mobile App",
+  "version": "7.1.6",
+  "description": "Novelos Desktop App",
   "main": "electron/main.js",
   "repository": {
     "type": "git",
@@ -17,16 +18,17 @@
     "electron:build:win": "vite build && electron-builder --win",
     "electron:build:linux": "vite build && electron-builder --linux",
     "electron:build:all": "vite build && electron-builder -mwl",
-    "mobile:build": "vite build && npx cap copy && npx cap build android --androidrebuild",
     "postinstall": "electron-builder install-app-deps"
   },
-  "keywords": [],
+  "keywords": [
+    "writing",
+    "novel",
+    "minimalist",
+    "ai"
+  ],
   "author": "Novelos",
   "license": "ISC",
   "dependencies": {
-    "@capacitor/android": "^6.0.0",
-    "@capacitor/cli": "^6.0.0",
-    "@capacitor/core": "^6.0.0",
     "@google/genai": "*",
     "docx": "^8.5.0",
     "immer": "^10.1.3",
@@ -81,7 +83,8 @@
     },
     "linux": {
       "target": [
-        "AppImage"
+        "AppImage",
+        "deb"
       ],
       "icon": "public/icon.png",
       "category": "Office",

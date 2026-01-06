@@ -1,5 +1,4 @@
-
-import React, { ErrorInfo, ReactNode } from 'react';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { INovelState } from '../../types';
 import { RefreshIcon, SaveIcon } from './Icons';
 
@@ -17,30 +16,30 @@ interface ErrorBoundaryState {
 /**
  * ErrorBoundary component to catch rendering errors and provide a rescue backup option.
  */
-// Use explicit React.Component to ensure inheritance is correctly recognized by the TS compiler.
-export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  public state: ErrorBoundaryState = {
-    hasError: false,
-    error: null,
-    errorInfo: null
-  };
+// Explicitly extending Component ensures that 'props', 'state', and 'setState' are properly typed.
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: null,
+      errorInfo: null
+    };
+  }
 
-  // static method to update state on error.
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error, errorInfo: null };
   }
 
-  // Lifecycle method to catch errors and update errorInfo in state.
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
-    // setState is now correctly recognized as a member of React.Component.
+    // Inherited setState is used to capture technical error details
     this.setState({ errorInfo });
   }
 
-  // Handler for emergency save of project state.
   private handleEmergencySave = () => {
     try {
-        // Accessing props via 'this.props' as inherited from the React.Component base class.
+        // Accessing manuscript state through inherited props for data rescue
         const backupData = JSON.stringify(this.props.state, null, 2);
         const blob = new Blob([backupData], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -55,7 +54,6 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     } catch (e) {
         alert("Failed to generate backup file. Please check console for data.");
         console.error("Backup failed:", e);
-        // Correctly accessing props within the instance scope of the arrow function.
         if (this.props && this.props.state) {
             console.log("Current State:", this.props.state);
         }
@@ -67,7 +65,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   };
 
   render(): ReactNode {
-    // Accessing state via 'this.state' as inherited from React.Component.
+    // Check inherited state for error condition
     if (this.state.hasError) {
       return (
         <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gray-900 text-white p-8 text-center font-sans">
@@ -107,7 +105,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       );
     }
 
-    // children is accessed via this.props which is provided by React.Component.
+    // Access inherited children prop when no error occurred
     return this.props.children;
   }
 }

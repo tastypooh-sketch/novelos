@@ -1,5 +1,7 @@
 
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Modality } from "@google/genai";
+
+export { Modality };
 
 let aiInstance: GoogleGenAI | null = null;
 

@@ -12,6 +12,7 @@ interface CustomizeToolbarModalProps {
     onSave: (visibility: ToolbarVisibility) => void;
     onClose: () => void;
     onSaveProject: () => Promise<boolean>;
+    onExportStoreCopy: () => Promise<void>;
     hasContent: boolean;
     appUpdate?: AppUpdate | null;
 }
@@ -34,7 +35,7 @@ const ALL_TOOLBAR_ITEMS: { key: keyof ToolbarVisibility; label: string }[] = [
     { key: 'userGuide', label: 'User Guide' },
 ];
 
-export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ settings, currentVisibility, onSave, onClose, onSaveProject, hasContent, appUpdate: initialUpdate }) => {
+export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ settings, currentVisibility, onSave, onClose, onSaveProject, onExportStoreCopy, hasContent, appUpdate: initialUpdate }) => {
     const [visibility, setVisibility] = useState(currentVisibility);
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<string | null>(null);
@@ -42,7 +43,7 @@ export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ se
     const [activeUpdate, setActiveUpdate] = useState<AppUpdate | null>(initialUpdate || null);
 
     const handleToggle = (key: keyof ToolbarVisibility) => {
-        setVisibility(produce(draft => {
+        visibility && setVisibility(produce(draft => {
             draft[key] = !draft[key];
         }));
     };
