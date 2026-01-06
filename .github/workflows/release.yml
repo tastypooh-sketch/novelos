@@ -4,7 +4,7 @@ name: Build and Release Novelos
 on:
   push:
     tags:
-      - 'v*' # Trigger on tags like v7.1.8
+      - 'v*' # Trigger on any tag starting with v, like v7.1.9
 
 permissions:
   contents: write
@@ -16,7 +16,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Build for all three major desktop ecosystems
         os: [macos-latest, windows-latest, ubuntu-latest]
 
     steps:
@@ -32,7 +31,6 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      # Linux-specific tools needed for building .deb packages for Chromebooks
       - name: Install Linux build tools
         if: matrix.os == 'ubuntu-latest'
         run: |
