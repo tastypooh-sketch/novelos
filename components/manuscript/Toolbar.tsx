@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import type { IChapter, EditorSettings, Palette, WritingGoals, ToolbarVisibility } from '../../types';
 import { 
@@ -103,7 +102,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     isSoundEnabled, onToggleSound, isFullscreen, onToggleFullscreen,
     isSinglePageView, isSpellcheckEnabled, onToggleSpellcheck, onToggleTransitionStyle,
     hasDirectory, onToggleReadAloud, ttsStatus,
-    onExportNoveli, onImportNoveli, updateAvailable = false
+    updateAvailable = false
 }) => {
   const fontOptions = ["Lora", "Merriweather", "Times New Roman", "Bookman Old Style", "Georgia", "Roboto", "Open Sans", "Arial", "Inter", "Inconsolata"];
   
@@ -312,9 +311,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                     <button {...menuItemHoverProps} onClick={() => { onSaveToFolder(); setIsSaveMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm cursor-pointer" style={{color: settings.toolbarText, backgroundColor: 'transparent'}}>Save Project to Folder (Ctrl+S)</button>
                     <div className="border-t my-1 mx-2" style={{borderColor: settings.toolbarInputBorderColor || 'transparent'}}></div>
                     <button {...menuItemHoverProps} onClick={() => { onDownloadRtf(); setIsSaveMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm cursor-pointer" style={{color: settings.toolbarText, backgroundColor: 'transparent'}}>Download Manuscript as RTF</button>
-                    <div className="border-t my-1 mx-2" style={{borderColor: settings.toolbarInputBorderColor || 'transparent'}}></div>
-                    <button {...menuItemHoverProps} onClick={() => { onExportNoveli(); setIsSaveMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm cursor-pointer font-bold" style={{color: settings.accentColor, backgroundColor: 'transparent'}}>Export Project for Noveli</button>
-                    <button {...menuItemHoverProps} onClick={() => { onImportNoveli(); setIsSaveMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm cursor-pointer" style={{color: settings.toolbarText, backgroundColor: 'transparent'}}>Import from Noveli</button>
                 </div>
             )}
         </div>

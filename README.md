@@ -2,7 +2,7 @@
 # NOVELOS 
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Version](https://img.shields.io/badge/version-7.1.6-green.svg)
+![Version](https://img.shields.io/badge/version-7.0.9-green.svg)
 ![Status](https://img.shields.io/badge/status-stable-success.svg)
 
 **Novelos** redefines digital storytelling by fusing a distraction-free, horizontal "infinite spread" interface with a deeply integrated, context-aware AI engine. Unlike traditional corkboarding software where AI is merely an add-on, Novelos is architected from the ground up as a responsive "Novel Operating System." 
@@ -36,23 +36,13 @@ Built with **React**, **Electron**, and **Google Gemini 2.5/3.0**.
 
 ---
 
-## 🚀 Installation & Build
+## 🚀 Getting Started
 
-### Windows
-Download the `.exe` (NSIS Installer) from the GitHub releases.
+### Prerequisites
+*   Node.js (v18 or higher)
+*   A **Google Gemini API Key** (Get one at [aistudio.google.com](https://aistudio.google.com))
 
-### macOS
-Download the `.dmg` (Universal build for Intel/Apple Silicon) from the GitHub releases.
-
-### Chromebook / Linux
-Download the `.deb` file. 
-1. Enable **Linux (Beta)** in your ChromeOS settings.
-2. Double-click the `.deb` file in your Files app to install it directly into your Linux container.
-3. Access Novelos from your App Launcher under "Linux Apps".
-
----
-
-## 🛠️ Development
+### Installation
 
 1.  **Clone the repository**
     ```bash
@@ -72,9 +62,20 @@ Download the `.deb` file.
 
 ### Building for Production
 
+You can build for specific platforms or all at once. Note that cross-compiling (e.g., building Windows on Mac) may require additional tools like Wine.
+
 ```bash
-# Build All (Mac, Windows, Linux/Chromebook)
+# Build All (Mac, Windows, Linux)
 npm run electron:build:all
+
+# Windows Only
+npm run electron:build:win
+
+# macOS Only
+npm run electron:build:mac
+
+# Linux Only
+npm run electron:build:linux
 ```
 
 Output files will be generated in the `dist-electron` folder.
@@ -88,6 +89,16 @@ Novelos utilizes the Google GenAI SDK. To use the AI features:
 2.  Go to **Customize Toolbar** (Cog Icon).
 3.  Enter your Google Gemini API Key.
 4.  The key is stored locally on your device (`localStorage`).
+
+---
+
+## 🛠️ Tech Stack
+
+*   **Frontend:** React 19, Vite, Tailwind CSS
+*   **Backend/Shell:** Electron 31
+*   **AI:** @google/genai (Gemini 2.5 Flash, Gemini 3.0 Pro, Imagen 3)
+*   **State Management:** React Context + Immer
+*   **Data Handling:** JSZip (for portable sync), DOCX export
 
 ---
 

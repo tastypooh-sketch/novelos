@@ -1,7 +1,7 @@
 
 {
   "name": "novelos-desktop",
-  "version": "7.1.6",
+  "version": "7.1.8",
   "description": "Novelos Desktop App",
   "main": "electron/main.js",
   "repository": {
@@ -20,12 +20,7 @@
     "electron:build:all": "vite build && electron-builder -mwl",
     "postinstall": "electron-builder install-app-deps"
   },
-  "keywords": [
-    "writing",
-    "novel",
-    "minimalist",
-    "ai"
-  ],
+  "keywords": [],
   "author": "Novelos",
   "license": "ISC",
   "dependencies": {
@@ -72,7 +67,7 @@
     "win": {
       "target": "nsis",
       "icon": "public/icon.ico",
-      "artifactName": "${productName}_Windows_${version}.${ext}"
+      "artifactName": "${productName}_Windows_Setup_${version}.${ext}"
     },
     "mac": {
       "target": "dmg",
@@ -89,7 +84,7 @@
       "icon": "public/icon.png",
       "category": "Office",
       "synopsis": "A minimalist novel writing app",
-      "artifactName": "${productName}_Linux_${version}.${ext}"
+      "artifactName": "${productName}_Linux_Chromebook_${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,

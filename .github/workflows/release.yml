@@ -5,7 +5,7 @@ name: Build/Release
 on:
   push:
     tags:
-      - 'v*' # Trigger on tags like v1.0.0
+      - 'v*' # Trigger on tags like v7.1.8
 
 permissions:
   contents: write
@@ -17,43 +17,44 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Building for all 3 platforms
+        # Building for all 3 platforms (Windows, Mac, Linux/Chromebook)
         os: [macos-latest, windows-latest, ubuntu-latest]
 
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v4
+        uses: checkout@v4
 
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
       - name: Install Dependencies
         run: npm install
 
-      # Linux-specific setup: Add graphics and archive tools often needed by electron-builder
+      # Linux/Chromebook-specific setup
       - name: Install Linux Dependencies
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y libarchive-tools libicns-dev graphicsmagick xz-utils rpm
 
-      # macOS Build (Triggers Universal Build)
+      # macOS Build (Universal)
       - name: Build & Release (macOS)
         if: matrix.os == 'macos-latest'
         run: npm run electron:build:mac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Linux Build
-      - name: Build & Release (Linux)
+      # Linux & Chromebook Build (.deb & AppImage)
+      - name: Build & Release (Linux/Chromebook)
         if: matrix.os == 'ubuntu-latest'
         run: npm run electron:build:linux
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Windows Build
+      # Windows Build (NSIS Setup)
       - name: Build & Release (Windows)
         if: matrix.os == 'windows-latest'
         run: npm run electron:build:win
