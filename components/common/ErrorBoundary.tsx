@@ -17,7 +17,8 @@ interface ErrorBoundaryState {
 /**
  * ErrorBoundary component to catch rendering errors and provide a rescue backup option.
  */
-/* Fixed: Using Component from react explicitly to ensure TypeScript correctly identifies the base class and resolves inherited properties like props, state, and setState */
+// Fix: Use the named import 'Component' directly to ensure the TypeScript compiler correctly 
+// resolves inheritance of members like this.props, this.state, and this.setState.
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState = {
     hasError: false,
@@ -31,13 +32,13 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
-    /* Fixed: setState is correctly inherited from Component */
+    // Fix: Correctly access setState on the component instance.
     this.setState({ errorInfo });
   }
 
   private handleEmergencySave = () => {
     try {
-        /* Fixed: props is correctly inherited from Component */
+        // Fix: Access state from props through the component instance.
         const backupData = JSON.stringify(this.props.state, null, 2);
         const blob = new Blob([backupData], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -52,7 +53,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     } catch (e) {
         alert("Failed to generate backup file. Please check console for data.");
         console.error("Backup failed:", e);
-        /* Fixed: Accessing props correctly within class methods */
+        // Fix: Access props correctly within the arrow function scope.
         if (this.props && this.props.state) {
             console.log("Current State:", this.props.state);
         }
@@ -64,7 +65,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   };
 
   render(): ReactNode {
-    /* Fixed: state is correctly inherited from Component */
+    // Fix: Access hasError from instance state.
     if (this.state.hasError) {
       return (
         <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gray-900 text-white p-8 text-center font-sans">
@@ -104,7 +105,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       );
     }
 
-    /* Fixed: props is correctly inherited from Component */
+    // Fix: Access children from instance props.
     return this.props.children;
   }
 }

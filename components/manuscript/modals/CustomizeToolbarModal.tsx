@@ -12,7 +12,6 @@ interface CustomizeToolbarModalProps {
     onSave: (visibility: ToolbarVisibility) => void;
     onClose: () => void;
     onSaveProject: () => Promise<boolean>;
-    onExportStoreCopy: () => Promise<void>;
     hasContent: boolean;
     appUpdate?: AppUpdate | null;
 }
@@ -35,13 +34,12 @@ const ALL_TOOLBAR_ITEMS: { key: keyof ToolbarVisibility; label: string }[] = [
     { key: 'userGuide', label: 'User Guide' },
 ];
 
-export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ settings, currentVisibility, onSave, onClose, onSaveProject, onExportStoreCopy, hasContent, appUpdate: initialUpdate }) => {
+export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ settings, currentVisibility, onSave, onClose, onSaveProject, hasContent, appUpdate: initialUpdate }) => {
     const [visibility, setVisibility] = useState(currentVisibility);
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<string | null>(null);
     const [checkingUpdate, setCheckingUpdate] = useState(false);
     const [activeUpdate, setActiveUpdate] = useState<AppUpdate | null>(initialUpdate || null);
-    const [isExportingStore, setIsExportingStore] = useState(false);
 
     const handleToggle = (key: keyof ToolbarVisibility) => {
         setVisibility(produce(draft => {
@@ -65,15 +63,6 @@ export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ se
             } finally {
                 setCheckingUpdate(false);
             }
-        }
-    };
-
-    const handleExportStore = async () => {
-        setIsExportingStore(true);
-        try {
-            await onExportStoreCopy();
-        } finally {
-            setIsExportingStore(false);
         }
     };
 
@@ -207,26 +196,6 @@ export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ se
                                 <span className="text-sm font-medium opacity-80 group-hover:opacity-100 transition-opacity">{item.label}</span>
                             </label>
                         ))}
-                    </div>
-                </div>
-
-                {/* Distribution Tools */}
-                <div className="pt-6 border-t" style={{ borderColor: settings.toolbarInputBorderColor }}>
-                    <h3 className="font-bold text-sm uppercase tracking-widest opacity-50 mb-4">Store Distribution</h3>
-                    <div className="p-4 rounded-lg bg-black/10 flex justify-between items-center gap-4">
-                        <div>
-                            <h3 className="font-bold text-sm">Export Blank Noveli</h3>
-                            <p className="text-xs opacity-50">Generate a clean Noveli.html with zero content for your digital store upload.</p>
-                        </div>
-                        <button 
-                            onClick={handleExportStore} 
-                            disabled={isExportingStore}
-                            className="px-4 py-2 rounded-md text-xs font-bold text-white flex items-center gap-2 flex-shrink-0"
-                            style={{ backgroundColor: settings.accentColor }}
-                        >
-                            {isExportingStore ? <SpinnerIcon className="h-4 w-4" /> : <ImportIcon className="h-4 w-4" />}
-                            Export for Store
-                        </button>
                     </div>
                 </div>
 

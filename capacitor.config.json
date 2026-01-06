@@ -1,0 +1,10 @@
+
+{
+  "appId": "com.novelos.app",
+  "appName": "Novelos",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}

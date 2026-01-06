@@ -1,61 +1,99 @@
 
-# Novelos Build Workflow
-name: Build/Release
+name: Build/Release (v7.1.3)
 
 on:
   push:
     tags:
-      - 'v*' # Trigger on tags like v1.0.0
+      - 'v*'
 
 permissions:
   contents: write
 
 jobs:
-  release:
+  desktop-release:
+    name: Build Desktop (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-
     strategy:
       fail-fast: false
       matrix:
-        # Building for all 3 platforms
-        os: [macos-latest, windows-latest, ubuntu-latest]
+        os: [macos-latest, windows-latest]
 
     steps:
-      - name: Check out Git repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
       - name: Install Dependencies
         run: npm install
 
-      # Linux-specific setup: Add graphics and archive tools often needed by electron-builder
-      - name: Install Linux Dependencies
-        if: matrix.os == 'ubuntu-latest'
+      - name: Build Desktop Artifacts
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libarchive-tools libicns-dev graphicsmagick xz-utils rpm
-
-      # macOS Build (Triggers Universal Build)
-      - name: Build & Release (macOS)
-        if: matrix.os == 'macos-latest'
-        run: npm run electron:build:mac
+          if [ "${{ matrix.os }}" == "macos-latest" ]; then
+            npm run electron:build:mac
+          else
+            npm run electron:build:win
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          API_KEY: ${{ secrets.API_KEY }}
 
-      # Linux Build
-      - name: Build & Release (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: npm run electron:build:linux
+      - name: Upload Desktop Artifacts
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist-electron/*.exe
+            dist-electron/*.dmg
+            dist-electron/*.zip
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Windows Build
-      - name: Build & Release (Windows)
-        if: matrix.os == 'windows-latest'
-        run: npm run electron:build:win
+  android-release:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Web App
+        run: npm run build
+
+      - name: Capacitor Sync
+        run: |
+          npx cap add android
+          npx cap sync android
+
+      - name: Build Android APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Rename APK
+        run: mv android/app/build/outputs/apk/debug/app-debug.apk Novelos_7.1.3_Android.apk
+
+      - name: Upload Android Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: Novelos_7.1.3_Android.apk
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

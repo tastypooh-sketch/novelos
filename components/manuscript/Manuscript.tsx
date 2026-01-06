@@ -1013,10 +1013,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
         await exportForNoveli(fullState, settings, writingGoals);
     }, [fullState, settings, writingGoals]);
 
-    const handleExportDistributionCopy = useCallback(async () => {
-        await exportDistributionNoveli(initialNovelState, settings);
-    }, [settings]);
-
     const processImport = async (file: File) => {
         try {
             const result = await parseNoveliSync(file);
@@ -1388,7 +1384,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
                     onSave={(newVisibility) => onSettingsChange({ toolbarVisibility: newVisibility })} 
                     onClose={() => setActiveModal(null)} 
                     onSaveProject={onSaveToFolder}
-                    onExportStoreCopy={handleExportDistributionCopy}
                     hasContent={hasContent}
                     appUpdate={availableUpdate}
                 />
