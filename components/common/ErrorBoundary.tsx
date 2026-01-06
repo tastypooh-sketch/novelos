@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { ErrorInfo, ReactNode } from 'react';
 import { INovelState } from '../../types';
 import { RefreshIcon, SaveIcon } from './Icons';
 
@@ -16,13 +16,16 @@ interface ErrorBoundaryState {
 /**
  * ErrorBoundary component to catch rendering errors and provide a rescue backup option.
  */
-// Explicitly use named import Component to ensure proper inheritance and access to base properties like props and setState
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  public state: ErrorBoundaryState = {
-    hasError: false,
-    error: null,
-    errorInfo: null
-  };
+// FIXED: Explicitly extending React.Component and providing constructor to ensure proper base class initialization and access to inherited properties like props and setState.
+export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: null,
+      errorInfo: null
+    };
+  }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error, errorInfo: null };
@@ -30,13 +33,13 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
-    // Correctly access setState from the Component base class
+    // FIXED: Properly calling setState which is now correctly inherited from React.Component.
     this.setState({ errorInfo });
   }
 
   private handleEmergencySave = () => {
     try {
-        // Access props from Component base class
+        // FIXED: Correctly accessing props inherited from the Component base class.
         const backupData = JSON.stringify(this.props.state, null, 2);
         const blob = new Blob([backupData], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -51,7 +54,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     } catch (e) {
         alert("Failed to generate backup file. Please check console for data.");
         console.error("Backup failed:", e);
-        // Correctly access props within class methods after verifying its existence
+        // FIXED: Accessing this.props within class method after ensuring proper base class inheritance.
         if (this.props && this.props.state) {
             console.log("Current State:", this.props.state);
         }
@@ -103,7 +106,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       );
     }
 
-    // Correctly access children from the inherited props property
+    // FIXED: Properly accessing children from props inherited from the Component base class.
     return this.props.children;
   }
 }
