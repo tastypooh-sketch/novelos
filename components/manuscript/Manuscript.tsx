@@ -2,10 +2,10 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, useLayoutEffect } from 'react';
 import type { IChapter, EditorSettings, Shortcut, WritingGoals, GalleryItem, INovelState, SearchResult, AppUpdate } from '../../types';
 import { useDebouncedCallback } from 'use-debounce';
-import { useNovelDispatch, useNovelState } from '../../NovelContext';
+import { useNovelDispatch, useNovelState, initialNovelState } from '../../NovelContext';
 import { getAI } from '../../utils/ai';
 
-import { generateRtfForChapters, downloadFile, calculateWordCountFromHtml, decode, exportForNoveli, parseNoveliSync } from '../../utils/manuscriptUtils';
+import { generateRtfForChapters, downloadFile, calculateWordCountFromHtml, decode, exportForNoveli, parseNoveliSync, exportDistributionNoveli } from '../../utils/manuscriptUtils';
 import { generateId, extractJson } from '../../utils/common';
 
 import { Toolbar } from './Toolbar';
@@ -1013,6 +1013,10 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
         await exportForNoveli(fullState, settings, writingGoals);
     }, [fullState, settings, writingGoals]);
 
+    const handleExportDistributionCopy = useCallback(async () => {
+        await exportDistributionNoveli(initialNovelState, settings);
+    }, [settings]);
+
     const processImport = async (file: File) => {
         try {
             const result = await parseNoveliSync(file);
@@ -1352,14 +1356,18 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
             )}
             
             {activeModal === 'stats' && (
-                <StatsDashboardModal
-                    settings={settings}
-                    chapters={chapters}
-                    totalWordCount={totalWordCount}
-                    goals={writingGoals}
-                    onGoalsChange={onWritingGoalsChange}
-                    onClose={() => setActiveModal(null)}
-                />
+                <div 
+                   onMouseDown={(e) => e.stopPropagation()} // Prevent editor click issues
+                >
+                    <StatsDashboardModal
+                        settings={settings}
+                        chapters={chapters}
+                        totalWordCount={totalWordCount}
+                        goals={writingGoals}
+                        onGoalsChange={onWritingGoalsChange}
+                        onClose={() => setActiveModal(null)}
+                    />
+                </div>
             )}
              {isFindReplaceOpen && (
                 <FindReplaceModal 
@@ -1380,6 +1388,7 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
                     onSave={(newVisibility) => onSettingsChange({ toolbarVisibility: newVisibility })} 
                     onClose={() => setActiveModal(null)} 
                     onSaveProject={onSaveToFolder}
+                    onExportStoreCopy={handleExportDistributionCopy}
                     hasContent={hasContent}
                     appUpdate={availableUpdate}
                 />

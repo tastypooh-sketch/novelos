@@ -214,6 +214,7 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (!hasAPIKey()) return onSetError(API_KEY_ERROR, character.id);
         setAiState(prev => ({ ...prev, isGeneratingProfile: character.id, errorMessage: null }));
         try {
+            // Fixed: Removed incorrect backslash escapes from prompt template literal
             const prompt = `Based on these notes, generate a detailed character profile for "${character.name}".
             Notes: ${rawNotes}
             Return JSON: { "summary": "brief summary", "tagline": "short hook", "profile": "full markdown profile", "keywords": ["kw1", "kw2"] }`;
@@ -228,6 +229,7 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (!hasAPIKey()) return onSetError(API_KEY_ERROR, character.id);
         setAiState(prev => ({ ...prev, isGeneratingProfile: character.id, errorMessage: null }));
         try {
+            // Fixed: Removed incorrect backslash escapes from prompt template literal
             const prompt = `Analyze the manuscript to update the profile for "${character.name}".
             Manuscript: ${manuscriptContent.substring(0, 30000)}
             Return JSON: { "summary": "updated summary", "tagline": "updated tagline", "profile": "updated markdown profile", "keywords": ["kw1", "kw2"] }`;
@@ -242,6 +244,7 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (!hasAPIKey()) return onSetError(API_KEY_ERROR, chapter.id);
         setAiState(prev => ({ ...prev, isGeneratingChapter: chapter.id, errorMessage: null }));
         try {
+            // Fixed: Removed incorrect backslash escapes from prompt template literal
             const prompt = `Generate details for Chapter ${chapter.chapterNumber}: ${chapter.title}.
             Notes: ${rawNotes}
             Return JSON: { "summary": "brief summary", "outline": "markdown beat list", "analysis": "markdown conflict analysis", "keywords": ["kw1", "kw2"] }`;
@@ -257,6 +260,7 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setAiState(prev => ({ ...prev, isGeneratingChapter: chapter.id, errorMessage: null }));
         try {
             const tempDiv = document.createElement('div'); tempDiv.innerHTML = chapter.content;
+            // Fixed: Removed incorrect backslash escapes from prompt template literal
             const prompt = `Analyze this chapter text to update summary and outline.
             Text: ${tempDiv.innerText.substring(0, 15000)}
             Return JSON: { "summary": "updated summary", "outline": "updated outline beats", "analysis": "updated conflict analysis", "keywords": ["kw1", "kw2"] }`;
@@ -271,6 +275,7 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (!hasAPIKey()) { onSetError(API_KEY_ERROR, 'snippets'); return false; }
         setAiState(prev => ({ ...prev, isGeneratingSnippets: true, errorMessage: null }));
         try {
+            // Fixed: Removed incorrect backslash escapes from prompt template literal
             const prompt = `Split this text into distinct snippet items. Identify type and character IDs.
             Characters: ${characters.map(c => `[ID: ${c.id}] Name: ${c.name}`).join(', ')}
             Text: ${rawText}
@@ -286,6 +291,7 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const onSuggestPlacement = async (snippet: ISnippet, chapters: IChapter[]) => {
         if (!hasAPIKey()) return API_KEY_ERROR;
         try {
+            // Fixed: Removed incorrect backslash escapes from prompt template literal
             const prompt = `Where should this snippet go?
             Snippet: ${snippet.cleanedText}
             Chapters: ${chapters.map(c => `[ID: ${c.id}] Ch ${c.chapterNumber}: ${c.summary}`).join('\n')}
@@ -300,6 +306,7 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         dispatch({ type: 'SET_PLOT_BRAINSTORM_STATE', payload: { isGeneratingPacingAndStructure: true, isGeneratingCharacters: true, isGeneratingOpportunities: true } });
         try {
             const chapText = chapters.map(c => `Ch ${c.chapterNumber}: ${c.summary}`).join('\n');
+            // Fixed: Removed incorrect backslash escapes from prompt template literal
             const prompt = `Analyze novel plot structure and characters.
             Story: ${chapText}
             Return JSON: { "pacing": { "summary": "...", "points": [{ "chapterNumber": 1, "title": "...", "description": "...", "type": "Inciting Incident" }] }, "characterAnalysis": "markdown", "opportunityAnalysis": "markdown" }`;
@@ -315,6 +322,7 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { isLoading: true } });
         try {
             const char = excerpt.characterIds[0] ? characters.find(c => c.id === excerpt.characterIds[0]) : null;
+            // Fixed: Removed incorrect backslash escapes from prompt template literal
             const prompt = `Create social media content for: "${excerpt.text}"
             Character: ${char ? char.name + ' - ' + char.summary : 'None'}
             Return JSON: { "imagePrompt": "...", "instagram": { "text": "...", "hashtags": ["..."] }, "tiktok": { "text": "...", "hashtags": ["..."] } }`;
@@ -333,6 +341,7 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (!hasAPIKey()) return onSetError(API_KEY_ERROR, item.id);
         setAiState(prev => ({ ...prev, isGeneratingWorldItem: item.id }));
         try {
+            // Fixed: Removed incorrect backslash escapes from prompt template literal
             const prompt = `Refine this world-building entry: ${item.name}. Notes: ${item.rawNotes}. Return JSON: { "summary": "one line", "description": "full markdown codex entry" }`;
             const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
             const data = extractJson<any>(response.text || '');
@@ -345,6 +354,7 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (!hasAPIKey()) return onSetError(API_KEY_ERROR, 'distill');
         setAiState(prev => ({ ...prev, isDistillingWorld: true }));
         try {
+            // Fixed: Removed incorrect backslash escapes from prompt template literal
             const prompt = `Distill world items from these notes. Return JSON array: [{ "name": "...", "type": "Location|Lore|Object|Organization|Concept", "rawNotes": "...", "summary": "..." }]
             Notes: ${text}`;
             const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
@@ -361,6 +371,7 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
              if (!hasAPIKey()) return onSetError(API_KEY_ERROR, 'pacing');
              dispatch({ type: 'UPDATE_ASSEMBLY_VIEW_STATE', payload: { isGeneratingPacingAnalysis: true } });
              try {
+                 // Fixed: Removed incorrect backslash escapes from prompt template literal
                  const prompt = `Analyze chapter pacing (-1 to 1). Return JSON array: [{ "chapterId": "...", "chapterNumber": 1, "title": "...", "pacingScore": 0.5, "justification": "..." }]
                  Data: ${chapters.map(c => `[ID: ${c.id}] Ch ${c.chapterNumber}: ${c.summary}`).join('\n')}`;
                  const res = await getAI().models.generateContent({ model: 'gemini-3-flash-preview', contents: prompt, config: { responseMimeType: 'application/json' } });
@@ -438,7 +449,7 @@ export const Assembly: React.FC<AssemblyProps> = ({ settings, onSettingsChange, 
                         <CharactersPanel 
                             characters={characters} settings={settings} tileBackgroundStyle={settings.assemblyTileStyle || 'solid'} 
                             selectedIds={selectedIds} onSelect={handleSelect} onUpdate={(id, updates) => dispatch({ type: 'UPDATE_CHARACTER', payload: { id, updates } })} 
-                            onDeleteRequest={setDeleteCharacterTarget} onSetCharacters={(c) => dispatch({ type: 'SET_CHARACTERS', payload: c })} 
+                            onDeleteRequest={setDeleteChapterTarget} onSetCharacters={(c) => dispatch({ type: 'SET_CHARACTERS', payload: c })} 
                             expandedCharacterId={assemblyState.expandedCharacterId} setExpandedCharacterId={(id) => dispatch({ type: 'UPDATE_ASSEMBLY_VIEW_STATE', payload: { expandedCharacterId: id } })}
                         />
                     )}

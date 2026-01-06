@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { produce } from 'immer';
 import { Modal } from './Modal';
 import type { EditorSettings, ToolbarVisibility, AppUpdate } from '../../../types';
-import { TrashIconOutline, SpinnerIcon, SparklesIconOutline, RefreshIcon } from '../../common/Icons';
+import { TrashIconOutline, SpinnerIcon, SparklesIconOutline, RefreshIcon, ImportIcon } from '../../common/Icons';
 import MarkdownRenderer from '../../common/MarkdownRenderer';
 
 interface CustomizeToolbarModalProps {
@@ -12,6 +12,7 @@ interface CustomizeToolbarModalProps {
     onSave: (visibility: ToolbarVisibility) => void;
     onClose: () => void;
     onSaveProject: () => Promise<boolean>;
+    onExportStoreCopy: () => Promise<void>;
     hasContent: boolean;
     appUpdate?: AppUpdate | null;
 }
@@ -34,12 +35,13 @@ const ALL_TOOLBAR_ITEMS: { key: keyof ToolbarVisibility; label: string }[] = [
     { key: 'userGuide', label: 'User Guide' },
 ];
 
-export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ settings, currentVisibility, onSave, onClose, onSaveProject, hasContent, appUpdate: initialUpdate }) => {
+export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ settings, currentVisibility, onSave, onClose, onSaveProject, onExportStoreCopy, hasContent, appUpdate: initialUpdate }) => {
     const [visibility, setVisibility] = useState(currentVisibility);
     const [isSaving, setIsSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<string | null>(null);
     const [checkingUpdate, setCheckingUpdate] = useState(false);
     const [activeUpdate, setActiveUpdate] = useState<AppUpdate | null>(initialUpdate || null);
+    const [isExportingStore, setIsExportingStore] = useState(false);
 
     const handleToggle = (key: keyof ToolbarVisibility) => {
         setVisibility(produce(draft => {
@@ -63,6 +65,15 @@ export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ se
             } finally {
                 setCheckingUpdate(false);
             }
+        }
+    };
+
+    const handleExportStore = async () => {
+        setIsExportingStore(true);
+        try {
+            await onExportStoreCopy();
+        } finally {
+            setIsExportingStore(false);
         }
     };
 
@@ -149,65 +160,92 @@ export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ se
                             href={activeUpdate.updateUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="block w-full text-center py-2.5 rounded-md text-white font-bold shadow-lg transition-transform active:scale-95 mb-2"
+                            className="block w-full text-center py-2.5 rounded-md text-white font-bold shadow-lg transition-transform active:scale-95 hover:opacity-90"
                             style={{ backgroundColor: settings.accentColor }}
                         >
-                            Download from Lemon Squeezy
+                            Download Update
                         </a>
-                        <p className="text-[10px] text-center opacity-50 italic">Updates are provided as full installers. Your novel and settings will stay safe.</p>
                     </div>
                 ) : (
-                    <div className="flex items-center justify-between p-4 rounded-lg border border-dashed" style={{ borderColor: settings.toolbarInputBorderColor }}>
-                        <div className="flex flex-col">
-                            <span className="text-xs opacity-50 uppercase font-bold tracking-widest">System Status</span>
-                            <span className="text-sm font-medium">Novelos is up to date (v7.0.9)</span>
+                    <div className="p-4 rounded-lg bg-black/10 flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                            <RefreshIcon className="h-5 w-5 opacity-50" />
+                            <div>
+                                <h3 className="font-bold text-sm">Software Updates</h3>
+                                <p className="text-xs opacity-50">Latest Version: Checking...</p>
+                            </div>
                         </div>
                         <button 
-                            onClick={handleCheckUpdate}
+                            onClick={handleCheckUpdate} 
                             disabled={checkingUpdate}
-                            className="flex items-center gap-2 px-3 py-1.5 rounded bg-black/20 hover:bg-black/40 text-xs transition-colors disabled:opacity-50"
+                            className="px-4 py-1.5 rounded-md text-xs font-medium bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
                         >
-                            {checkingUpdate ? <SpinnerIcon className="h-3 w-3" /> : <RefreshIcon className="h-3 w-3" />}
-                            Check for Updates
+                            {checkingUpdate ? <SpinnerIcon className="h-4 w-4" /> : "Check for Updates"}
                         </button>
                     </div>
                 )}
 
+                {/* Toolbar Visibility Section */}
                 <div>
-                    <h3 className="font-semibold text-sm mb-3">Toolbar Visibility</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                        {ALL_TOOLBAR_ITEMS.map(({ key, label }) => (
-                            <label key={key} className="flex items-center space-x-3 p-2 rounded cursor-pointer" style={{backgroundColor: settings.toolbarButtonBg}}>
-                                <input
-                                    type="checkbox"
-                                    checked={!!visibility[key]}
-                                    onChange={() => handleToggle(key)}
-                                    className="rounded"
-                                    style={{color: settings.accentColor}}
-                                />
-                                <span className="text-sm">{label}</span>
+                    <h3 className="font-bold text-sm uppercase tracking-widest opacity-50 mb-4">Visible Toolbar Items</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
+                        {ALL_TOOLBAR_ITEMS.map((item) => (
+                            <label key={item.key} className="flex items-center gap-3 cursor-pointer group">
+                                <div className="relative flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        checked={visibility[item.key] !== false}
+                                        onChange={() => handleToggle(item.key)}
+                                        className="sr-only"
+                                    />
+                                    <div 
+                                        className={`w-10 h-5 rounded-full transition-colors duration-200 ${visibility[item.key] !== false ? '' : 'bg-gray-600'}`}
+                                        style={{ backgroundColor: visibility[item.key] !== false ? settings.accentColor : undefined }}
+                                    ></div>
+                                    <div className={`absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-transform duration-200 ${visibility[item.key] !== false ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                                </div>
+                                <span className="text-sm font-medium opacity-80 group-hover:opacity-100 transition-opacity">{item.label}</span>
                             </label>
                         ))}
                     </div>
                 </div>
 
-                <div className="pt-4 mt-4 border-t space-y-3" style={{ borderColor: settings.toolbarInputBorderColor }}>
-                    <h3 className="font-semibold text-xs opacity-50 uppercase tracking-wider">Advanced</h3>
-                    
-                    <button
-                        onClick={handleFactoryReset}
-                        className="w-full px-4 py-2 rounded-md text-sm border flex items-center justify-center gap-2 transition-colors mt-4"
-                        style={{ 
-                            borderColor: settings.dangerColor, 
-                            color: settings.dangerColor,
-                            backgroundColor: 'transparent'
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.backgroundColor = `${settings.dangerColor}15`}
-                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                    >
-                        <TrashIconOutline className="h-4 w-4" />
-                        Reset All UI Settings
-                    </button>
+                {/* Distribution Tools */}
+                <div className="pt-6 border-t" style={{ borderColor: settings.toolbarInputBorderColor }}>
+                    <h3 className="font-bold text-sm uppercase tracking-widest opacity-50 mb-4">Store Distribution</h3>
+                    <div className="p-4 rounded-lg bg-black/10 flex justify-between items-center gap-4">
+                        <div>
+                            <h3 className="font-bold text-sm">Export Blank Noveli</h3>
+                            <p className="text-xs opacity-50">Generate a clean Noveli.html with zero content for your digital store upload.</p>
+                        </div>
+                        <button 
+                            onClick={handleExportStore} 
+                            disabled={isExportingStore}
+                            className="px-4 py-2 rounded-md text-xs font-bold text-white flex items-center gap-2 flex-shrink-0"
+                            style={{ backgroundColor: settings.accentColor }}
+                        >
+                            {isExportingStore ? <SpinnerIcon className="h-4 w-4" /> : <ImportIcon className="h-4 w-4" />}
+                            Export for Store
+                        </button>
+                    </div>
+                </div>
+
+                {/* Maintenance Section */}
+                <div className="pt-6 border-t" style={{ borderColor: settings.toolbarInputBorderColor }}>
+                    <div className="flex flex-col gap-4">
+                        <div className="flex justify-between items-center">
+                            <div>
+                                <h3 className="font-bold text-sm text-red-400">Factory Reset</h3>
+                                <p className="text-xs opacity-50 max-w-xs">Reset all UI settings and themes. Your manuscript data remains safe.</p>
+                            </div>
+                            <button 
+                                onClick={handleFactoryReset}
+                                className="px-4 py-2 rounded-md text-xs font-bold bg-red-900/20 text-red-400 hover:bg-red-900/40 border border-red-500/20 transition-colors"
+                            >
+                                Reset UI
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </Modal>

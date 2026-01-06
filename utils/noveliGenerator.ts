@@ -443,6 +443,33 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
             </div>
         );
 
+        const EULAModal = ({ settings, onAccept }) => {
+            const [accepted, setAccepted] = useState(false);
+            return (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md">
+                    <div className="w-full max-w-xl m-4 rounded-lg shadow-2xl border flex flex-col overflow-hidden" style={{ backgroundColor: settings.toolbarBg, color: settings.textColor, borderColor: settings.toolbarInputBorderColor }}>
+                        <header className="p-6 border-b" style={{ borderColor: settings.toolbarInputBorderColor }}>
+                            <h2 className="text-xl font-serif font-bold">End User License Agreement</h2>
+                        </header>
+                        <div className="p-8 text-sm space-y-4 font-sans opacity-90">
+                             <p><strong>1. DISCLAIMER:</strong> This software is provided "AS IS". The developer assumes no responsibility for data loss, system crashes, or lost income.</p>
+                             <p><strong>2. PRIVACY:</strong> Noveli works offline. Your manuscript stays on your device. No data is harvested or transmitted.</p>
+                             <p><strong>3. BACKUPS:</strong> You are solely responsible for maintaining external backups. Noveli saves "snapshots" into ZIP files when you click save.</p>
+                             <p><strong>4. STANDALONE USE:</strong> Noveli is a derivative of Novelos. It is free for portable use, but does not include AI tools, which require a Novelos Desktop license.</p>
+                             
+                             <label className="flex items-center gap-3 pt-4 cursor-pointer select-none">
+                                <input type="checkbox" checked={accepted} onChange={e => setAccepted(e.target.checked)} className="w-4 h-4 rounded" style={{accentColor: settings.accentColor}} />
+                                <span className="text-xs font-bold">I have read the disclaimer and understand my responsibilities regarding data backups.</span>
+                             </label>
+                        </div>
+                        <footer className="p-6 border-t flex justify-end gap-4" style={{ borderColor: settings.toolbarInputBorderColor }}>
+                            <button disabled={!accepted} onClick={onAccept} className="px-8 py-2 rounded font-bold text-white shadow-lg transition-all active:scale-95 disabled:opacity-30" style={{ backgroundColor: settings.accentColor }}>Accept & Proceed</button>
+                        </footer>
+                    </div>
+                </div>
+            );
+        };
+
         const UserGuideModal = ({ onClose, settings }) => {
             const guideContent = [
                 {
@@ -1035,6 +1062,7 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
             const [isSaving, setIsSaving] = useState(false);
             const [searchTarget, setSearchTarget] = useState(null);
             const [portableDirHandle, setPortableDirHandle] = useState(null);
+            const [hasAcceptedEULA, setHasAcceptedEULA] = useState(() => localStorage.getItem('noveli_eula_accepted') === 'true');
             const isFirstRun = useRef(true);
             const [notification, setNotification] = useState(null);
             const [settings, setSettings] = useState(initialSettings);
@@ -1158,6 +1186,11 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
                 setActiveChapterId(newId);
             };
 
+            const handleAcceptEULA = () => {
+                setHasAcceptedEULA(true);
+                localStorage.setItem('noveli_eula_accepted', 'true');
+            };
+
             const handlePortableSave = async (forceNewFolder = false) => {
                 setIsSaving(true);
                 const syncData = { chapters: chapters, settings: settings, timestamp: new Date().toISOString(), source: 'Noveli' };
@@ -1210,6 +1243,7 @@ export const generateNoveliHTML = (state: INovelState, settings: EditorSettings,
 
             return (
                 <div className="flex flex-col h-screen font-sans overflow-hidden transition-colors duration-300 bg-transparent">
+                    {!hasAcceptedEULA && <EULAModal settings={settings} onAccept={handleAcceptEULA} />}
                     {notification && <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-[9999] px-6 py-2 rounded-full shadow-xl toast-enter flex items-center gap-2 backdrop-blur-md border border-white/20" style={{ backgroundColor: settings.successColor, color: '#FFFFFF' }}><span className="font-bold text-sm">{notification}</span></div>}
                     <div className="flex flex-grow overflow-hidden relative">
                         <NoveliManuscript chapter={activeChapter} onChange={handleContentChange} settings={settings} isFocusMode={isFocusMode} onPlaySound={playSound} notesOpen={notesOpen} onPageInfoChange={setPageInfo} isSpellcheckEnabled={isSpellcheckEnabled} searchTarget={searchTarget} />

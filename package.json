@@ -92,7 +92,8 @@
       "createStartMenuShortcut": true,
       "shortcutName": "Novelos",
       "installerIcon": "public/icon.ico",
-      "uninstallerIcon": "public/icon.ico"
+      "uninstallerIcon": "public/icon.ico",
+      "license": "EULA.txt"
     }
   }
 }

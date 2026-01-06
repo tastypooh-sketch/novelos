@@ -47,7 +47,7 @@ export type Action =
 
 // --- INITIAL STATE ---
 
-const initialNovelState: INovelState = {
+export const initialNovelState: INovelState = {
   characters: [{
     id: 'initial_char_1',
     name: 'New Character',

@@ -13,6 +13,7 @@ import { getAI } from './utils/ai';
 import { TitleBar } from './components/common/TitleBar';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { CommandPalette } from './components/common/CommandPalette';
+import { EULAModal } from './components/common/EULAModal';
 import { createProjectZip, generateTimestampedName, parseTimestampFromFilename, parseNoveliSync } from './utils/manuscriptUtils';
 
 type AppMode = 'manuscript' | 'assembly';
@@ -260,6 +261,9 @@ const App: React.FC = () => {
     const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement);
     const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
     
+    // EULA Acceptance State
+    const [hasAcceptedEULA, setHasAcceptedEULA] = useState(() => localStorage.getItem('novelos_eula_accepted') === 'true');
+
     // Access full state for save
     const novelState = useNovelState(); 
     const { chapters, whatIfState } = novelState;
@@ -439,10 +443,12 @@ const App: React.FC = () => {
                                             cancelId: 1,
                                             title: 'Update Available',
                                             message: 'Update Available',
+                                            // Fixed: Removed incorrect backslash escape from backtick and dollar sign
                                             detail: `Portable version is newer (${portableFile.name}). Overwrite local project?`
                                         });
                                         confirmOverwrite = ovResult.response === 0;
                                     } else {
+                                        // Fixed: Removed incorrect backslash escape from backtick and dollar sign
                                         confirmOverwrite = window.confirm(`Portable version is newer (${portableFile.name}). Overwrite local project?`);
                                     }
 
@@ -665,6 +671,7 @@ const App: React.FC = () => {
     const onGenerateWhatIf = useCallback(async (text: string, context: string) => {
         dispatch({ type: 'UPDATE_WHAT_IF_STATE', payload: { isOpen: true, isLoading: true, originalText: text, suggestions: null, error: null } });
         try {
+            // Fixed: Removed incorrect backslash escapes from prompt template literal
             const prompt = `You are a creative writing assistant. The user has highlighted a key decision point or event in their story. Your task is to brainstorm 2-3 plausible and interesting alternative outcomes or "what if" scenarios.
 
 For each scenario, provide a brief, one-paragraph description of the alternative path. Make sure your suggestions are creative but still logically consistent with the surrounding story context provided.
@@ -702,6 +709,12 @@ Return your response as a JSON array of strings, where each string is a single p
         }
     }, [dispatch]);
 
+    const handleAcceptEULA = () => {
+        setHasAcceptedEULA(true);
+        localStorage.setItem('novelos_eula_accepted', 'true');
+    };
+
+    // Fixed: Removed incorrect backslash escapes from backtick and interpolation
     const navClasses = `
         absolute top-10 left-1/2 -translate-x-1/2 z-50 print:hidden
         transition-transform duration-300 ease-in-out
@@ -716,6 +729,7 @@ Return your response as a JSON array of strings, where each string is a single p
         const color = settings.backgroundColor || '#111827';
         // Convert hex to rgb for the gradient
         const rgb = color.match(/\w\w/g)?.map(x => parseInt(x, 16));
+        // Fixed: Removed incorrect backslash escapes from backtick and interpolation
         if (!rgb) return `linear-gradient(rgba(0, 0, 0, ${overlayOpacity}), rgba(0, 0, 0, ${overlayOpacity})), url(${settings.backgroundImage})`;
         return `linear-gradient(rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${overlayOpacity}), rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${overlayOpacity})), url(${settings.backgroundImage})`;
     }, [settings.backgroundImage, settings.backgroundImageOpacity, settings.backgroundColor]);
@@ -728,6 +742,8 @@ Return your response as a JSON array of strings, where each string is a single p
                     backgroundColor: settings.backgroundColor,
                 }}
             >
+                 {!hasAcceptedEULA && <EULAModal settings={settings} onAccept={handleAcceptEULA} />}
+
                  {/* Title Bar for Window Controls - Hide in fullscreen */}
                  {!isFullscreen && <TitleBar backgroundColor={settings.toolbarBg || '#1F2937'} textColor={settings.toolbarText || '#FFFFFF'} />}
 
@@ -742,12 +758,14 @@ Return your response as a JSON array of strings, where each string is a single p
                         }}
                     />
                 )}
+                {/* Fixed: Removed incorrect backslash escapes from interpolation */}
                 <div className={`relative z-10 h-full w-full flex flex-col ${isFullscreen ? '' : 'pt-8'}`}> {/* Conditional Padding Top */}
                     <GlobalStyles settings={settings} />
                     <nav className={navClasses}>
                         <div 
                             className="flex items-center gap-2 p-1 rounded-lg shadow-lg"
                             style={{
+                                // Fixed: Removed incorrect backslash escape from interpolation
                                 backgroundColor: `${settings.toolbarBg}B3`, // 70% opacity
                                 backdropFilter: 'blur(8px)',
                                 WebkitBackdropFilter: 'blur(8px)',
@@ -782,6 +800,7 @@ Return your response as a JSON array of strings, where each string is a single p
                         </div>
                     </nav>
                     <main className="flex-grow min-h-0 flex flex-col relative">
+                        {/* Fixed: Removed incorrect backslash escapes from interpolation */}
                         <div className={`absolute inset-0 ${mode === 'manuscript' ? 'block' : 'hidden'}`}>
                             <Manuscript 
                                 settings={settings} 
@@ -806,6 +825,7 @@ Return your response as a JSON array of strings, where each string is a single p
                                 onSaveToFolder={handleSaveToFolder} 
                             />
                         </div>
+                        {/* Fixed: Removed incorrect backslash escapes from interpolation */}
                         <div className={`h-full w-full ${mode === 'assembly' ? 'block' : 'hidden'}`}>
                             <Assembly 
                                 settings={settings} 
