@@ -21,7 +21,10 @@
     "postinstall": "electron-builder install-app-deps"
   },
   "keywords": [],
-  "author": "Novelos",
+  "author": {
+    "name": "Novelos",
+    "email": "contact@novelos.app"
+  },
   "license": "ISC",
   "dependencies": {
     "@google/genai": "*",
@@ -81,6 +84,7 @@
         "AppImage",
         "deb"
       ],
+      "maintainer": "Novelos <contact@novelos.app>",
       "icon": "public/icon.png",
       "category": "Office",
       "synopsis": "A minimalist novel writing app",
