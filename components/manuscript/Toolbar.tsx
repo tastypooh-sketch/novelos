@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import type { IChapter, EditorSettings, Palette, WritingGoals, ToolbarVisibility } from '../../types';
 import { 
@@ -88,8 +89,8 @@ interface ToolbarProps {
   hasDirectory: boolean;
   onToggleReadAloud: () => void;
   ttsStatus: TTSStatus;
-  onExportNoveli: () => void;
-  onImportNoveli: () => void;
+  onExportNove: () => void;
+  onImportNove: () => void;
   updateAvailable?: boolean;
 }
 

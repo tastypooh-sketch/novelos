@@ -19,7 +19,7 @@ Built with **React**, **Electron**, and **Google Gemini 2.5/3.0**.
 
 ### 1. Hybrid Architecture
 *   **Novelos Desktop:** The full "Command Center" for outlining, world-building, and drafting.
-*   **Noveli (Portable):** Generates a single-file, offline HTML word processor (`Noveli.html`) that contains your entire manuscript. Write on any device with a browser, then sync back to Desktop.
+*   **Nove (Portable):** Generates a single-file, offline HTML word processor (`Nove.html`) that contains your entire manuscript. Write on any device with a browser, then sync back to Desktop.
 
 ### 2. Manuscript Mode
 *   **Distraction-Free:** Horizontal "Infinite Spread" layout that mimics a book.
@@ -78,7 +78,7 @@ npm run electron:build:mac
 npm run electron:build:linux
 ```
 
-Output files will be generated in the `dist-electron` folder.
+Output files will be generated in the \`dist-electron\` folder.
 
 ---
 
@@ -88,7 +88,7 @@ Novelos utilizes the Google GenAI SDK. To use the AI features:
 1.  Launch the app.
 2.  Go to **Customize Toolbar** (Cog Icon).
 3.  Enter your Google Gemini API Key.
-4.  The key is stored locally on your device (`localStorage`).
+4.  The key is stored locally on your device (\`localStorage\`).
 
 ---
 

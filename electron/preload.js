@@ -1,4 +1,3 @@
-
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -14,8 +13,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   writeZipToFolder: (folderPath, fileName, content) => ipcRenderer.invoke('write-zip-to-folder', folderPath, fileName, content),
   scanForLatestZip: (folderPath) => ipcRenderer.invoke('scan-for-latest-zip', folderPath),
   openFileDialog: () => ipcRenderer.invoke('open-file-dialog'),
-  // Alias for compatibility with Manuscript.tsx which calls importNoveliFile
-  importNoveliFile: () => ipcRenderer.invoke('open-file-dialog'),
+  // Rename for brand consistency
+  importNoveFile: () => ipcRenderer.invoke('open-file-dialog'),
 
   // Version Check
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),

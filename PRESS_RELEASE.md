@@ -30,7 +30,7 @@ For Centres offering "Plotting" or "Novel in a Year" courses, **Assembly Mode** 
 
 **Workshop-Ready Portability**
 
-Recognizing that many Writers' Centres utilize shared computer labs or have members working across different devices, Novelos includes **Noveli**—a portable, single-file word processor included with every license.
+Recognizing that many Writers' Centres utilize shared computer labs or have members working across different devices, Novelos includes **Nove**—a portable, single-file word processor included with every license.
 *   **Zero Installation:** Runs in any browser from a USB stick.
 *   **Privacy First:** No data is stored on shared machines.
 *   **Take It Home:** Members can start work in a centre's computer lab and continue seamlessly at home without expensive software licenses.

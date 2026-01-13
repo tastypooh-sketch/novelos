@@ -1,9 +1,7 @@
 
-import React, { useRef } from 'react';
-import { Packer, Document, Paragraph, TextRun, HeadingLevel, AlignmentType, ExternalHyperlink } from 'docx';
+import React from 'react';
 import { Modal } from './Modal';
 import type { EditorSettings } from '../../../types';
-import { DocumentTextIcon } from '../../common/Icons';
 
 interface UserGuideModalProps {
     settings: EditorSettings;
@@ -11,439 +9,94 @@ interface UserGuideModalProps {
 }
 
 export const UserGuideModal: React.FC<UserGuideModalProps> = ({ settings, onClose }) => {
-    
     const guideContent = [
         {
-            level: 1, title: "PART I: NOVELI", children: [
+            level: 1, 
+            title: "PART I: NOVE (PORTABLE)", 
+            children: [
                 {
-                    level: 2, title: "Introduction: Writing unbound and uncompromised",
+                    level: 2, 
+                    title: "Introduction",
                     content: [
-                        "Noveli is an ultra-portable, single-file, horizontally scrolling word processor designed for creative writers, which is completely free to use. Born from the frustration of a novelist who found traditional word processors inefficient, Noveli challenges the norm of vertically scrolling portrait pages on landscape monitors. Those layouts waste valuable screen space and offer poor horizontal pagination, even with page fitting.",
-                        "Noveli solves this with a revolutionary Single-File Application that redefines digital writing platforms by putting absolute control back in the hands of the writer. It combines the instant speed of local software with the essential flexibility of the cloud."
+                        "Nove is an ultra-portable, single-file, horizontally scrolling word processor designed for creative writers. It challenges the norm of vertically scrolling portrait pages on landscape monitors, maximizing your screen real estate.",
+                        "It is designed to be absolute portable, system-independent, and seamless in its integration with Novelos (the full Desktop suite)."
                     ]
                 },
                 {
-                    level: 2, title: "What Noveli Delivers",
+                    level: 2, 
+                    title: "The Interface: The Infinite Spread",
                     content: [
-                        "The application was built to meet these core requirements:",
-                        "• Horizontally scrolling, landscape-oriented word processor",
-                        "• Absolute portability",
-                        "• Independence from any operating system",
-                        "• Elegant visual aesthetics",
-                        "• Efficient code footprint",
-                        "• Ultra-stable performance",
-                        "• Full online and offline functionality",
-                        "• Seamless integration with Novelos, a licenced AI-powered corkboarding suite"
+                        "Nove's interface maximizes writing space through a minimalist design. The dual-pane editor flows horizontally. When a spread is filled, the text snaps forward, mimicking the page-turning rhythm of a physical book.",
+                        "Navigation is simple: use your mouse wheel, drag the scrollbar, or use Page Up/Page Down keys to flip spreads instantly."
                     ]
                 },
                 {
-                    level: 2, title: "The Hybrid Advantage",
+                    level: 2, 
+                    title: "Iconography Reference",
                     content: [
-                        "Because Noveli is just a single file, you decide where it lives. For maximum security and zero-latency performance, keep it on your hard drive for complete privacy. If you need cloud convenience, save your Noveli file in Google Drive, Dropbox, OneDrive or Box for automatic backup and cross-device accessibility.",
-                        "Either way, Noveli offers Zero-Footprint Writing: carry it on a USB stick and open it on any machine, whether it’s a public library PC, a borrowed MacBook or your own Chromebook, without installation or leaving any software traces behind.",
-                        "Your entire manuscript and the Noveli application code live together in one portable zipped file.",
-                        "You own the file. You own the words. You’re never locked in. Store it on a USB drive, email it or keep it in an offline digital vault. Noveli will always work, requiring only a web browser, such as Chrome, Edge or Safari, to open and edit your work. No servers, subscriptions or licenses required, at all, ever."
-                    ]
-                },
-                {
-                    level: 2, title: "The Interface: The Infinite Spread—Designed for Novelists",
-                    content: [
-                        "Noveli’s interface maximizes writing space and delivers elegant pagination through a minimalist yet visually striking design. The dual-pane editor spans the full width of your landscape monitor, creating an immersive environment for your text.",
-                        "Unlike traditional word processors that rely on an endless vertical scroll, which often evokes the psychological weight of a bottomless task, Noveli flows horizontally. When a page is filled, the text snaps forward, which produces a rhythmic sense of progress and completion. It feels like turning the pages of a physical book, but without any chance of papercuts."
-                    ]
-                },
-                {
-                    level: 2, title: "Navigation",
-                    content: [
-                        "Effortlessly move through your manuscript chatper by dragging the horizontal scroll bar, or mouse scroll wheel to scrub quickly, or Page Up and Page Down to flip spreads with precision."
-                    ]
-                },
-                {
-                    level: 2, title: "Focus Mode",
-                    content: [
-                        "Press the Eye Icon to enter Focus Mode. The interface disappears, leaving only you and your narrative in a clean, distraction-free space. Every pixel, from the frameless window to the Infinite Spread layout, is engineered to reduce cognitive load.",
-                        "Activate the Audio Engine for simulated mechanical keystrokes and a classic carriage-return bell. This auditory feedback triggers a Pavlovian rhythm that accelerates entry into a Flow State, something silent editors rarely achieve."
-                    ]
-                },
-                {
-                    level: 2, title: "Design Gallery",
-                    content: [
-                        "Click the Pencil Icon to explore themes that match your story’s tone. Midnight or Gothic for horror, Sepia or Paperback for romance, or simply choose what’s easiest on your eyes. Think of it as an expanded light/dark mode with personality."
-                    ]
-                },
-                {
-                    level: 2, title: "Dynamic Backgrounds",
-                    content: [
-                        "Upload an image or paste a URL into the background field to create a custom theme. Noveli’s engine analyzes the image, extracts dominant colors and recolors the entire interface, including text, buttons and accents, to harmonize with your chosen aesthetic. This visual cue sets the mood for your story world’s chapter, further helping you slip into creative flow."
-                    ]
-                },
-                {
-                    level: 2, title: "Typewriter Sounds",
-                    content: [
-                        "Click the Speaker Icon to enable mechanical keyboard sounds. These are mathematically generated tones are via the Web Audio API rather than mp3s, which keeps Noveli lightweight, while providing rhythmic feedback to keep your fingers moving."
-                    ]
-                },
-                {
-                    level: 2, title: "The Command Palette (Ctrl+K / Cmd+K) (Novelos)",
-                    content: [
-                        "This is a spotlight-style search bar designed to keep your hands on the keyboard and your mind in the flow. Press Ctrl+K (or Cmd+K on Mac) to open a global search bar. Type the name of any Chapter, Character, or World Item, and the palette filters instantly. Press Enter to jump directly to that asset.",
-                        "It also supports commands like Toggle Focus Mode or Toggle Fullscreen, which eliminates menu diving. Jump from writing Chapter 3 to editing the villain’s backstory in Assembly Mode in seconds—without touching the mouse."
-                    ]
-                },
-                {
-                    level: 2, title: "Global Search Results",
-                    content: [
-                        "While standard Find navigates matches one by one, Global Results offers a macroscopic view of keyword usage. In the Find & Replace modal, click Find All to generate a clickable list of every occurrence across your manuscript. Each entry shows the Chapter Title, Number, and a context snippet containing the keyword.",
-                        "This is essential for continuity: track every mention of a Smoking Gun to ensure foreshadowing remains consistent throughout your book."
-                    ]
-                },
-                {
-                    level: 2, title: "Iconography Reference: Decoding Your Workspace",
-                    content: [
-                        "Noveli and Novelos Manuscript mode use a minimalist, symbolic interface designed to be unobtrusive until needed.",
-                        "• <strong>Focus Mode:</strong> Hides all toolbars, borders, and elements instantly. Toggle with ESC.",
-                        "• <strong>Fullscreen:</strong> Toggles the browser's full-screen mode. Combined with Focus Mode, this creates a dedicated writing appliance that only contains written text.",
-                        "• <strong>Page Transition:</strong> Toggles between Horizontal Scroll and Fade transitions between spreads. Fade is recommended for e-ink users or those prone to motion sickness.",
-                        "• <strong>Design Gallery:</strong> Opens the visual customization suite. Choose color themes, upload background images via URL, and adjust image opacity.",
-                        "• <strong>Cycle Background:</strong> Instantly swaps the current background image to the next one in your Design Gallery.",
-                        "• <strong>Sound Toggle:</strong> Enables/Disables Typewriter Mode, adding high-quality mechanical keyboard sounds and a bell 'ding'.",
-                        "• <strong>Read Aloud:</strong> (Novelos only) Opens the Text-to-Speech player. Listen to your chapter read back to you to catch rhythm issues.",
-                        "• <strong>Stats Dashboard:</strong> Displays your Manuscript Goal and Daily Goal. Visualizes your progress.",
-                        "• <strong>Notes/AI Assist:</strong> Toggles the side panel. Contains Chapter Notes, (In Novelos, it also contains the AI Assist chat interface, and Beta Feedback summary space.",
-                        "• <strong>Alignment Toggle:</strong> Switches the text between Left-Aligned and Justified (classic book print style with automatic hyphenation for improved aesthetics).",
-                        "• <strong>Spellcheck Toggle:</strong> Toggles the browser's native spell checker on or off.",
-                        "• <strong>AI Proofreader:</strong> (Novelos only) Scans your chapter for grammar, punctuation and stylistic errors, offering author voice and context-aware corrections.",
-                        "• <strong>Text Shortcuts:</strong> Opens the Shortcuts Manager. Define custom expansions.",
-                        "• <strong>Find & Replace:</strong> Opens a search dialog for FInd and Replace that operates on the current chapter or entire manuscript.",
-                        "• <strong>Version History:</strong> (Novelo only) Only active when saved to a Folder. Shows auto-saved snapshots.",
-                        "• <strong>Cloud Sync:</strong> (Novelos only) Connects Noveli to your Google Drive (or other providers) to back up/restore your file.",
-                        "• <strong>Customize Toolbar:</strong> (Novelos only) Opens the configuration menu. Location to show/hide buttons.",
-                        "• <strong>User Guide:</strong> Opens the in-app documentation.",
-                        "• <strong>Donate/Support:</strong> A link to support the developer."
-                    ]
-                },
-                {
-                    level: 2, title: "Saving: How Saving Works in Noveli",
-                    content: [
-                        "Noveli operates differently from traditional desktop software because it runs entirely inside your web browser via the Noveli.html file. For security reasons, browsers cannot directly overwrite files on your hard drive. To overcome this, Noveli uses a Snapshot & Sync saving method.",
-                        "<strong>The Save Action:</strong> When you click Export/Save (or press Ctrl+S) inside Noveli, the app does not overwrite the HTML file you’re currently using. Instead, it instantly packages your manuscript, settings, and notes into a timestamped ZIP file: Noveli_Bookname_Day_Month_24Hour-Min.zip.",
-                        "This ZIP file downloads to your chosen location—your computer, a thumb drive, or any secure storage.",
-                        "<strong>What’s Inside the ZIP?</strong>",
-                        "• <strong>noveli_data.json</strong> – The brain of your project. This is what the main Novelos Desktop app uses to sync your progress.",
-                        "• <strong>RTF_Backups folder</strong> – Standard Rich Text Format copies of every chapter. These files are readable in Word, Google Docs, or Scrivener, ensuring your words are never locked inside Noveli."
-                    ]
-                },
-                {
-                    level: 2, title: "Closing the Loop if using Novelos (Syncing)",
-                    content: [
-                        "To bring your writing back into Novelos Desktop:",
-                        "1. Open Novelos Desktop.",
-                        "2. Click Import from Noveli.",
-                        "3. Select the most recent ZIP file you downloaded from Noveli.",
-                        "4. Novelos updates your main project file with the new content and warns you if the latest ZIP isn’t selected.",
-                        "5. Your entire project transfers instantly, including any design changes, into the full Novelos suite.",
-                        "From here, you can unlock advanced features like Novelos’ Assembly Mode with dynamic crosslinking and AI-powered tools."
-                    ]
-                },
-                {
-                    level: 2, title: "Adding Chapters in Noveli",
-                    content: [
-                        "Need to expand your book structure while away from your main Novelos desktop—or using Noveli exclusively? In the toolbar, click the + (Plus) icon next to the Chapter Selector dropdown. This instantly creates a new blank chapter at the end of your list, ready for writing.",
-                        "Important: These new chapters exist only in your current browser session until you Save/Export."
+                        "• <strong>Focus Mode:</strong> Hides all UI elements instantly. Toggle with ESC.",
+                        "• <strong>Page Transition:</strong> Toggles between Horizontal Scroll and Fade transitions.",
+                        "• <strong>Design Gallery:</strong> Customizes themes and background images.",
+                        "• <strong>Typewriter Sounds:</strong> Provides rhythmic auditory feedback for mechanical keystrokes.",
+                        "• <strong>Stats Dashboard:</strong> Tracks your manuscript and daily goals.",
+                        "• <strong>Find & Replace:</strong> Operates on current chapter or entire manuscript."
                     ]
                 }
             ]
         },
         {
-            level: 1, title: "PART II: NOVELOS (FOUNDATIONS)", children: [
+            level: 1, 
+            title: "PART II: NOVELOS (ASSEMBLY MODE)", 
+            children: [
                 {
-                    level: 2, title: "Philosophy",
+                    level: 2, 
+                    title: "Structural Engineering",
                     content: [
-                        "Novelos is a Long-Form Novel Operating System: a desktop platform designed to function like your personal publishing team. It acts as a copy editor, technical editor, beta reader, brainstormer and publicist, all working together to understand your unique authro voice and dramatically reduce the time spent on editing, feedback, marketing and promotion. This results in more time for what matters most: creative writing.",
-                        "Writing a novel is more than typing words. It’s a complex management task. Novelos’ Assembly Mode transforms the ideal word processor into a cohesive production environment.",
-                        "The true power of Novelos lies in its bi-directional sync that bridges creativity and structure. You can Forward Generate outlines from rough notes or Reverse Update from the evolving manuscript. This ensures your outline always reflects what you actually wrote, not just what you planned to write."
+                        "While Nove is for drafting, Assembly Mode is for structural engineering. Use the following panels to manage your story's DNA:",
+                        "• <strong>Chapters:</strong> Outline your book using the Act system (1, 2, and 3). Drag and drop chapters to reorganize them.",
+                        "• <strong>Characters:</strong> Build deep profiles. Link characters to specific chapters to track their presence.",
+                        "• <strong>World:</strong> Use the Crucible to distill messy notes into a structured Story Bible. Map locations on a visual Map Builder.",
+                        "• <strong>Snippets:</strong> A repository for loose ideas. Let AI suggest where in your manuscript they should be placed."
                     ]
                 },
                 {
-                    level: 2, title: "AI That Preserves Your Voice",
+                    level: 2, 
+                    title: "Advanced AI Analysis",
                     content: [
-                        "Many AI writing tools churn out generic prose that feels disconnected from your style. Novelos takes a different approach by analyzing rather than generating. By reading your manuscript, its AI learns your syntax, tone, rhythm and vocabulary. Whether it’s crafting a social media caption or suggesting a beta-reader fix, the output is tailored to your author voice. This solves the biggest friction writers have with AI: keeping the story’s soul intact and unmarred."
-                    ]
-                },
-                {
-                    level: 2, title: "Noveli vs. Novelos: The Two-Engine Approach",
-                    content: [
-                        "• <strong>Noveli: The Satellite</strong> - Noveli is a portable, single-file word processor designed for absolute accessibility and portability. It’s a lightweight zipped HTML application you can carry on a USB drive and run on any computer, whether library, café or legacy hardware, without installation or requiring admin rights. It works in any browser, anywhere, ensuring you can write under any circumstances without relying on cloud servers.",
-                        "• <strong>Novelos: The Mothership</strong> - Novelos is the full Novel OS: a powerful desktop suite for structural and analytical heavy lifting. It integrates an enhanced version of Noveli that imports chapters written on the go. Novelos handles advanced tasks like AI analysis, plot mapping, world building and marketing.",
-                        "Together, this two-engine approach offers maximum flexibility: Write anywhere with Noveli, then harness the full power of Novelos for deep structural work and professional-grade publishing tools."
-                    ]
-                },
-                {
-                    level: 2, title: "SECTION A: MANUSCRIPT MODE",
-                    content: [
-                        "Manuscript Mode is the core writing interface of Novelos. It is designed to provide a distraction-free, immersive environment that mirrors the book-spread layout of the portable Noveli word processor while layering powerful context-aware AI tools on top of your text.",
-                        "Novelos does not write for you. Instead, it analyzes your manuscript as it evolves, learning your tone, vocabulary and rhythm so that every suggestion aligns with your voice.",
-                        "<strong>The Editor Interface: Book Spread Layout</strong>",
-                        "The editor calculates screen width and splits text into a two-column book-spread view, mimicking a physical book where text flows horizontally from page to page. This adaptive layout, including scalable font size, is visually pleasing and allows more words per page than vertical orientation.",
-                        "<strong>The AI Assist Panel (Sidebar)</strong>",
-                        "Located in the sidebar and toggled via the Notebook icon, this is a voice-aware in-line editorial brain of Novelos. It reads your manuscript to understand your style before offering feedback.",
-                        "<strong>Tab 1: AI Assist (Developmental Editing)</strong>",
-                        "Drag highlighted text into the Drop Zone for targeted feedback:",
-                        "• Flow and Pacing Check: Analyzes sentence rhythm and flags clunky phrasing or run-ons",
-                        "• Show, Don’t Tell: Identifies abstract summaries and suggests sensory details for deeper immersion",
-                        "• Dialogue and Voice Review: Compares dialogue against character profiles for consistency",
-                        "• Tension Injection: Suggests narrative devices like ticking clocks or subtle threats to raise stakes",
-                        "<strong>Tab 2: Beta Feedback Summarizer</strong>",
-                        "• Beta Reader Room: Simulates feedback from AI personas such as Cynical Critic, Romance Reader, Hard Sci-Fi Fan and Pacing Expert for diverse perspectives",
-                        "• Feedback Summarizer: Paste raw comments from human beta readers and convert them into structured categories: Key Themes, Structural Criticisms, Positive Reactions and Actionable Suggestions. This prevents edit paralysis by prioritizing feedback",
-                        "<strong>Tab 3: Chapter Notes and Excerpts</strong>",
-                        "A digital scratchpad for manual notes or saving excerpts. Excerpts can be sent to the Social Media panel in Assembly Mode. Notes stay linked to the chapter without leaving the writing pane, helping to maintain flow."
-                    ]
-                },
-                {
-                    level: 2, title: "Contextual Intelligence Tools",
-                    content: [
-                        "• <strong>The What If? Engine:</strong> Accessed by highlighting text and right-clicking in the editor, it generates 3 plausible alternative outcomes for a highlighted plot point based on the preceding story trajectory. This helps authors explore narrative branches and cures writer’s block.",
-                        "• <strong>Smart Read Aloud (Neural TTS):</strong> An advanced Text-to-Speech engine where specific neural voices (e.g., 'Kore', 'Fenrir') can be assigned to characters. It allows authors to \"hear\" their dialogue performed to check for naturalism and rhythmic issues.",
-                        "• <strong>AI Proofreader:</strong> Accessed via the Toolbar, it scans the chapter for spelling, grammar and punctuation errors, providing an explanation for each correction. This acts as an additional polish to catch technical errors that standard spellcheckers miss."
-                    ]
-                },
-                {
-                    level: 2, title: "Toolbar Utilities",
-                    content: [
-                        "• <strong>Design Gallery:</strong> This allows full customization of the editor's aesthetic, including fonts, background colors, such as Midnight or Sepia, and background images.",
-                        "• <strong>Version History:</strong> Tracks local saves of the chapter, allowing the user to view previous drafts and restore them. It provides a safety net to encourage fearless editing.",
-                        "• <strong>Writing Stats & Goals:</strong> Tracks Session Word Count versus Total Manuscript Word Count. Users can set Daily Goals. This gamifies the writing process to provide motivation and a clear sense of progress.",
-                        "• <strong>Find & Replace:</strong> Standard search functionality with Case Sensitive and Whole Word toggles for the current chapter or entire manuscript. This is essential for fixing recurring typos or renaming characters.",
-                        "• <strong>The Typesetter (Typography Controls):</strong> Writing is a visual experience. Novelos allows you to tune the reading environment to reduce eye spacing and match your aesthetic preference. Switch between Serif fonts, such as Lora and Merriweather, for a classic book feel, or Sans-Serif fonts, such as Inter and Roboto, for a clean, modern drafting look. Toggle between Compact (1.2) line spacing for fitting more text on screen, or Comfortable (1.8) for easier readability during long editing sessions. Font size can also be adjusted to accommodate different monitor resolutions and eyesight requirements.",
-                        "• <strong>Contextual Brainstorming (Right-Click \"What If?\"):</strong> The \"What If?\" engine is not just limited to the toolbar; it lives inside the text. Highlight any paragraph or sentence in the editor and Right-Click to open the Context Menu. Select \"What If?\" to instantly generate narrative alternatives for that specific selection. This keeps the creative assistance strictly local to the sentence you are struggling with, without opening the full sidebar or breaking your immersion."
-                    ]
-                },
-                {
-                    level: 2, title: "File Management",
-                    content: [
-                        "• <strong>Export for Noveli:</strong> This packages the entire writing project (Chapters, Settings and selected Assets) into a standalone HTML/Zip file. This portable version of the book that can be opened on any device with a browser, allowing for writing on the go without installing software. On first save, a dialoge allows you to choose the location, which may be a thumb drive or a cloud folder such as Box or Google Drive. Subsequent saves are automatically saved to this chosen directory.",
-                        "• <strong>Save to Folder:</strong> Writes the project data to the local file system in a structured format of RTF files for chapters and JSON for metadata. This ensures the user owns their data in a universal, non-proprietary format that can be opened by other word processors, such as Word or Scrivener, if needed.",
-                        "• <strong>Importing Noveli back to Novelos:</strong> This is bridge allows you to write anywhere via Noveli and organize your novel at home in Novelos.",
-                        "1. In Noveli: When finished writing, click Export/Save. This generates a timestamped .zip file Noveli_Projectname_Date_time.zip. This file contains your manuscript text, any new chapters added during Noveli use, and your settings.",
-                        "2. In Novelos Desktop: Open your project in Manuscript View. Click the Import from Noveli button from the manuscript toolbar. Select the .zip file you just exported. Novelos detects chapters that already exist (by ID) and updates their content with the new words you wrote in Noveli. Novelos also detects any new chapters you added in Noveli and appends these to your Chapter Board in the correct order. This seamless transition means you can now switch to Assembly View and use Update from Manuscript on these new chapters to generate their summaries and outlines, fully integrating them into your project structure.",
-                        "<strong>The Rescue Protocol (Crash Recovery)</strong>",
-                        "Novelos adheres to best practice React coding and structure and is highly stable. However, in the advent of a crash, Novelos includes a Black Box flight recorder for your manuscript. If the application encounters a critical error, such as a White Screen of Death, the Rescue Protocol automatically intercepts the crash. A dark Rescue Mode screen appears, offering a Download Rescue Backup button. This generates an emergency JSON dump (novelos_rescue_backup_[timestamp].json) containing your entire project state at the exact moment of failure. This ensures that even in the event of a catastrophic system failure, your words are never lost. You can reload the app and Import the rescue file to resume immediately after changing any soiled undergarments."
-                    ]
-                },
-                {
-                    level: 2, title: "SECTION B: ASSEMBLY MODE",
-                    content: [
-                        "Assembly Mode is the structural backend of Novelos. As a Story Factory and Command Center, this is where ideas, chapters, characters, world lore, marketing assets and analytical insights are captured, distilled and cross-linked into a living, synchronized database that evolves with the manuscript. It replaces static binders with intelligent linking so notes, people, places and plot are kept current as you write. This makes it the place to dump broad, rough ideas and have them organically built into the book’s architecture."
-                    ]
-                },
-                {
-                    level: 2, title: "1. Chapter Board",
-                    content: [
-                        "The Chapter Board functions as an architectural blueprint for the novel. Chapters begin in an unassigned pool and can be dragged into Act 1, Act 2 or Act 3 to experiment freely with structure without rewriting prose. Reordering is instant: when a chapter is moved, numbering updates to reflect its new linear position so a former Chapter 5 placed into the second slot becomes Chapter 2, with subsequent chapters renumbered automatically. The underlying chapter rtf files as automatically renumbered. This fluidity supports non-linear timelines and makes moving flashbacks or adjusting inciting incidents a one-step operation.",
-                        "A color-coded Pacing Heatmap sits at the top of the interface to visualize narrative tension across the whole book. Each chapter’s summary is analyzed to assign a score from −1 for slow or introspective material to +1 for fast, high-conflict action. Cool blues signal set-up, reflection and exposition, while hot reds mark climaxes, fights and rapid-fire dialogue. Thrillers often trend hotter toward the end but benefit from intermittent cool breathers. If the middle skews uniformly blue, you have a sagging middle; if there are no cool-downs, the rhythm risks reader burnout.",
-                        "Each collapsed chapter card presents a high-level thumbnail with number, title, a cinematic scene image and the top keywords. Visual accent styles, toggled via brush controls, allow quick color-coding by point of-view, timeline or subplot without relying solely on text labels, enabling visual outlining that triggers instant recall: you do not just read ‘Chapter 4’, you see the burning barn and remember the scene.",
-                        "Expanding a card reveals the detail editor, which is a command center for that scene. A prominent visual header can accept uploaded art or generate a cinematic visualization from notes, and a lock lets you preserve a favored image against future regeneration. The Summary captures a one-to-two sentence hook while the Outline develops a beat-by-beat roadmap. Story Analysis explains why the chapter exists by articulating conflict, stakes and motivation, which helps discourage writing unecessary content filler.",
-                        "Two synchronization flows keep the board aligned with reality:",
-                        "• Update from Manuscript reads the prose you actually wrote in Manuscript Mode and overwrites Summary, Outline and Analysis to match to ensure the Story Bible never drifts.",
-                        "• Generate from Notes turns rough bullets like ‘They fight, it rains, he loses his sword’ into a structured five-beat plan with choreography and emotional affect, which helps cure blank-page syndrome when you are planning forward.",
-                        "Intelligent linking binds chapters to the rest of the ecosystem. Drag-and-drop character avatars onto a chapter to tag their presence: the system records these appearances so profiles evolve as the story does. Linked snippets arrive from the repository as reminders to include a cherished line or observation: if it no longer fits, send it back in one click.",
-                        "Navigation remains tactile: drag chapters between acts to adjust macro structure, and let automatic file system synchronization rename underlying RTF files (for example, 03_ChapterTitle.rtf) to reflect new numbering. This keeps local folders organized and export-ready without manual maintenance."
-                    ]
-                },
-                {
-                    level: 2, title: "2. Character Cast",
-                    content: [
-                        "The Character Panel is a living cast list rather than static sheets. A grid of visual cards can be reordered to enforce hierarchy or grouped by faction through multi-selection for bulk moves. Collapsed cards provide a glanceable face, name, tagline and keywords for instant recognition, and starring marks primaries so key players stand out in epics with dozens of characters. Visual accents across cards enable faction coding — red for the Red Guild, blue for the Blue Kingdom — for balance at a glance.",
-                        "Expanding a card opens the profile editor, which is the soul of the character. When no image exists, rough notes drive generation of a photorealistic portrait that you can lock to protect curation during future text updates, or you can upload your own art. Taglines provide a punchy hook (‘The man who never misses.’) and the Summary offers a concise elevator pitch. A rich-text profile in Markdown captures backstory, personality, appearance and motivation in a readable way even at depth.",
-                        "Relationship fields dynamically link characters together. Declaring that one hates another automatically updates the reciprocal profile; connections display as avatar chips and help prevent continuity errors where a rivalry vanishes for chapters without cause.",
-                        "AI intelligence accelerates creation and keeps documentation honest. ‘Generate Profile’ converts messy rough notes into a structured summary, profile, keywords and portrait in seconds. In this way, ‘Angry, lost his dog, ex-cop’ becomes a noir detective with an apt tagline. ‘Update from Manuscript’ reads all chapters where the character appears to reflect actual events, so an initially timid person who saves a child in Chapter 4 evolves into someone with discovered courage, with the profile updating to reflect this.",
-                        "Integration keeps casting aligned with scenes. Drag characters onto chapter cards to associate them with that moment, which in turn gives the AI office exact context when analyzing pacing, plot holes or voice. Snippet links back to individual characters ensure dialogue banks and observations are always at hand when drafting the right scene."
-                    ]
-                },
-                {
-                    level: 2, title: "3. Snippet Repository",
-                    content: [
-                        "The repository is a low-friction dump box designed to capture inspiration before it evaporates. Paste entire braindumps with distinct ideas separated by blank lines and let processing split, clean and move entries into a structured grid. Dynamic categorization classifies each item as dialogue, description, internal monologue, theme statement, general action, world-building note or uncategorized, which helps turn chaotic ideas into order you can filter later when fleshing out scenes.",
-                        "Intelligent character tagging cross-references snippet text against the cast, automatically assigning speakers in quoted lines or tagging mentions, such as Sarah’s scar, to build dialogue banks per character. If no dialogue tags were included with dumped ideas, these can be tagged manually via a dropdown with avatars to keep associations precise.",
-                        "When a Snippet placement is unclear, the suggestion engine compares a snippet’s content against summaries, outlines and analyses for every chapter to return the top three homes with confidence ratings and justifications: Dominic’s assertion that ‘Confidence isn’t learnt, it’s earnt’ may match the heist coaching in Chapter 4. Sending a snippet to this chapter commits the link, marks it as used to avoid duplication and surfaces it in the expanded chapter view as a linked reminder. If this ends up not being suitable, Revert returns it to the Snippet Respository without destruction. In this way, good ideas are never lost, and you can keep editing the text in place as the story grows."
-                    ]
-                },
-                {
-                    level: 2, title: "4. Social Media Studio",
-                    content: [
-                        "The Social Media Studio ensures promotion happens alongside writing rather than replacing it. Feed the engine by sending excerpts directly from Manuscript Mode using the paper-airplane action, which preserves chapter and character metadata. Or let the engine read a chapter and surface three to five high-engagement moments such as cliffhangers, romantic beats or witty lines.",
-                        "For each selected excerpt, the visual engine analyzes the text to craft detailed prompts and generate high-definition images designed to stop the social scroll. You can choose Mood Only for atmospheric scenery that keeps superimposed text visible, or With Characters to inject profile-driven appearances so figures match your book’s cast.",
-                        "Voice-aware copywriting reads the surrounding manuscript context to mimic your tone. Gritty noir captions feel gritty while rom-com posts feel bubbly. Captions are optimized for each platform with scene-relevant hashtag clusters and TikTok scripts or hooks with broader tags.",
-                        "A variation engine repurposes one post into distinct funny, dramatic or mysterious takes for A/B testing. Export options allow one-click PNG downloads and ready-to-copy text so you can post in minutes and return to writing without losing momentum."
-                    ]
-                },
-                {
-                    level: 2, title: "5. World Building",
-                    content: [
-                        "The World Node solves scattered lore by unifying ingestion, distillation, refinement and mapping. Dump raw notes into the Crucible; distillation detects distinct entities and sorts them into locations, lore, objects, organizations and concepts so a paragraph on crystal magic becomes separate cards for the mines, the system and the singing crystals.",
-                        "Repository cards present categories in columns for at-a-glance taxonomy and gap spotting. Inside each item, a refine action reads rough bullets and rewrites them into professional codex entries — ‘Big sword, cursed, red glow’ becomes a Sun-Eater with pyromancy runes and cauterizing strikes — and generates succinct summaries for rapid scanning.",
-                        "A spatial map offers an infinite canvas with pins you can drop, pan and zoom to visualize geography from continents to cities. If a location is mentioned but not mapped, ‘Suggest Locations’ reads summaries and outlines, then places pins with coordinates inferred from context, such as a swamp south of the capital. This keeps geography synchronized with the draft and prevents continuity errors.",
-                        "Integration stabilizes rules and captures spontaneous invention. Maintaining a codified magic system prevents lore drift like color changes between chapters. When you invent a faction mid-draft, add it to the Crucible immediately and distill later so ephemeral ideas become official entries rather than vanishing into prose."
-                    ]
-                },
-                {
-                    level: 2, title: "6. Plot Brainstorming Suite",
-                    content: [
-                        "This node evaluates architecture rather than grammar. It generates a plot timeline with major and supporting beats against recognized narrative structures. A horizontal visualization marks inciting incidents, climaxes and resolutions with distinct colors and shapes; hovering reveals events and the reasons for classification, which quickly surfaces issues like a climax arriving at Chapter 10 of a 50-chapter book. Narrative summaries critique flow with actionable notes such as tension drops across ranges.",
-                        "A Relationship Dynamics Mapper quantifies emotional distance over time. Select any pair and the system plots sentiment from hostile through neutral to allied, verifying arcs such as enemies-to-lovers with expected zigzags, dips and recoveries; flat or erratic jumps flag rushed or unearned transitions. Opportunity detection scans for setups without payoff and suggests twists or callbacks, while logical checks catch contradictions in timeline or movement, and character arc stress tests compare actions to profiles to flag out-of-character behavior that needs bridging scenes.",
-                        "Lateral integration powers these insights by pulling curated summaries and outlines from the Chapter Board, profiles from the Character Board and updates from Manuscript Mode. Changing a chapter’s summary and regenerating immediately refreshes timelines and sentiment graphs, creating a living feedback loop you can consult after each session."
-                    ]
-                },
-                {
-                    level: 2, title: "7. Synopsis & Market Mode",
-                    content: [
-                        "This node translates art into business assets. It analyzes themes, tropes and tone to position the book with comparable titles, produces industry-standard BISAC codes and high-traffic keywords, and generates concise loglines, punchy taglines and an ideal reader profile to guide targeting and brand consistency.",
-                        "Synopsis generation outputs two formats from the structure you have already curated: a ~300-word blurb that teases without spoilers for back covers or queries, and a ~1000-word spoiler document with the full arc for agent and publisher review. Rather than parsing the entire manuscript, the system reads your Chapter Board summaries and analyses to stay focused on events and structure. The flow is simple: write and update in Manuscript Mode, sync the chapter card from manuscript so summaries match reality, then generate the synopses. Themes from Plot Brainstorming carry through into market positioning to keep internal development aligned with external messaging.",
-                        "Comparable titles help agents and readers triangulate tone, genre and premise; the system identifies three or more successful works that resemble yours — for example, political maneuvering reminiscent of A Game of Thrones paired with a magic system akin to Mistborn — and lists primary narrative tropes such as The Chosen One, Found Family or Whodunit to support niche marketing.",
-                        "BISAC codes and keywords are generated from story content to meet retailer and library standards; entries like FIC009000 (FICTION / Fantasy / Dark Fantasy) are coupled with high-traffic phrases such as enemies to lovers, elemental magic, political intrigue and slow burn to improve discoverability.",
-                        "Promotional assets include a single-sentence logline that compresses protagonist, conflict and stakes — for instance, a retired assassin must dust off her blades to save the kingdom that betrayed her, or watch her daughter become the next target — and multiple taglines suitable for covers and social graphics, such as Heritage is a lie. Blood is the truth. A vibe check proposes a song lyric or musical style aligned to the book’s mood and defines the ideal reader (such as those who embrace complex anti-heroes and accept tragic endings) to keep branding consistent.",
-                        "Cinematic storyboarding can automatically generate atmospheric images representing the scene’s mood and setting from chapter content; favorite visuals can be locked to prevent overwriting. Characters may be injected by dragging tiles onto cards to mark presence; linked snippets assigned to a chapter appear on its dashboard so pivotal lines or observations are not forgotten.",
-                        "The Novelos Team"
+                        "• <strong>Pacing Heatmap:</strong> Visualizes the tension and speed of your narrative across all chapters.",
+                        "• <strong>Plot Brainstorm:</strong> Detects plot holes, suggests twists, and analyzes character arc consistency.",
+                        "• <strong>Social Media Studio:</strong> Automatically generates promotional images and captions for Instagram and TikTok based on your actual manuscript content."
                     ]
                 }
             ]
         }
     ];
 
-    const sectionRefs = useRef<{[key: string]: HTMLHeadingElement | null}>({});
-
-    const handleLinkClick = (title: string) => {
-        sectionRefs.current[title]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
-
-    const handleExport = () => {
-        const paragraphs: Paragraph[] = [];
-        
-        const createRunsFromHtml = (htmlString: string): (TextRun | ExternalHyperlink)[] => {
-            const runs: (TextRun | ExternalHyperlink)[] = [];
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = htmlString;
-
-            function processNode(node: Node, isBold = false) {
-                if (node.nodeType === Node.TEXT_NODE && node.textContent) {
-                    runs.push(new TextRun({ text: node.textContent, bold: isBold }));
-                } else if (node.nodeType === Node.ELEMENT_NODE) {
-                    const el = node as HTMLElement;
-                    const currentBold = isBold || el.tagName.toLowerCase() === 'strong' || el.tagName.toLowerCase() === 'b';
-
-                    if (el.tagName.toLowerCase() === 'a') {
-                        const link = el.getAttribute('href');
-                        if (link && el.textContent) {
-                            runs.push(new ExternalHyperlink({
-                                children: [new TextRun({ text: el.textContent, style: "Hyperlink" })],
-                                link: link,
-                            }));
-                        }
-                    } else {
-                        el.childNodes.forEach(child => processNode(child, currentBold));
-                    }
-                }
-            }
-            
-            tempDiv.childNodes.forEach(node => processNode(node, false));
-            return runs;
-        };
-        
-        paragraphs.push(new Paragraph({ text: "Novelos User Guide", heading: HeadingLevel.TITLE, alignment: AlignmentType.CENTER }));
-
-        guideContent.forEach(section => {
-            paragraphs.push(new Paragraph({ 
-                text: section.title, 
-                heading: HeadingLevel.HEADING_1, 
-                spacing: { before: 400, after: 200 }
-            }));
-
-            (section.children as any[]).forEach((child: any) => {
-                paragraphs.push(new Paragraph({ text: child.title, heading: HeadingLevel.HEADING_2, spacing: { before: 300, after: 150 } }));
-                
-                if (child.content) {
-                    child.content.forEach((p: string) => paragraphs.push(new Paragraph({ children: createRunsFromHtml(p), spacing: { after: 100 } })));
-                }
-            });
-        });
-
-        const doc = new Document({
-            sections: [{
-                properties: {},
-                children: paragraphs,
-            }],
-        });
-    
-        Packer.toBlob(doc).then(blob => {
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "novelos_user_guide.docx";
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        });
-    };
-
     return (
         <Modal onClose={onClose} settings={settings} title="Novelos User Guide" className="max-w-4xl">
-            <div className="space-y-8 text-sm opacity-90 leading-relaxed">
-                {/* Table of Contents */}
-                <div>
-                    <h2 className="text-2xl font-bold mb-4" style={{color: settings.textColor}}>Contents</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-                        {guideContent.map(section => (
-                            <div key={section.title} className="mb-4">
-                                <h3 className="font-semibold text-base mb-2">
-                                    <a onClick={() => handleLinkClick(section.title)} className="cursor-pointer hover:underline" style={{color: settings.accentColor}}>{section.title}</a>
-                                </h3>
-                                <ul className="space-y-1 pl-2">
-                                    {(section.children as any[]).map(child => (
-                                        <li key={child.title}>
-                                            <a onClick={() => handleLinkClick(child.title)} className="cursor-pointer hover:underline text-xs">{child.title}</a>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                <hr className="my-8" style={{borderColor: settings.toolbarInputBorderColor}} />
-
-                {/* Guide Content */}
-                {guideContent.map(section => (
-                    <div key={section.title}>
-                        <h3 ref={el => { sectionRefs.current[section.title] = el; }} className="text-2xl font-semibold mb-4 scroll-mt-4 border-b pb-2" style={{color: settings.textColor, borderColor: settings.toolbarInputBorderColor}}>{section.title}</h3>
-                        <div className="space-y-8">
-                            {(section.children as any[]).map(child => (
-                                <div key={child.title}>
-                                    <h4 ref={el => { sectionRefs.current[child.title] = el; }} className="text-xl font-semibold mb-3 scroll-mt-4" style={{color: settings.textColor}}>{child.title}</h4>
-                                    <div className="space-y-3">
-                                        {child.content?.map((p: string, i: number) => <p key={i} dangerouslySetInnerHTML={{__html: p}} className="leading-relaxed" />)}
+            <div className="space-y-8 py-2">
+                {guideContent.map((section, sIdx) => (
+                    <div key={sIdx} className="space-y-6">
+                        <h2 className="text-2xl font-serif font-bold tracking-tight border-b pb-2" style={{ borderColor: settings.toolbarInputBorderColor, color: settings.accentColor }}>
+                            {section.title}
+                        </h2>
+                        <div className="space-y-8 pl-2">
+                            {section.children.map((child, cIdx) => (
+                                <div key={cIdx} className="space-y-3">
+                                    <h3 className="text-lg font-bold opacity-90">{child.title}</h3>
+                                    <div className="space-y-4 text-sm leading-relaxed opacity-80">
+                                        {child.content.map((paragraph, pIdx) => (
+                                            <p key={pIdx} dangerouslySetInnerHTML={{ __html: paragraph }} />
+                                        ))}
                                     </div>
                                 </div>
                             ))}
                         </div>
-                        <div className="h-8"></div>
                     </div>
                 ))}
-            </div>
-
-             <div className="mt-6 pt-4 border-t flex justify-end" style={{ borderColor: settings.toolbarInputBorderColor }}>
-                <button
-                    onClick={handleExport}
-                    className="px-3 py-1.5 rounded-md text-sm font-medium flex items-center"
-                    style={{ backgroundColor: settings.toolbarButtonBg }}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = settings.toolbarButtonHoverBg || ''}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = settings.toolbarButtonBg || ''}
-                    title="Export User Guide as DOCX"
-                >
-                    <DocumentTextIcon className="h-4 w-4 mr-2" />
-                    Export as DOCX
-                </button>
+                <div className="pt-8 text-center border-t opacity-40 text-xs" style={{ borderColor: settings.toolbarInputBorderColor }}>
+                    <p>Novelos v7.2.5 &mdash; Thomas Corfield</p>
+                </div>
             </div>
         </Modal>
     );

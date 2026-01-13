@@ -1,4 +1,3 @@
-
 export {};
 
 declare global {
@@ -11,7 +10,7 @@ declare global {
     writeZipToFolder: (folderPath: string, fileName: string, content: Uint8Array) => Promise<boolean>;
     scanForLatestZip: (folderPath: string) => Promise<{ name: string; path: string; date: number; content: Uint8Array } | null>;
     openFileDialog: () => Promise<{ name: string; content: Uint8Array } | null>;
-    importNoveliFile: () => Promise<{ name: string; content: Uint8Array; warning?: string } | null>;
+    importNoveFile: () => Promise<{ name: string; content: Uint8Array; warning?: string } | null>;
     activateLicense: (key: string) => Promise<{ success: boolean; error?: string }>;
     checkLicense: () => Promise<boolean>;
     openPath: (path: string) => Promise<boolean>;

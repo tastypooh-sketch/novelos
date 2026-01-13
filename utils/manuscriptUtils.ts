@@ -1,9 +1,7 @@
-
-
 import { Packer, Document, Paragraph, TextRun, HeadingLevel, ImageRun, AlignmentType, ExternalHyperlink } from 'docx';
 import JSZip from 'jszip';
 import type { IChapter, INovelState, EditorSettings, ICharacter, ISnippet, WritingGoals } from '../types';
-import { generateNoveliHTML } from './noveliGenerator';
+import { generateNoveHTML } from './noveGenerator';
 
 // --- ZIP PROTOCOL UTILS ---
 
@@ -48,8 +46,6 @@ export const parseTimestampFromFilename = (filename: string): Date | null => {
 const getFaviconBase64 = async (): Promise<string> => {
     try {
         // Try fetching the icon from the public root
-        // In Vite dev: /icon.png
-        // In Prod (Electron): ./icon.png relative to index.html
         let response = await fetch('./icon.png');
         if (!response.ok) response = await fetch('./icon.ico');
         
@@ -62,7 +58,7 @@ const getFaviconBase64 = async (): Promise<string> => {
             });
         }
     } catch (e) {
-        console.warn("Failed to load favicon for Noveli export", e);
+        console.warn("Failed to load favicon for Nove export", e);
     }
     return "";
 };
@@ -412,30 +408,30 @@ export const markdownToDocxParagraphs = (markdown: string | undefined): Paragrap
     return paragraphs;
 };
 
-// --- NOVELI EXPORT UTILS ---
+// --- NOVE EXPORT UTILS ---
 
-export const exportForNoveli = async (fullState: INovelState, settings: EditorSettings, writingGoals: WritingGoals) => {
+export const exportForNove = async (fullState: INovelState, settings: EditorSettings, writingGoals: WritingGoals) => {
     const zip = new JSZip();
     
     // Fetch favicon
     const favicon = await getFaviconBase64();
 
     // 1. Generate Standalone Application HTML
-    const noveliHtml = generateNoveliHTML(fullState, settings, writingGoals, favicon);
-    zip.file("Noveli.html", noveliHtml);
+    const noveHtml = generateNoveHTML(fullState, settings, writingGoals, favicon);
+    zip.file("Nove.html", noveHtml);
 
     // 2. Add raw data files
     const projectData = zip.folder("Project_Data");
     if (projectData) {
         // We create a backup zip inside the export to act as the "Initial Save" for the portable user
         const initialBackup = await createProjectZip(fullState, settings);
-        const name = generateTimestampedName("Novelos_Export"); // Default name, user can rename file
+        const name = generateTimestampedName("Nove_Export"); // Default name, user can rename file
         projectData.file(name, initialBackup);
     }
 
     // 3. Generate Zip
     const content = await zip.generateAsync({ type: "blob" });
-    const filename = generateTimestampedName("Noveli_Portable");
+    const filename = generateTimestampedName("Nove_Portable");
     
     // 4. Save
     // @ts-ignore
@@ -468,10 +464,10 @@ export const exportForNoveli = async (fullState: INovelState, settings: EditorSe
 };
 
 /**
- * Creates a clean Noveli zip file for distribution (e.g., store upload).
+ * Creates a clean Nove zip file for distribution (e.g., store upload).
  * It contains an empty project state.
  */
-export const exportDistributionNoveli = async (cleanState: INovelState, defaultSettings: EditorSettings) => {
+export const exportDistributionNove = async (cleanState: INovelState, defaultSettings: EditorSettings) => {
     const zip = new JSZip();
     
     // Fetch favicon
@@ -480,14 +476,14 @@ export const exportDistributionNoveli = async (cleanState: INovelState, defaultS
     // 1. Generate Clean HTML
     // Default goals for a new user
     const goals: WritingGoals = { manuscriptGoal: 50000, dailyGoal: 1000 };
-    const noveliHtml = generateNoveliHTML(cleanState, defaultSettings, goals, favicon);
+    const noveHtml = generateNoveHTML(cleanState, defaultSettings, goals, favicon);
     
     // 2. Add ONLY the HTML file. No Project_Data folder needed for a fresh start.
-    zip.file("Noveli.html", noveliHtml);
+    zip.file("Nove.html", noveHtml);
 
     // 3. Generate Zip
     const content = await zip.generateAsync({ type: "blob" });
-    const filename = "Noveli_Portable_Distribution.zip";
+    const filename = "Nove_Portable_Distribution.zip";
     
     // 4. Save
     // @ts-ignore
@@ -514,7 +510,7 @@ export const exportDistributionNoveli = async (cleanState: INovelState, defaultS
     }
 };
 
-export const parseNoveliSync = async (file: File): Promise<{ state: INovelState, settings?: EditorSettings } | null> => {
+export const parseNoveSync = async (file: File): Promise<{ state: INovelState, settings?: EditorSettings } | null> => {
     if (file.name.endsWith('.zip')) {
         try {
             const zip = new JSZip();
@@ -524,7 +520,7 @@ export const parseNoveliSync = async (file: File): Promise<{ state: INovelState,
             let jsonFile = content.file("project_data.json");
             
             // Legacy/Fallback lookups
-            if (!jsonFile) jsonFile = content.file("noveli_data.json");
+            if (!jsonFile) jsonFile = content.file("nove_data.json");
             if (!jsonFile) jsonFile = content.file("Project_Data/project_meta.json");
             
             if (!jsonFile) {
@@ -566,7 +562,7 @@ export const parseNoveliSync = async (file: File): Promise<{ state: INovelState,
                         const settings = json.settings as EditorSettings | undefined;
                         resolve({ state, settings });
                     } else {
-                        reject(new Error("Invalid Noveli sync file format."));
+                        reject(new Error("Invalid Nove sync file format."));
                     }
                 } catch (err) {
                     reject(err);

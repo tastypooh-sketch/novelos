@@ -200,7 +200,7 @@ export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ se
 
                 {/* Maintenance Section */}
                 <div className="pt-6 border-t" style={{ borderColor: settings.toolbarInputBorderColor }}>
-                    <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-6">
                         <div className="flex justify-between items-center">
                             <div>
                                 <h3 className="font-bold text-sm text-red-400">Factory Reset</h3>

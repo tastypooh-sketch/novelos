@@ -1,4 +1,3 @@
-
 import type { INovelState, EditorSettings, WritingGoals } from '../types';
 
 // Default backgrounds from App.tsx to ensure consistency
@@ -73,13 +72,16 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
     const encodedGoals = safeEncode(writingGoals);
     const encodedBackgrounds = safeEncode(DEFAULT_BACKGROUNDS);
 
+    // Pre-calculate the favicon link to avoid template literal escaping issues inside the main block
+    const faviconHtml = faviconBase64 ? `<link rel="icon" href="${faviconBase64}" />` : '';
+
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Nove: Portable Manuscript</title>
-    ${faviconBase64 ? `<link rel="icon" href="${faviconBase64}" />` : ''}
+    ${faviconHtml}
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
@@ -171,10 +173,8 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
     <div id="root" class="h-full w-full"></div>
 
     <script type="text/babel">
-        // --- REACT GLOBALS ---
         const { useState, useEffect, useRef, useMemo, useCallback, useLayoutEffect } = React;
 
-        // --- DATA DECODING ---
         const safeDecode = (str) => {
             try {
                 return JSON.parse(decodeURIComponent(atob(str).split('').map(function(c) {
@@ -191,7 +191,6 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
         const initialGoals = safeDecode('${encodedGoals}');
         const DEFAULT_BGS = safeDecode('${encodedBackgrounds}');
         
-        // --- UTILS ---
         const hexToRgb = (hex) => {
             const result = /^#?([a-f\\d]{2})([a-f\\d]{2})([a-f\\d]{2})$/i.exec(hex);
             return result ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)] : null;
@@ -920,7 +919,7 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
                             if (!node.getAttribute('style')) node.removeAttribute('style');
                         }
                     }
-                    onPlaySound('enter'); onChange(e.currentTarget.innerHTML);
+                    onPlaySound('enter'); onChange(editorRef.current.innerHTML);
                     setTimeout(checkAndEnforceCaretVisibility, 10);
                     return;
                 }
@@ -1260,7 +1259,7 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
                     </div>
                     <div className={\`flex-shrink-0 flex flex-wrap items-center justify-center sm:justify-between gap-y-2 px-4 shadow-lg z-20 transition-all duration-300 \${isFocusMode ? 'max-h-0 py-0 opacity-0 pointer-events-none border-none overflow-hidden' : 'max-h-48 py-2 opacity-100 border-t'}\`} style={{backgroundColor: settings.toolbarBg, borderColor: settings.toolbarButtonBg}}>
                         <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-center sm:justify-start w-full sm:w-auto">
-                            <a href="https://www.thomascorfield.com" target="_blank" rel="noopener noreferrer" className="text-xl font-serif font-bold tracking-wider hover:opacity-80 transition-opacity" style={{color: settings.textColor}}>Novel<span style={{color: settings.accentColor}}>e</span></a>
+                            <a href="https://www.thomascorfield.com" target="_blank" rel="noopener noreferrer" className="text-xl font-serif font-bold tracking-wider hover:opacity-80 transition-opacity mr-2" style={{color: settings.textColor}}>Nov<span style={{color: settings.accentColor}}>e</span></a>
                             <select value={activeChapterId} onChange={(e) => setActiveChapterId(e.target.value)} className="text-sm border rounded px-2 py-1 focus:outline-none" style={{backgroundColor: settings.toolbarButtonBg, color: settings.textColor, borderColor: settings.toolbarButtonBg}}>{chapters.map(c => <option key={c.id} value={c.id}>{c.chapterNumber}. {c.title}</option>)}</select>
                             <button onClick={handleAddChapter} className="p-1 rounded hover:opacity-80 transition-colors" style={{backgroundColor: settings.toolbarButtonBg, color: settings.textColor}} title="Add New Chapter"><Icons.Plus /></button>
                             <div className="flex items-center gap-2">

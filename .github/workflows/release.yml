@@ -1,10 +1,10 @@
 
-name: Build and Release Novelos
+name: Build and Release Novelos 7.2.5
 
 on:
   push:
     tags:
-      - 'v*' # Trigger on any tag starting with v, like v7.1.9
+      - 'v*'
 
 permissions:
   contents: write
@@ -37,19 +37,19 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libarchive-tools libicns-dev graphicsmagick xz-utils rpm
 
-      - name: Build & Release (macOS)
+      - name: Build & Release (macOS Universal)
         if: matrix.os == 'macos-latest'
         run: npm run electron:build:mac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build & Release (Windows)
+      - name: Build & Release (Windows Setup)
         if: matrix.os == 'windows-latest'
         run: npm run electron:build:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build & Release (Linux/Chromebook)
+      - name: Build & Release (Linux Chromebook/Debian)
         if: matrix.os == 'ubuntu-latest'
         run: npm run electron:build:linux
         env:

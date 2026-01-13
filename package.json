@@ -1,7 +1,7 @@
 
 {
   "name": "novelos-desktop",
-  "version": "7.1.9",
+  "version": "7.2.5",
   "description": "Novelos Desktop App",
   "main": "electron/main.js",
   "repository": {
@@ -77,7 +77,7 @@
       "icon": "public/icon.icns",
       "category": "public.app-category.productivity",
       "identity": null,
-      "artifactName": "${productName}_macOS_${version}.${ext}"
+      "artifactName": "${productName}_macOS_${version}_${arch}.${ext}"
     },
     "linux": {
       "target": [
