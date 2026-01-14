@@ -33,7 +33,7 @@ const safeEncode = (data: any) => {
                 return String.fromCharCode(parseInt(p1, 16));
             }));
     } catch (e) {
-        console.error("Failed to encode data for Nove export", e);
+        console.error("Failed to encode data for Nové export", e);
         return "";
     }
 };
@@ -80,7 +80,7 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Nove: Portable Manuscript</title>
+    <title>Nové: Portable Manuscript</title>
     ${faviconHtml}
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
@@ -452,9 +452,9 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
                         </header>
                         <div className="p-8 text-sm space-y-4 font-sans opacity-90">
                              <p><strong>1. DISCLAIMER:</strong> This software is provided "AS IS". The developer assumes no responsibility for data loss, system crashes, or lost income.</p>
-                             <p><strong>2. PRIVACY:</strong> Nove works offline. Your manuscript stays on your device. No data is harvested or transmitted.</p>
-                             <p><strong>3. BACKUPS:</strong> You are solely responsible for maintaining external backups. Nove saves "snapshots" into ZIP files when you click save.</p>
-                             <p><strong>4. STANDALONE USE:</strong> Nove is a derivative of Novelos. It is free for portable use, but does not include AI tools, which require a Novelos Desktop license.</p>
+                             <p><strong>2. PRIVACY:</strong> Nové works offline. Your manuscript stays on your device. No data is harvested or transmitted.</p>
+                             <p><strong>3. BACKUPS:</strong> You are solely responsible for maintaining external backups. Nové saves "snapshots" into ZIP files when you click save.</p>
+                             <p><strong>4. STANDALONE USE:</strong> Nové is a derivative of Novelos. It is free for portable use, but does not include AI tools, which require a Novelos Desktop license.</p>
                              
                              <label className="flex items-center gap-3 pt-4 cursor-pointer select-none">
                                 <input type="checkbox" checked={accepted} onChange={e => setAccepted(e.target.checked)} className="w-4 h-4 rounded" style={{accentColor: settings.accentColor}} />
@@ -473,8 +473,8 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
             const guideContent = [
                 {
                     level: 1, title: "GETTING STARTED", children: [
-                        { level: 2, title: "Welcome to Nove Portable", content: ["Nove is a zero-installation, private, and ultra-portable word processor designed for long-form fiction. You can write anywhere with just a browser."] },
-                        { level: 2, title: "The Infinite Spread", content: ["Nove uses a landscape-oriented dual-pane layout. As you fill one page, the text naturally flows to the next spread. This eliminates the fatigue of infinite vertical scrolling and mimics the experience of reading a physical book."] },
+                        { level: 2, title: "Welcome to Nové Portable", content: ["Nové is a zero-installation, private, and ultra-portable word processor designed for long-form fiction. You can write anywhere with just a browser."] },
+                        { level: 2, title: "The Infinite Spread", content: ["Nové uses a landscape-oriented dual-pane layout. As you fill one page, the text naturally flows to the next spread. This eliminates the fatigue of infinite vertical scrolling and mimics the experience of reading a physical book."] },
                         { level: 2, title: "Navigation", content: ["Use your mouse wheel to scroll through spreads. On touchscreens, swipe left and right. You can also use Page Up and Page Down keys to flip entire spreads instantly."] }
                     ]
                 },
@@ -487,16 +487,16 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
                 },
                 {
                     level: 1, title: "SAVING & SYNCING", children: [
-                        { level: 2, title: "How Saving Works", content: ["Browsers cannot directly overwrite files on your computer. When you click 'Save', Nove packages your manuscript and settings into a timestamped ZIP file. Save this ZIP to your hard drive, cloud folder, or USB stick."] },
-                        { level: 2, title: "Back to Novelos", content: ["To resume work in the full Novelos Desktop application, use the 'Import from Nove' button and select your latest ZIP file. Everything—including your design choices—will be synchronized."] }
+                        { level: 2, title: "How Saving Works", content: ["Browsers cannot directly overwrite files on your computer. When you click 'Save', Nové packages your manuscript and settings into a timestamped ZIP file. Save this ZIP to your hard drive, cloud folder, or USB stick."] },
+                        { level: 2, title: "Back to Novelos", content: ["To resume work in the full Novelos Desktop application, use the 'Import from Nové' button and select your latest ZIP file. Everything—including your design choices—will be synchronized."] }
                     ]
                 },
                 {
                     level: 1, title: "FREQUENTLY ASKED QUESTIONS", children: [
-                        { level: 2, title: "Is my data private?", content: ["Absolutely. Nove runs entirely on your local machine. No data is sent to our servers. Your words live inside the HTML file and the ZIP snapshots you create."] },
-                        { level: 2, title: "Can I use it offline?", content: ["Yes. Once you have the Nove.html file, you do not need an internet connection to write or save snapshots."] },
+                        { level: 2, title: "Is my data private?", content: ["Absolutely. Nové runs entirely on your local machine. No data is sent to our servers. Your words live inside the HTML file and the ZIP snapshots you create."] },
+                        { level: 2, title: "Can I use it offline?", content: ["Yes. Once you have the Nové.html file, you do not need an internet connection to write or save snapshots."] },
                         { level: 2, title: "Why a ZIP file instead of a Word doc?", content: ["The ZIP protocol is our 'Save' method. It allows us to bundle the structural data needed for syncing back to Novelos alongside human-readable RTF backups of every chapter."] },
-                        { level: 2, title: "Where are my characters and world notes?", content: ["The portable Nove editor focuses on pure writing. While Nove is the perfect tool for distraction-free drafting on any device, the heavy lifting of structural analysis and world management happens in the full Novelos suite.", "Think of Nove as your agile satellite and Novelos as your powerful mothership. When you return to your desktop, Novelos unlocks a universe of features: the AI-powered Pacing Heatmap, full character relationship graphs, the World-Building Crucible, and the Social Media Studio to automate your marketing. By separating drafting from structural engineering, you maintain creative flow while ensuring your story bible is always just a sync away."] }
+                        { level: 2, title: "Where are my characters and world notes?", content: ["The portable Nové editor focuses on pure writing. While Nové is the perfect tool for distraction-free drafting on any device, the heavy lifting of structural analysis and world management happens in the full Novelos suite.", "Think of Nové as your agile satellite and Novelos as your powerful mothership. When you return to your desktop, Novelos unlocks a universe of features: the AI-powered Pacing Heatmap, full character relationship graphs, the World-Building Crucible, and the Social Media Studio to automate your marketing. By separating drafting from structural engineering, you maintain creative flow while ensuring your story bible is always just a sync away."] }
                     ]
                 }
             ];
@@ -505,7 +505,7 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm p-4" onClick={onClose}>
                     <div className="w-full max-w-4xl m-4 rounded-lg shadow-2xl flex flex-col overflow-hidden h-[85vh]" style={{backgroundColor: settings.toolbarBg, color: settings.textColor, borderColor: settings.toolbarInputBorderColor}} onClick={e => e.stopPropagation()}>
                         <div className="p-4 border-b flex justify-between items-center bg-black/10" style={{borderColor: settings.toolbarButtonBg}}>
-                            <h3 className="font-bold text-lg">Nove User Guide & FAQ</h3>
+                            <h3 className="font-bold text-lg">Nové User Guide & FAQ</h3>
                             <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10"><Icons.Close /></button>
                         </div>
                         <div className="p-8 overflow-y-auto flex-grow space-y-10 text-sm leading-relaxed scroll-smooth">
@@ -526,7 +526,7 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
                             ))}
                             
                             <div className="pt-10 mt-10 border-t text-center opacity-40 text-xs" style={{borderColor: settings.toolbarInputBorderColor}}>
-                                <p>Nove v7.0 Portable &mdash; Part of the Novelos Ecosystem</p>
+                                <p>Nové v7.2.5 Portable &mdash; Part of the Novelos Ecosystem</p>
                             </div>
                         </div>
                     </div>
@@ -1192,9 +1192,9 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
 
             const handlePortableSave = async (forceNewFolder = false) => {
                 setIsSaving(true);
-                const syncData = { chapters: chapters, settings: settings, timestamp: new Date().toISOString(), source: 'Nove' };
+                const syncData = { chapters: chapters, settings: settings, timestamp: new Date().toISOString(), source: 'Nové' };
                 try {
-                    const zip = new jszip();
+                    const zip = new JSZip();
                     zip.file("project_data.json", JSON.stringify(syncData, null, 2));
                     const rtfFolder = zip.folder("RTF_Backups");
                     chapters.forEach(ch => {
@@ -1259,7 +1259,7 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
                     </div>
                     <div className={\`flex-shrink-0 flex flex-wrap items-center justify-center sm:justify-between gap-y-2 px-4 shadow-lg z-20 transition-all duration-300 \${isFocusMode ? 'max-h-0 py-0 opacity-0 pointer-events-none border-none overflow-hidden' : 'max-h-48 py-2 opacity-100 border-t'}\`} style={{backgroundColor: settings.toolbarBg, borderColor: settings.toolbarButtonBg}}>
                         <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-center sm:justify-start w-full sm:w-auto">
-                            <a href="https://www.thomascorfield.com" target="_blank" rel="noopener noreferrer" className="text-xl font-serif font-bold tracking-wider hover:opacity-80 transition-opacity mr-2" style={{color: settings.textColor}}>Nov<span style={{color: settings.accentColor}}>e</span></a>
+                            <a href="https://www.thomascorfield.com" target="_blank" rel="noopener noreferrer" className="text-xl font-serif font-bold tracking-wider hover:opacity-80 transition-opacity mr-2" style={{color: settings.textColor}}>Nov<span style={{color: settings.accentColor}}>é</span></a>
                             <select value={activeChapterId} onChange={(e) => setActiveChapterId(e.target.value)} className="text-sm border rounded px-2 py-1 focus:outline-none" style={{backgroundColor: settings.toolbarButtonBg, color: settings.textColor, borderColor: settings.toolbarButtonBg}}>{chapters.map(c => <option key={c.id} value={c.id}>{c.chapterNumber}. {c.title}</option>)}</select>
                             <button onClick={handleAddChapter} className="p-1 rounded hover:opacity-80 transition-colors" style={{backgroundColor: settings.toolbarButtonBg, color: settings.textColor}} title="Add New Chapter"><Icons.Plus /></button>
                             <div className="flex items-center gap-2">

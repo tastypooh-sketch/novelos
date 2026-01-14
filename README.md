@@ -2,7 +2,7 @@
 # NOVELOS 
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Version](https://img.shields.io/badge/version-7.0.9-green.svg)
+![Version](https://img.shields.io/badge/version-7.2.9-green.svg)
 ![Status](https://img.shields.io/badge/status-stable-success.svg)
 
 **Novelos** redefines digital storytelling by fusing a distraction-free, horizontal "infinite spread" interface with a deeply integrated, context-aware AI engine. Unlike traditional corkboarding software where AI is merely an add-on, Novelos is architected from the ground up as a responsive "Novel Operating System." 
@@ -78,7 +78,7 @@ npm run electron:build:mac
 npm run electron:build:linux
 ```
 
-Output files will be generated in the \`dist-electron\` folder.
+Output files will be generated in the `dist-electron` folder.
 
 ---
 
@@ -88,7 +88,7 @@ Novelos utilizes the Google GenAI SDK. To use the AI features:
 1.  Launch the app.
 2.  Go to **Customize Toolbar** (Cog Icon).
 3.  Enter your Google Gemini API Key.
-4.  The key is stored locally on your device (\`localStorage\`).
+4.  The key is stored locally on your device (`localStorage`).
 
 ---
 

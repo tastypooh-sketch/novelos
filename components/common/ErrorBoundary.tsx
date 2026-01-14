@@ -1,3 +1,4 @@
+
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { INovelState } from '../../types';
 import { RefreshIcon, SaveIcon } from './Icons';
@@ -16,18 +17,14 @@ interface ErrorBoundaryState {
 /**
  * ErrorBoundary component to catch rendering errors and provide a rescue backup option.
  */
-// Fix: Use React.Component explicitly to ensure standard React component inheritance is recognized by TypeScript
-export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  // Fix: Initializing state property in class body to ensure it's recognized by TypeScript as part of ErrorBoundary
-  public state: ErrorBoundaryState = {
+// FIXED: Use Component from direct imports to avoid any potential namespace issues with React.Component.
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  // Initializing state property correctly
+  state: ErrorBoundaryState = {
     hasError: false,
     error: null,
     errorInfo: null
   };
-
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-  }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error, errorInfo: null };
@@ -35,14 +32,14 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
-    // Fix: Accessing setState method inherited from React.Component
+    // FIXED: Explicitly call setState inherited from Component.
     this.setState({ errorInfo });
   }
 
-  // Fix: Arrow function preserves instance context for accessing inherited props
+  // Arrow function preserves instance context for accessing this.props
   private handleEmergencySave = () => {
     try {
-        // Fix: Accessing props correctly via this.props inherited from React.Component
+        // FIXED: Accessing props via this.props inherited from React.Component
         const backupData = JSON.stringify(this.props.state, null, 2);
         const blob = new Blob([backupData], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -57,7 +54,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     } catch (e) {
         alert("Failed to generate backup file. Please check console for data.");
         console.error("Backup failed:", e);
-        // Fix: Safely accessing props within the class instance context
+        // FIXED: Safely accessing props within the class instance context
         if (this.props && this.props.state) {
             console.log("Current State:", this.props.state);
         }
@@ -69,7 +66,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   };
 
   render(): ReactNode {
-    // Fix: Accessing state inherited from React.Component via this.state
+    // FIXED: Accessing state inherited from Component via this.state
     if (this.state.hasError) {
       return (
         <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gray-900 text-white p-8 text-center font-sans">
@@ -80,7 +77,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             </p>
             
             <div className="bg-black/50 p-4 rounded text-left overflow-auto max-h-48 mb-8 font-mono text-xs text-red-300 border border-red-500/20">
-              {/* Fix: Accessing error information from component state instance */}
+              {/* FIXED: Accessing error information from component state instance */}
               {this.state.error && this.state.error.toString()}
               <br />
               {this.state.errorInfo && this.state.errorInfo.componentStack}
@@ -110,7 +107,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       );
     }
 
-    // Fix: Accessing props inherited from React.Component via this.props
+    // FIXED: Accessing props inherited from React.Component via this.props
     return this.props.children;
   }
 }
