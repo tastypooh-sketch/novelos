@@ -271,9 +271,41 @@ const App: React.FC = () => {
     
     // Local App State
     const [activeChapterId, setActiveChapterId] = useState<string>(chapters[0]?.id || '');
+    
+    // DEFAULT SHORTCUTS LIST - TYPO CORRECTIONS
     const [shortcuts, setShortcuts] = useState<Shortcut[]>([
-        { id: generateId(), key: 'Osc', value: 'Oscar' },
-        { id: generateId(), key: 'AI', value: "A'rdath-Irr" },
+        { id: generateId(), key: '--', value: '—' },
+        { id: generateId(), key: '...', value: '…' },
+        { id: generateId(), key: '." he', value: '," he' },
+        { id: generateId(), key: '." she', value: '," she' },
+        { id: generateId(), key: '." I', value: '," I' },
+        { id: generateId(), key: 'taht', value: 'that' },
+        { id: generateId(), key: 'teh', value: 'the' },
+        { id: generateId(), key: 'abd', value: 'and' },
+        { id: generateId(), key: 'adn', value: 'and' },
+        { id: generateId(), key: 'hvae', value: 'have' },
+        { id: generateId(), key: 'wihout', value: 'without' },
+        { id: generateId(), key: 'recieve', value: 'receive' },
+        { id: generateId(), key: 'beleive', value: 'believe' },
+        { id: generateId(), key: 'seperate', value: 'separate' },
+        { id: generateId(), key: 'occured', value: 'occurred' },
+        { id: generateId(), key: 'occurence', value: 'occurrence' },
+        { id: generateId(), key: 'definately', value: 'definitely' },
+        { id: generateId(), key: 'dont', value: "don't" },
+        { id: generateId(), key: 'wont', value: "won't" },
+        { id: generateId(), key: 'cant', value: "can't" },
+        { id: generateId(), key: 'didnt', value: "didn't" },
+        { id: generateId(), key: 'thier', value: 'their' },
+        { id: generateId(), key: 'theyre', value: "they're" },
+        { id: generateId(), key: 'yuo', value: 'you' },
+        { id: generateId(), key: 'i ', value: 'I ' },
+        { id: generateId(), key: "i'm", value: "I'm" },
+        { id: generateId(), key: 'wierd', value: 'weird' },
+        { id: generateId(), key: 'writting', value: 'writing' },
+        { id: generateId(), key: 'lenth', value: 'length' },
+        { id: generateId(), key: 'wich', value: 'which' },
+        { id: generateId(), key: 'comming', value: 'coming' },
+        { id: generateId(), key: 'tommorrow', value: 'tomorrow' },
     ]);
     const [writingGoals, setWritingGoals] = useState<WritingGoals>({ manuscriptGoal: 110000, dailyGoal: 2500 });
     const [directoryHandle, setDirectoryHandle] = useState<FileSystemDirectoryHandle | null>(null);
@@ -686,7 +718,7 @@ ${text}
 Return your response as a JSON array of strings, where each string is a single paragraph describing one alternative scenario.`;
 
             const response = await getAI().models.generateContent({
-                model: 'gemini-2.5-flash',
+                model: 'gemini-3-flash-preview',
                 contents: prompt,
                 config: {
                     responseMimeType: "application/json",

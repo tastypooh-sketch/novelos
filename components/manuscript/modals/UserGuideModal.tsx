@@ -95,7 +95,7 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({ settings, onClos
                     </div>
                 ))}
                 <div className="pt-8 text-center border-t opacity-40 text-xs" style={{ borderColor: settings.toolbarInputBorderColor }}>
-                    <p>Novelos v7.2.5 &mdash; Thomas Corfield</p>
+                    <p>Novelos v7.3.9 &mdash; Thomas Corfield</p>
                 </div>
             </div>
         </Modal>

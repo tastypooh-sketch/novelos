@@ -2,7 +2,7 @@
 # NOVELOS 
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Version](https://img.shields.io/badge/version-7.2.9-green.svg)
+![Version](https://img.shields.io/badge/version-7.3.9-green.svg)
 ![Status](https://img.shields.io/badge/status-stable-success.svg)
 
 **Novelos** redefines digital storytelling by fusing a distraction-free, horizontal "infinite spread" interface with a deeply integrated, context-aware AI engine. Unlike traditional corkboarding software where AI is merely an add-on, Novelos is architected from the ground up as a responsive "Novel Operating System." 
@@ -19,7 +19,7 @@ Built with **React**, **Electron**, and **Google Gemini 2.5/3.0**.
 
 ### 1. Hybrid Architecture
 *   **Novelos Desktop:** The full "Command Center" for outlining, world-building, and drafting.
-*   **Nove (Portable):** Generates a single-file, offline HTML word processor (`Nove.html`) that contains your entire manuscript. Write on any device with a browser, then sync back to Desktop.
+*   **Nové (Portable):** Generates a single-file, offline HTML word processor (`Nové.html`) that contains your entire manuscript. Write on any device with a browser, then sync back to Desktop.
 
 ### 2. Manuscript Mode
 *   **Distraction-Free:** Horizontal "Infinite Spread" layout that mimics a book.

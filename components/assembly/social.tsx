@@ -1,16 +1,13 @@
-
 import React, { useCallback, useContext, useEffect, useState, useRef } from 'react';
 import type { EditorSettings, IChapter, ICharacter, Excerpt, SocialPost } from '../../types';
 import { useNovelState, useNovelDispatch } from '../../NovelContext';
 import { useAssemblyAI } from './AssemblyAIContext';
-// FIX: Removed non-existent PhoneIcon from imports.
-import { SpinnerIcon, SparklesIconOutline, RefreshIcon, ShareIcon, CameraIcon, UserCircleIcon } from '../common/Icons';
-import AutosizeTextarea from '../common/AutosizeTextarea';
+import { SpinnerIcon, SparklesIconOutline, RefreshIcon, ShareIcon, CameraIcon, UserCircleIcon, ChevronRightIcon, PlusIcon } from '../common/Icons';
 import { PostDisplay } from '../social/PostDisplay';
 import { PostVariationsModal } from '../social/PostVariationsModal';
 import { useDebouncedCallback } from 'use-debounce';
 import { AIError } from '../common/AIError';
-
+import { shadeColor } from '../../utils/colorUtils';
 
 const ExcerptItem: React.FC<{ 
     excerpt: Excerpt,
@@ -20,165 +17,62 @@ const ExcerptItem: React.FC<{
     onSelect: () => void,
     settings: EditorSettings 
 }> = ({ excerpt, chapter, characters, isSelected, onSelect, settings }) => {
-    const novelTitle = 'Novelos';
-    
     return (
         <div 
             onClick={onSelect} 
-            className="p-3 rounded-lg border-2 cursor-pointer transition-colors" 
+            className="p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 group relative overflow-hidden" 
             style={{ 
-                backgroundColor: settings.toolbarButtonBg, 
-                borderColor: isSelected ? settings.accentColor : settings.toolbarInputBorderColor,
-                borderStyle: 'solid'
+                backgroundColor: isSelected ? `${settings.accentColor}10` : settings.toolbarButtonBg, 
+                borderColor: isSelected ? settings.accentColor : 'transparent',
             }}
         >
-            <p className="text-sm italic">
-                {excerpt.text}
-                <span className="opacity-70">
-                    &nbsp;&mdash;&nbsp;{novelTitle}, Ch {chapter?.chapterNumber || '?'}.
-                </span>
-            </p>
-            <div className="text-xs opacity-60 mt-2 flex items-center gap-2">
-                <div className="flex items-center gap-1">
-                    {characters.map(c => c && (
-                        <div key={c.id} className="h-4 w-4 rounded-full bg-cover bg-center" style={{backgroundImage: c.photo ? `url(${c.photo})` : undefined, backgroundColor: c.imageColor}} title={c.name} />
-                    ))}
+            <div className="flex justify-between items-start gap-4">
+                <div className="flex-grow">
+                    <p className="text-sm italic leading-relaxed" style={{ color: settings.textColor }}>
+                        "{excerpt.text}"
+                    </p>
+                    <div className="flex items-center gap-3 mt-3">
+                        <div className="flex -space-x-1.5">
+                            {characters.map(c => c && (
+                                <div key={c.id} className="h-5 w-5 rounded-full border border-gray-800 bg-cover bg-center ring-2 ring-transparent group-hover:ring-white/20 transition-all" style={{backgroundImage: c.photo ? `url(${c.photo})` : undefined, backgroundColor: c.imageColor}} title={c.name} />
+                            ))}
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">Ch {chapter?.chapterNumber || '?'} &bull; {characters.map(c => c?.name).join(', ')}</span>
+                    </div>
                 </div>
-                 <span>{characters.map(c => c?.name).join(', ')}</span>
+                {isSelected && (
+                    <div className="flex-shrink-0 animate-in fade-in slide-in-from-left-2 duration-300">
+                        <ChevronRightIcon className="h-5 w-5" style={{ color: settings.accentColor }} />
+                    </div>
+                )}
             </div>
         </div>
     );
 };
-
-const ConfirmNewExcerptModal: React.FC<{
-    onConfirm: () => void;
-    onCancel: () => void;
-    settings: EditorSettings;
-}> = ({ onConfirm, onCancel, settings }) => {
-    const modalRef = useRef<HTMLDivElement>(null);
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-                onCancel();
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [onCancel]);
-
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div ref={modalRef} className="p-6 rounded-lg shadow-xl w-full max-w-md" style={{ backgroundColor: settings.toolbarBg, color: settings.toolbarText }}>
-                <h2 className="text-xl font-bold mb-4">Generate New Content?</h2>
-                <p className="mb-6">
-                    You have already generated content for an excerpt. Starting a new one will replace the current image and posts. Are you sure you want to continue?
-                </p>
-                <div className="mt-6 flex justify-end gap-4">
-                    <button onClick={onCancel} className="rounded px-4 py-2" style={{ backgroundColor: settings.toolbarButtonBg }} onMouseEnter={e => e.currentTarget.style.backgroundColor = settings.toolbarButtonHoverBg || ''} onMouseLeave={e => e.currentTarget.style.backgroundColor = settings.toolbarButtonBg || ''}>Cancel</button>
-                    <button onClick={onConfirm} className="rounded px-4 py-2 text-white" style={{ backgroundColor: settings.dangerColor }} onMouseEnter={e => e.currentTarget.style.backgroundColor = settings.dangerColorHover || ''} onMouseLeave={e => e.currentTarget.style.backgroundColor = settings.dangerColor || ''}>Continue & Replace</button>
-                </div>
-            </div>
-        </div>
-    );
-};
-
 
 export const SocialMediaPanel: React.FC<{ settings: EditorSettings }> = ({ settings }) => {
     const { chapters, characters, socialMediaState } = useNovelState();
     const dispatch = useNovelDispatch();
-    const {
-        onGenerateSocialContent,
-        onRegenerateImage,
-        onRegenerateTextAndHashtags,
-        onExtractExcerpts,
-        onGeneratePostVariations,
-    } = useAssemblyAI();
+    const { onGenerateSocialContent, onRegenerateImage, onRegenerateTextAndHashtags, onExtractExcerpts, onGeneratePostVariations, onSetError } = useAssemblyAI();
     const [isRegeneratingImage, setIsRegeneratingImage] = useState(false);
     const endOfExcerptsRef = useRef<HTMLDivElement>(null);
 
-    // State for confirmation modal
-    const [showConfirmModal, setShowConfirmModal] = useState(false);
-    const [pendingExcerptId, setPendingExcerptId] = useState<string | null>(null);
-    const [isVariationModalOpen, setIsVariationModalOpen] = useState(false);
-
-
-    const {
-        isLoading, error, excerpts, selectedExcerptId,
-        generatedImagePrompt, generatedImageUrl, generatedInstagramPost, generatedTiktokPost, selectedChapterId,
-        postVariations, variationPlatform,
-    } = socialMediaState;
+    const { isLoading, error, excerpts, selectedExcerptId, generatedImagePrompt, generatedImageUrl, generatedInstagramPost, generatedTiktokPost, selectedChapterId, postVariations, variationPlatform } = socialMediaState;
 
     const [localImagePrompt, setLocalImagePrompt] = useState(generatedImagePrompt || '');
     
-    useEffect(() => {
-        setLocalImagePrompt(generatedImagePrompt || '');
-    }, [generatedImagePrompt]);
+    useEffect(() => { setLocalImagePrompt(generatedImagePrompt || ''); }, [generatedImagePrompt]);
 
     const debouncedUpdateImagePrompt = useDebouncedCallback((prompt: string) => {
         dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { generatedImagePrompt: prompt } });
     }, 300);
 
-    const handleImagePromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setLocalImagePrompt(e.target.value);
-        debouncedUpdateImagePrompt(e.target.value);
-    };
-    
-    useEffect(() => {
-        endOfExcerptsRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [excerpts]);
-
-    // This is the core logic for selecting an excerpt and generating content
-    const proceedWithExcerptSelection = useCallback((excerptId: string) => {
-        dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: {
-            selectedExcerptId: excerptId,
-            generatedImagePrompt: null,
-            generatedImageUrl: null,
-            generatedInstagramPost: null,
-            generatedTiktokPost: null
-        }});
-        const excerpt = excerpts.find(e => e.id === excerptId);
-        if (excerpt) {
-            onGenerateSocialContent(excerpt);
-        }
-    }, [dispatch, excerpts, onGenerateSocialContent]);
-
-    // This is the user-facing handler that checks for existing content first
     const handleExcerptSelect = useCallback((excerptId: string) => {
-        if (generatedImageUrl && selectedExcerptId !== excerptId) {
-            setPendingExcerptId(excerptId);
-            setShowConfirmModal(true);
-        } else if (selectedExcerptId !== excerptId) {
-            proceedWithExcerptSelection(excerptId);
-        }
-    }, [generatedImageUrl, selectedExcerptId, proceedWithExcerptSelection]);
-
-    // Handlers for the confirmation modal
-    const handleConfirmNewExcerpt = () => {
-        if (pendingExcerptId) {
-            proceedWithExcerptSelection(pendingExcerptId);
-        }
-        setShowConfirmModal(false);
-        setPendingExcerptId(null);
-    };
-
-    const handleCancelNewExcerpt = () => {
-        setShowConfirmModal(false);
-        setPendingExcerptId(null);
-    };
-    
-    const handleChapterSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const chapterId = e.target.value;
-        dispatch({ type: 'SET_SOCIAL_CHAPTER', payload: chapterId });
-    };
-
-    const handleGenerateAiExcerpts = () => {
-        if (selectedChapterId) {
-            const chapter = chapters.find(c => c.id === selectedChapterId);
-            if (chapter) {
-                onExtractExcerpts(chapter, characters);
-            }
-        }
-    };
+        if (selectedExcerptId === excerptId) return;
+        dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { selectedExcerptId: excerptId, generatedImagePrompt: null, generatedImageUrl: null, generatedInstagramPost: null, generatedTiktokPost: null }});
+        const excerpt = excerpts.find(e => e.id === excerptId);
+        if (excerpt) onGenerateSocialContent(excerpt);
+    }, [dispatch, excerpts, onGenerateSocialContent, selectedExcerptId]);
 
     const handleRegenImage = useCallback(async (moodOnly: boolean) => {
         if (localImagePrompt) {
@@ -186,231 +80,121 @@ export const SocialMediaPanel: React.FC<{ settings: EditorSettings }> = ({ setti
             const selectedExcerpt = excerpts.find(e => e.id === selectedExcerptId);
             const mainCharacter = selectedExcerpt ? characters.find(c => c.id === selectedExcerpt.characterIds[0]) : undefined;
             const newUrl = await onRegenerateImage(localImagePrompt, moodOnly, mainCharacter);
-            if (newUrl) {
-                dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { generatedImageUrl: newUrl } });
-            }
+            if (newUrl) dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { generatedImageUrl: newUrl } });
             setIsRegeneratingImage(false);
         }
     }, [localImagePrompt, onRegenerateImage, dispatch, excerpts, selectedExcerptId, characters]);
-
-    const handleRegenText = useCallback(async (platform: 'instagram' | 'tiktok') => {
-        const excerpt = excerpts.find(e => e.id === selectedExcerptId);
-        if (excerpt) {
-            onRegenerateTextAndHashtags(excerpt, platform);
-        }
-    }, [excerpts, selectedExcerptId, onRegenerateTextAndHashtags]);
-    
-    const handleInstaTextChange = (text: string) => {
-        if(generatedInstagramPost){
-            const newPost = {...generatedInstagramPost, text};
-            dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { generatedInstagramPost: newPost } });
-        }
-    };
-    
-    const handleTiktokTextChange = (text: string) => {
-        if(generatedTiktokPost){
-            const newPost = {...generatedTiktokPost, text};
-            dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { generatedTiktokPost: newPost } });
-        }
-    };
-
-    const handleInstaHashtagsChange = (hashtags: string[]) => {
-        if (generatedInstagramPost) {
-            const newPost = { ...generatedInstagramPost, hashtags };
-            dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { generatedInstagramPost: newPost } });
-        }
-    };
-
-    const handleTiktokHashtagsChange = (hashtags: string[]) => {
-        if (generatedTiktokPost) {
-            const newPost = { ...generatedTiktokPost, hashtags };
-            dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { generatedTiktokPost: newPost } });
-        }
-    };
-
-    const handleExportImage = useCallback(() => {
-        if (!generatedImageUrl) return;
-        const excerpt = excerpts.find(e => e.id === selectedExcerptId);
-        const chapter = excerpt ? chapters.find(c => c.id === excerpt.chapterId) : null;
-
-        const a = document.createElement('a');
-        a.href = generatedImageUrl;
-        const fileName = `novelos_image_ch${chapter?.chapterNumber || 'X'}_${excerpt?.text.substring(0, 15).replace(/\s/g, '_') || 'export'}.png`;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-    }, [generatedImageUrl, selectedExcerptId, excerpts, chapters]);
-
-    const handleRepurpose = useCallback(async (platform: 'instagram' | 'tiktok') => {
-        const post = platform === 'instagram' ? generatedInstagramPost : generatedTiktokPost;
-        const excerpt = excerpts.find(e => e.id === selectedExcerptId);
-        if (post && excerpt) {
-            await onGeneratePostVariations(post, excerpt, platform);
-            setIsVariationModalOpen(true);
-        }
-    }, [generatedInstagramPost, generatedTiktokPost, excerpts, selectedExcerptId, onGeneratePostVariations]);
-
-    const handleSelectVariation = (post: SocialPost) => {
-        dispatch({ type: 'APPLY_POST_VARIATION', payload: post });
-        setIsVariationModalOpen(false);
-    };
 
     const userExcerpts = excerpts.filter(e => e.type === 'user');
     const aiExcerpts = excerpts.filter(e => e.type === 'ai');
 
     return (
-        <div className="w-full h-full flex flex-col md:flex-row gap-4 p-4 overflow-y-auto" style={{ backgroundColor: `${settings.toolbarButtonBg}60`}}>
-            {/* Column 1: Selection */}
-            <div className="flex flex-col gap-4 min-h-0 md:flex-[5]">
-                <div className="flex-shrink-0">
-                    <h3 className="font-semibold mb-2">1. Select an Excerpt</h3>
-                    <p className="text-xs opacity-70 mb-2">Send an excerpt from the Manuscript notes panel, or use the AI to generate suggestions from a chapter below.</p>
-                    <div className="space-y-2">
-                        <select
-                            value={selectedChapterId || ''}
-                            onChange={handleChapterSelectChange}
-                            className="w-full p-2 rounded border text-sm"
-                            style={{ backgroundColor: settings.backgroundColor, borderColor: settings.toolbarInputBorderColor, color: settings.textColor }}
-                        >
-                            <option value="">Select a chapter to generate excerpts...</option>
-                            {chapters.map(chap => <option key={chap.id} value={chap.id}>{chap.title} {chap.chapterNumber}</option>)}
-                        </select>
-                        <div className="flex justify-end">
-                            <button
-                                onClick={handleGenerateAiExcerpts}
-                                disabled={!selectedChapterId || isLoading}
-                                className="px-4 py-2 rounded-md text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-50"
-                                style={{ backgroundColor: settings.accentColor, color: '#FFFFFF' }}
-                            >
-                                {isLoading && !generatedImageUrl ? <SpinnerIcon /> : <SparklesIconOutline className="h-4 w-4" />}
-                                Generate AI Excerpts
-                            </button>
-                        </div>
-                    </div>
+        <div className="w-full h-full flex flex-col p-6 gap-6 overflow-hidden" style={{ color: settings.textColor }}>
+            <div className="flex-shrink-0 flex justify-between items-end">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+                        <CameraIcon className="h-8 w-8 text-yellow-400" /> Social Media Studio
+                    </h2>
+                    <p className="text-sm opacity-60 mt-1">Transform your manuscript into visual hooks and promotional posts.</p>
                 </div>
-                <div className="flex-grow flex flex-col min-h-0">
-                     <div className="flex-grow overflow-y-auto space-y-2 pr-2 -mr-2">
-                        {excerpts.length === 0 && (
-                             <div className="text-center text-sm opacity-60 pt-10">
-                                Your user-sent excerpts and AI-generated suggestions will appear here.
-                            </div>
-                        )}
-                        {userExcerpts.map(excerpt => {
-                            const chapter = chapters.find(c => c.id === excerpt.chapterId);
-                            const excerptChars = excerpt.characterIds.map(id => characters.find(c => c.id === id));
-                            return <ExcerptItem key={excerpt.id} excerpt={excerpt} chapter={chapter} characters={excerptChars} isSelected={selectedExcerptId === excerpt.id} onSelect={() => handleExcerptSelect(excerpt.id)} settings={settings}/>
-                        })}
-                        {userExcerpts.length > 0 && aiExcerpts.length > 0 && (
-                             <div className="flex items-center gap-2 py-2">
-                                <div className="flex-grow border-t" style={{borderColor: settings.toolbarInputBorderColor}}></div>
-                                <span className="text-xs opacity-60">AI Suggestions</span>
-                                <div className="flex-grow border-t" style={{borderColor: settings.toolbarInputBorderColor}}></div>
-                            </div>
-                        )}
-                        {aiExcerpts.map(excerpt => {
-                            const chapter = chapters.find(c => c.id === excerpt.chapterId);
-                            const excerptChars = excerpt.characterIds.map(id => characters.find(c => c.id === id));
-                            return <ExcerptItem key={excerpt.id} excerpt={excerpt} chapter={chapter} characters={excerptChars} isSelected={selectedExcerptId === excerpt.id} onSelect={() => handleExcerptSelect(excerpt.id)} settings={settings}/>
-                        })}
-                        <div ref={endOfExcerptsRef} />
-                    </div>
+                <div className="flex gap-3">
+                    <select
+                        value={selectedChapterId || ''}
+                        onChange={(e) => dispatch({ type: 'SET_SOCIAL_CHAPTER', payload: e.target.value })}
+                        className="px-4 py-2 rounded-xl text-sm font-medium focus:ring-0 transition-colors"
+                        style={{ backgroundColor: settings.toolbarButtonBg, color: settings.textColor, border: `1px solid ${settings.toolbarInputBorderColor}` }}
+                    >
+                        <option value="">Choose a chapter...</option>
+                        {chapters.map(chap => <option key={chap.id} value={chap.id} className="bg-gray-800 text-white">Ch {chap.chapterNumber}: {chap.title}</option>)}
+                    </select>
+                    <button
+                        onClick={() => {
+                            const chapter = chapters.find(c => c.id === selectedChapterId);
+                            if (chapter) onExtractExcerpts(chapter, characters);
+                        }}
+                        disabled={!selectedChapterId || isLoading}
+                        className="px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 text-white shadow-lg transition-transform active:scale-95 disabled:opacity-50"
+                        style={{ backgroundColor: settings.accentColor }}
+                    >
+                        {isLoading && !generatedImageUrl ? <SpinnerIcon className="h-4 w-4" /> : <SparklesIconOutline className="h-4 w-4" />}
+                        Generate Excerpts
+                    </button>
                 </div>
             </div>
-            
-            {/* Column 2 & 3: Review */}
-            {selectedExcerptId ? (
-                <>
-                    {/* Column 2: Image */}
-                    <div className="flex flex-col gap-4 min-h-0 md:flex-[4]">
-                        <h3 className="font-semibold">2. Social Media Preview</h3>
-                         <div className="p-4 rounded-lg flex-grow flex flex-col" style={{backgroundColor: settings.toolbarButtonBg}}>
-                             <div className="flex justify-between items-center mb-2">
-                                 <h4 className="font-semibold text-sm">Generated Image</h4>
-                                 <button onClick={handleExportImage} disabled={!generatedImageUrl || isLoading || isRegeneratingImage} className="text-xs px-2 py-1 rounded flex items-center justify-center gap-1 disabled:opacity-50" style={{ backgroundColor: settings.toolbarBg }}>
-                                    <ShareIcon className="h-3 w-3" /> Export
-                                </button>
+
+            <div className="flex-grow flex gap-6 min-h-0">
+                {/* Selection Panel */}
+                <div className="w-1/3 flex flex-col gap-4 min-h-0 bg-black/5 rounded-2xl p-4 border border-white/5">
+                    <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-40 ml-1">Repository</h3>
+                    <div className="flex-grow overflow-y-auto space-y-3 pr-2 -mr-2 scroll-smooth">
+                        {excerpts.length === 0 && (
+                            <div className="flex flex-col items-center justify-center text-center py-20 opacity-30">
+                                <PlusIcon className="h-10 w-10 mb-3" />
+                                <p className="text-sm font-medium">No excerpts available.</p>
+                                <p className="text-[11px] mt-1">Send them from the manuscript or generate them above.</p>
                             </div>
-                            <div className="flex-grow flex items-center justify-center">
-                                <div 
-                                    className="relative w-full max-w-[250px] aspect-[9/19.5] border-4 rounded-3xl p-1.5 shadow-lg"
-                                    style={{ borderColor: settings.toolbarInputBorderColor }}
-                                >
-                                    <div 
-                                        className="w-full h-full rounded-[1.1rem] overflow-hidden relative flex items-center justify-center"
-                                        style={{ backgroundColor: settings.backgroundColor }}
-                                    >
-                                        {(isLoading && !generatedImageUrl) && <SpinnerIcon className="h-8 w-8" />}
-                                        {isRegeneratingImage && (
-                                            <div className="image-reloading-overlay absolute inset-0 flex items-center justify-center z-10">
-                                                <SpinnerIcon className="h-8 w-8" />
-                                            </div>
-                                        )}
-                                        {generatedImageUrl && (
-                                           <img 
-                                               key={generatedImageUrl}
-                                               src={generatedImageUrl} 
-                                               alt={generatedImagePrompt || ''} 
-                                               className={`w-full h-full object-cover transition-opacity duration-300 ${isRegeneratingImage ? 'opacity-30' : 'opacity-100'}`}
-                                           />
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                            {generatedImagePrompt && (
-                                <div className="mt-3 text-center">
-                                    <div className="flex justify-center gap-2 mt-2">
-                                        <button onClick={() => handleRegenImage(false)} disabled={isLoading || isRegeneratingImage} className="text-xs px-2 py-1 rounded flex items-center gap-1 disabled:opacity-50" style={{backgroundColor: settings.toolbarBg}}><UserCircleIcon className="h-3 w-3" /> With Character</button>
-                                        <button onClick={() => handleRegenImage(true)} disabled={isLoading || isRegeneratingImage} className="text-xs px-2 py-1 rounded flex items-center gap-1 disabled:opacity-50" style={{backgroundColor: settings.toolbarBg}}><CameraIcon className="h-3 w-3"/> Mood Only</button>
-                                    </div>
-                                </div>
-                            )}
-                         </div>
-                    </div>
-                    
-                    {/* Column 3: Posts */}
-                    <div className="flex flex-col gap-4 min-h-0 md:flex-[5]">
-                         <div className="flex-grow flex flex-col min-h-0">
-                             <PostDisplay platform="Instagram" post={generatedInstagramPost} onTextChange={handleInstaTextChange} onHashtagsChange={handleInstaHashtagsChange} onRegenerate={() => handleRegenText('instagram')} onRepurpose={() => handleRepurpose('instagram')} isLoading={isLoading} settings={settings} />
-                         </div>
-                         <div className="flex-grow flex flex-col min-h-0">
-                             <PostDisplay platform="TikTok" post={generatedTiktokPost} onTextChange={handleTiktokTextChange} onHashtagsChange={handleTiktokHashtagsChange} onRegenerate={() => handleRegenText('tiktok')} onRepurpose={() => handleRepurpose('tiktok')} isLoading={isLoading} settings={settings} />
-                         </div>
-                    </div>
-                </>
-            ) : (
-                <div className="flex items-center justify-center text-center p-8 rounded-lg md:flex-[9]" style={{ backgroundColor: `${settings.toolbarButtonBg}80`, color: `${settings.textColor}99` }}>
-                     <div>
-                        <SparklesIconOutline className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <h3 className="text-lg font-semibold">Social Media Content Generator</h3>
-                        <p className="mt-2 text-sm max-w-md">
-                            Select an excerpt to automatically generate a promotional image and posts for Instagram and TikTok.
-                        </p>
+                        )}
+                        {userExcerpts.map(e => <ExcerptItem key={e.id} excerpt={e} chapter={chapters.find(c => c.id === e.chapterId)} characters={e.characterIds.map(id => characters.find(c => c.id === id))} isSelected={selectedExcerptId === e.id} onSelect={() => handleExcerptSelect(e.id)} settings={settings}/>)}
+                        {userExcerpts.length > 0 && aiExcerpts.length > 0 && <div className="h-px w-full bg-white/5 my-4" />}
+                        {aiExcerpts.map(e => <ExcerptItem key={e.id} excerpt={e} chapter={chapters.find(c => c.id === e.chapterId)} characters={e.characterIds.map(id => characters.find(c => c.id === id))} isSelected={selectedExcerptId === e.id} onSelect={() => handleExcerptSelect(e.id)} settings={settings}/>)}
                     </div>
                 </div>
-            )}
-             {showConfirmModal && (
-                <ConfirmNewExcerptModal 
-                    onConfirm={handleConfirmNewExcerpt} 
-                    onCancel={handleCancelNewExcerpt} 
-                    settings={settings}
-                />
-            )}
-            {isVariationModalOpen && (
-                <PostVariationsModal
-                    isOpen={isVariationModalOpen}
-                    onClose={() => {
-                        setIsVariationModalOpen(false);
-                        dispatch({ type: 'CLEAR_POST_VARIATIONS' });
-                    }}
-                    settings={settings}
-                    variations={postVariations}
-                    platform={variationPlatform}
-                    onSelect={handleSelectVariation}
-                    isLoading={isLoading}
-                />
-            )}
-            {error && <AIError message={error} className="mt-4" />}
+
+                {/* Preview/Edit Panel */}
+                <div className="flex-grow flex gap-6 min-h-0">
+                    {selectedExcerptId ? (
+                        <>
+                            <div className="w-[320px] flex flex-col gap-4 bg-black/5 rounded-2xl p-4 border border-white/5">
+                                <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-40 ml-1">Visual Hook</h3>
+                                <div className="flex-grow flex flex-col items-center justify-center gap-6">
+                                    <div className="relative w-full aspect-[9/16] rounded-3xl overflow-hidden shadow-2xl border-4" style={{ borderColor: settings.toolbarInputBorderColor, backgroundColor: settings.backgroundColor }}>
+                                        {generatedImageUrl ? (
+                                            <img src={generatedImageUrl} className={`w-full h-full object-cover transition-opacity duration-500 ${isRegeneratingImage ? 'opacity-30' : 'opacity-100'}`} />
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center h-full gap-4 opacity-30">
+                                                <SpinnerIcon className="h-10 w-10" />
+                                                <span className="text-[10px] font-bold tracking-widest">RENDER IN PROGRESS</span>
+                                            </div>
+                                        )}
+                                        {isRegeneratingImage && (
+                                            <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/40">
+                                                <SpinnerIcon className="h-10 w-10" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => handleRegenImage(false)} disabled={isLoading || isRegeneratingImage} className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-2" style={{ backgroundColor: settings.toolbarButtonBg }}>
+                                            <UserCircleIcon className="h-3.5 w-3.5" /> Character
+                                        </button>
+                                        <button onClick={() => handleRegenImage(true)} disabled={isLoading || isRegeneratingImage} className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-2" style={{ backgroundColor: settings.toolbarButtonBg }}>
+                                            <CameraIcon className="h-3.5 w-3.5" /> Atmosphere
+                                        </button>
+                                        <button onClick={() => {
+                                            const a = document.createElement('a'); a.href = generatedImageUrl!; a.download = 'novelos_hook.png'; a.click();
+                                        }} disabled={!generatedImageUrl} className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center gap-2" style={{ backgroundColor: settings.accentColor, color: 'white' }}>
+                                            <ShareIcon className="h-3.5 w-3.5" /> Save
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex-grow flex flex-col gap-4">
+                                <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-40 ml-1">Copywriting</h3>
+                                <div className="flex-grow grid grid-rows-2 gap-4">
+                                    <PostDisplay platform="Instagram" post={generatedInstagramPost} onTextChange={(text) => dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { generatedInstagramPost: { ...generatedInstagramPost!, text } } })} onHashtagsChange={(hashtags) => dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { generatedInstagramPost: { ...generatedInstagramPost!, hashtags } } })} onRegenerate={() => onRegenerateTextAndHashtags(excerpts.find(e => e.id === selectedExcerptId)!, 'instagram')} onRepurpose={async () => { await onGeneratePostVariations(generatedInstagramPost!, excerpts.find(e => e.id === selectedExcerptId)!, 'instagram'); }} isLoading={isLoading} settings={settings} />
+                                    <PostDisplay platform="TikTok" post={generatedTiktokPost} onTextChange={(text) => dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { generatedTiktokPost: { ...generatedTiktokPost!, text } } })} onHashtagsChange={(hashtags) => dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { generatedTiktokPost: { ...generatedTiktokPost!, hashtags } } })} onRegenerate={() => onRegenerateTextAndHashtags(excerpts.find(e => e.id === selectedExcerptId)!, 'tiktok')} onRepurpose={async () => { await onGeneratePostVariations(generatedTiktokPost!, excerpts.find(e => e.id === selectedExcerptId)!, 'tiktok'); }} isLoading={isLoading} settings={settings} />
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="flex-grow flex flex-col items-center justify-center text-center opacity-20">
+                            <SparklesIconOutline className="h-24 w-24 mb-6" />
+                            <h3 className="text-2xl italic">Select an excerpt to begin crafting.</h3>
+                        </div>
+                    )}
+                </div>
+            </div>
+            {error && <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-full max-w-lg z-50 animate-in fade-in slide-in-from-bottom-5 duration-300"><AIError message={error} onDismiss={() => onSetError(null)} /></div>}
+            {variationPlatform && <PostVariationsModal isOpen={!!postVariations} onClose={() => dispatch({ type: 'CLEAR_POST_VARIATIONS' })} settings={settings} variations={postVariations} platform={variationPlatform} onSelect={(post) => { dispatch({ type: 'APPLY_POST_VARIATION', payload: post }); }} isLoading={isLoading} />}
         </div>
     );
 };

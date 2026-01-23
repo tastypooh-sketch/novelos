@@ -1,3 +1,4 @@
+
 import type { INovelState, EditorSettings, WritingGoals } from '../types';
 
 // Default backgrounds from App.tsx to ensure consistency
@@ -22,6 +23,41 @@ const DEFAULT_BACKGROUNDS = [
     { url: 'https://static.vecteezy.com/system/resources/thumbnails/008/014/636/small/abstract-dynamic-black-background-design-vector.jpg', category: 'Backgrounds' as const },
     { url: 'https://static.vecteezy.com/system/resources/previews/010/654/924/non_2x/wave-lights-with-black-background-and-focus-spot-light-free-vector.jpg', category: 'Backgrounds' as const },
     { url: 'https://static.vecteezy.com/system/resources/thumbnails/033/863/113/small/grunge-paper-background-with-space-for-text-or-image-old-paper-texture-old-paper-sheet-vintage-aged-original-background-or-texture-ai-generated-free-photo.jpg', category: 'Backgrounds' as const },
+];
+
+const DEFAULT_SHORTCUTS = [
+    { key: '--', value: '—' },
+    { key: '...', value: '…' },
+    { key: '." he', value: '," he' },
+    { key: '." she', value: '," she' },
+    { key: '." I', value: '," I' },
+    { key: 'taht', value: 'that' },
+    { key: 'teh', value: 'the' },
+    { key: 'abd', value: 'and' },
+    { key: 'adn', value: 'and' },
+    { key: 'hvae', value: 'have' },
+    { key: 'wihout', value: 'without' },
+    { key: 'recieve', value: 'receive' },
+    { key: 'beleive', value: 'believe' },
+    { key: 'seperate', value: 'separate' },
+    { key: 'occured', value: 'occurred' },
+    { key: 'occurence', value: 'occurrence' },
+    { key: 'definately', value: 'definitely' },
+    { key: 'dont', value: "don't" },
+    { key: 'wont', value: "won't" },
+    { key: 'cant', value: "can't" },
+    { key: 'didnt', value: "didn't" },
+    { key: 'thier', value: 'their' },
+    { key: 'theyre', value: "they're" },
+    { key: 'yuo', value: 'you' },
+    { key: 'i ', value: 'I ' },
+    { key: "i'm", value: "I'm" },
+    { key: 'wierd', value: 'weird' },
+    { key: 'writting', value: 'writing' },
+    { key: 'lenth', value: 'length' },
+    { key: 'wich', value: 'which' },
+    { key: 'comming', value: 'coming' },
+    { key: 'tommorrow', value: 'tomorrow' },
 ];
 
 // Helper to safely encode data for HTML injection
@@ -71,6 +107,7 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
     const encodedSettings = safeEncode(exportedSettings);
     const encodedGoals = safeEncode(writingGoals);
     const encodedBackgrounds = safeEncode(DEFAULT_BACKGROUNDS);
+    const encodedShortcuts = safeEncode(DEFAULT_SHORTCUTS);
 
     // Pre-calculate the favicon link to avoid template literal escaping issues inside the main block
     const faviconHtml = faviconBase64 ? `<link rel="icon" href="${faviconBase64}" />` : '';
@@ -190,6 +227,7 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
         const initialSettings = safeDecode('${encodedSettings}');
         const initialGoals = safeDecode('${encodedGoals}');
         const DEFAULT_BGS = safeDecode('${encodedBackgrounds}');
+        const initialShortcuts = safeDecode('${encodedShortcuts}');
         
         const hexToRgb = (hex) => {
             const result = /^#?([a-f\\d]{2})([a-f\\d]{2})([a-f\\d]{2})$/i.exec(hex);
@@ -329,7 +367,7 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
             Focus: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
             Unfocus: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.243 4.243l-4.243-4.243" /></svg>,
             SoundOn: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>,
-            SoundOff: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l-2.25 2.25M19.5 12l2.25-2.25M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>,
+            SoundOff: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l-2.25 2.25M19.5 12l2.25-2.25M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>,
             Transition: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>,
             Spellcheck: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5"><path d="M0 0h24v24H0z" fill="none"/><text x="2" y="15" fontSize="13" fontWeight="bold" fontFamily="sans-serif" fill="currentColor">abc</text><path d="M21 7L9 19l-5-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>,
             Brush: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z" /></svg>,
@@ -342,6 +380,8 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
             Help: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>,
             Plus: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>,
             LineHeight: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /><path strokeLinecap="round" strokeLinejoin="round" d="M21 6.75v10.5m0 0l-2.25-2.25M21 17.25l2.25-2.25" /></svg>,
+            Keyboard: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>,
+            Trash: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>,
         };
 
         const useTypewriterSound = (enabled, volume = 0.75) => {
@@ -526,7 +566,7 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
                             ))}
                             
                             <div className="pt-10 mt-10 border-t text-center opacity-40 text-xs" style={{borderColor: settings.toolbarInputBorderColor}}>
-                                <p>Nové v7.2.5 Portable &mdash; Part of the Novelos Ecosystem</p>
+                                <p>Nové v7.3.9 Portable &mdash; Part of the Novelos Ecosystem</p>
                             </div>
                         </div>
                     </div>
@@ -661,16 +701,20 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
             );
         };
 
-        const NoveManuscript = ({ chapter, onChange, settings, isFocusMode, onPlaySound, notesOpen, onPageInfoChange, isSpellcheckEnabled, searchTarget }) => {
+        const NoveManuscript = ({ chapter, onChange, settings, isFocusMode, onPlaySound, notesOpen, onPageInfoChange, isSpellcheckEnabled, searchTarget, shortcuts }) => {
             const editorRef = useRef(null);
             const editorContainerRef = useRef(null);
             const isTyping = useRef(false);
             const stableScrollLeft = useRef(0);
             const typingTimeoutRef = useRef(null);
             const isLocalUpdate = useRef(false);
+            const localUpdateTimeoutRef = useRef(null);
             const [layout, setLayout] = useState({ colWidth: 0, stride: 0, gap: 60, sideMargin: 40, columns: 2 });
             const [pageInfo, setPageInfo] = useState({ current: 1, total: 1 });
             const [isTransitioning, setIsTransitioning] = useState(false);
+
+            const shortcutsRef = useRef(shortcuts);
+            useEffect(() => { shortcutsRef.current = shortcuts; }, [shortcuts]);
 
             const calculateLayout = useCallback(() => {
                 if (!editorContainerRef.current) return;
@@ -679,7 +723,7 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
                 const GAP_PX = 60;
                 const SIDE_MARGIN_PX = 40;
                 const availableWidthTwo = Math.max(0, containerWidth - GAP_PX - (2 * SIDE_MARGIN_PX));
-                const safeColWidthTwo = Math.floor(availableWidthTwo / 2);
+                const safeColWidthTwo = Math.floor(availableWidth Two / 2);
                 let columns = 2;
                 let colWidth = safeColWidthTwo;
                 if (safeColWidthTwo < minTwoPageColWidth) {
@@ -709,12 +753,12 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
             }, [calculateLayout, isFocusMode, settings.fontSize, settings.fontFamily, notesOpen]);
 
             useLayoutEffect(() => {
-                const wasLocal = isLocalUpdate.current;
-                if (editorRef.current && editorRef.current.innerHTML !== chapter.content) {
-                    if (!wasLocal) editorRef.current.innerHTML = chapter.content;
+                if (!editorRef.current) return;
+                if (isLocalUpdate.current && editorRef.current.innerHTML === chapter.content) return;
+                if (editorRef.current.innerHTML !== chapter.content) {
+                    editorRef.current.innerHTML = chapter.content;
                 }
-                isLocalUpdate.current = false;
-                if (!wasLocal) calculateLayout();
+                if (!isLocalUpdate.current) calculateLayout();
             }, [chapter.id, chapter.content, calculateLayout]);
 
             const snapToSpread = useCallback((targetSpreadIndex, useTransition = true) => {
@@ -831,54 +875,86 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
                 }
             }, [layout.stride]);
 
-            const handleInput = (e) => {
-                isLocalUpdate.current = true;
-                const editor = e.currentTarget;
+            const runTextCorrections = useDebouncedCallback(() => {
                 const sel = window.getSelection();
-                if (sel && sel.rangeCount > 0) {
-                    const range = sel.getRangeAt(0);
-                    const node = range.startContainer;
-                    const offset = range.startOffset;
-                    if (node.nodeType === Node.TEXT_NODE) {
-                        const textContent = node.textContent || '';
-                        const nativeEvent = e.nativeEvent;
-                        const insertedChar = nativeEvent?.data;
-                        if (nativeEvent?.inputType === 'insertText' && (insertedChar === '"' || insertedChar === "'")) {
-                            const textBefore = textContent.substring(0, offset - 1);
-                            const charBefore = textBefore.slice(-1);
-                            const isOpenQuoteCondition = textBefore.length === 0 || /[\\s(\\[{“‘]/.test(charBefore);
-                            let replacementChar = insertedChar === '"' ? (isOpenQuoteCondition ? '“' : '”') : (isOpenQuoteCondition ? '‘' : '’');
-                            if (replacementChar) {
-                                node.textContent = textContent.substring(0, offset - 1) + replacementChar + textContent.substring(offset);
-                                const newRange = document.createRange();
-                                newRange.setStart(node, offset); newRange.collapse(true);
-                                sel.removeAllRanges(); sel.addRange(newRange);
-                            }
+                if (!sel || sel.rangeCount === 0 || !editorRef.current) return;
+                const range = sel.getRangeAt(0);
+                const node = range.startContainer;
+                const offset = range.startOffset;
+
+                if (node.nodeType === 3) { // Node.TEXT_NODE
+                    const text = node.textContent || '';
+                    const textBefore = text.substring(0, offset);
+
+                    if (textBefore.endsWith("  ")) {
+                        isLocalUpdate.current = true;
+                        const startPos = offset - 2;
+                        node.textContent = text.substring(0, startPos) + " " + text.substring(offset);
+                        const newRange = document.createRange();
+                        newRange.setStart(node, startPos + 1);
+                        newRange.collapse(true);
+                        sel.removeAllRanges();
+                        sel.addRange(newRange);
+                        onChange(editorRef.current.innerHTML);
+                        return;
+                    }
+                    
+                    const currentShortcuts = shortcutsRef.current;
+                    const sortedShortcuts = [...currentShortcuts].sort((a, b) => b.key.length - a.key.length);
+                    
+                    for (const s of sortedShortcuts) {
+                        const pattern = new RegExp(\`(\${s.key.replace(/[.*+?^$\{ }()|[\\\]\\\\]/g, '\\\\$&')})([\\\\s\\\\.,!?;:]?)$\`);
+                        const match = textBefore.match(pattern);
+                        if (match) {
+                            isLocalUpdate.current = true;
+                            const keyPart = match[1];
+                            const trailingPart = match[2] || "";
+                            const matchLen = keyPart.length + trailingPart.length;
+                            const startPos = offset - matchLen;
+                            const replacement = s.value + trailingPart;
+                            node.textContent = text.substring(0, startPos) + replacement + text.substring(offset);
+                            const newRange = document.createRange();
+                            newRange.setStart(node, startPos + replacement.length);
+                            newRange.collapse(true);
+                            sel.removeAllRanges();
+                            sel.addRange(newRange);
+                            onChange(editorRef.current.innerHTML);
+                            return;
+                        }
+                    }
+
+                    const lastChar = textBefore.slice(-1);
+                    if (lastChar === '"' || lastChar === "'") {
+                        const textBeforeQuote = textBefore.substring(0, textBefore.length - 1);
+                        const charBefore = textBeforeQuote.slice(-1);
+                        const isOpenQuoteCondition = textBeforeQuote.length === 0 || /[\\\\s(\\\\[{“‘\\\\u2014]/.test(charBefore);
+                        let replacementChar = null;
+                        if (lastChar === '"') {
+                            replacementChar = isOpenQuoteCondition ? '“' : '”';
+                        } else {
+                            replacementChar = isOpenQuoteCondition ? '‘' : '’';
+                        }
+                        if (replacementChar && replacementChar !== lastChar) {
+                            isLocalUpdate.current = true;
+                            node.textContent = textBeforeQuote + replacementChar + text.substring(offset);
+                            const newRange = document.createRange();
+                            newRange.setStart(node, offset); 
+                            newRange.collapse(true);
+                            sel.removeAllRanges();
+                            sel.addRange(newRange);
+                            onChange(editorRef.current.innerHTML);
                         }
                     }
                 }
+            }, 400);
+
+            const handleInput = (e) => {
+                isLocalUpdate.current = true;
+                if (localUpdateTimeoutRef.current) clearTimeout(localUpdateTimeoutRef.current);
+                localUpdateTimeoutRef.current = setTimeout(() => { isLocalUpdate.current = false; }, 1000);
+                const editor = e.currentTarget;
                 onChange(editor.innerHTML);
-                if (sel && sel.rangeCount > 0 && editorContainerRef.current && layout.stride > 0) {
-                     const range = sel.getRangeAt(0);
-                     if (editorRef.current?.contains(range.commonAncestorContainer)) {
-                         const caretRect = range.getBoundingClientRect();
-                         const containerRect = editorContainerRef.current.getBoundingClientRect();
-                         if (caretRect.width !== 0 || caretRect.height !== 0 || caretRect.x !== 0) {
-                             const relativeCaretX = (caretRect.left - containerRect.left) + editorContainerRef.current.scrollLeft;
-                             const adjustedCaretX = Math.max(0, relativeCaretX - layout.sideMargin);
-                             const columnIndex = Math.floor(adjustedCaretX / layout.stride);
-                             const currentScrollIndex = Math.round(stableScrollLeft.current / layout.stride);
-                             let targetSpread = currentScrollIndex;
-                             if (columnIndex >= currentScrollIndex + layout.columns) targetSpread = columnIndex - (layout.columns - 1);
-                             else if (columnIndex < currentScrollIndex) targetSpread = columnIndex;
-                             const targetScrollLeft = targetSpread * layout.stride;
-                             if (targetScrollLeft !== stableScrollLeft.current) {
-                                 stableScrollLeft.current = targetScrollLeft;
-                                 editorContainerRef.current.scrollLeft = targetScrollLeft;
-                             }
-                         }
-                     }
-                }
+                runTextCorrections();
                 requestAnimationFrame(() => requestAnimationFrame(() => updatePageInfo()));
             };
 
@@ -902,7 +978,7 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
                             if (isAtStart) {
                                 if (!p.style.textIndent || p.style.textIndent !== '0px') {
                                     e.preventDefault(); p.style.textIndent = '0px';
-                                    onChange(e.currentTarget.innerHTML); return;
+                                    onChange(editorRef.current.innerHTML); return;
                                 }
                             }
                         }
@@ -1056,12 +1132,14 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
             const [isStatsOpen, setIsStatsOpen] = useState(false);
             const [isFindReplaceOpen, setIsFindReplaceOpen] = useState(false);
             const [isUserGuideOpen, setIsUserGuideOpen] = useState(false);
+            const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
             const [isSpellcheckEnabled, setIsSpellcheckEnabled] = useState(false);
             const [pageInfo, setPageInfo] = useState({ current: 1, total: 1 });
             const [isSaving, setIsSaving] = useState(false);
             const [searchTarget, setSearchTarget] = useState(null);
             const [portableDirHandle, setPortableDirHandle] = useState(null);
             const [hasAcceptedEULA, setHasAcceptedEULA] = useState(() => localStorage.getItem('noveli_eula_accepted') === 'true');
+            const [shortcuts, setShortcuts] = useState(initialShortcuts || []);
             const isFirstRun = useRef(true);
             const [notification, setNotification] = useState(null);
             const [settings, setSettings] = useState(initialSettings);
@@ -1071,7 +1149,7 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
             const fontOptions = ["Lora", "Merriweather", "Times New Roman", "Bookman Old Style", "Georgia", "Roboto", "Open Sans", "Arial", "Inter", "Inconsolata"];
 
             const activeChapter = chapters.find(c => c.id === activeChapterId) || chapters[0] || { content: '' };
-            const activeChapterWordCount = useMemo(() => activeChapter ? getWordCount(activeChapter.content) : 0, [activeChapter?.content]);
+            const activeChapterWordCount = useMemo(() => activeChapter ? getWordCount(chapter.content) : 0, [activeChapter?.content]);
             const playSound = useTypewriterSound(settings.isSoundEnabled, settings.soundVolume);
             const totalWordCount = useMemo(() => chapters.reduce((acc, c) => acc + getWordCount(c.content), 0), [chapters]);
 
@@ -1192,7 +1270,7 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
 
             const handlePortableSave = async (forceNewFolder = false) => {
                 setIsSaving(true);
-                const syncData = { chapters: chapters, settings: settings, timestamp: new Date().toISOString(), source: 'Nové' };
+                const syncData = { chapters: chapters, settings: settings, shortcuts: shortcuts, timestamp: new Date().toISOString(), source: 'Nové' };
                 try {
                     const zip = new JSZip();
                     zip.file("project_data.json", JSON.stringify(syncData, null, 2));
@@ -1208,7 +1286,7 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
                     const mmm = MONTH_NAMES[now.getMonth()];
                     const hh = String(now.getHours()).padStart(2, '0');
                     const mm = String(now.getMinutes()).padStart(2, '0');
-                    const filename = \`Nove_Project_\${dd}_\${mmm}_\${hh}_\${mm}.zip\`;
+                    const filename = \`Nové_Project_\${dd}_\${mmm}_\${hh}_\${mm}.zip\`;
 
                     if ('showDirectoryPicker' in window) {
                         try {
@@ -1233,7 +1311,7 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
                 const handleKeyDown = (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); handlePortableSave(false); } };
                 window.addEventListener('keydown', handleKeyDown);
                 return () => window.removeEventListener('keydown', handleKeyDown);
-            }, [chapters, settings, portableDirHandle]);
+            }, [chapters, settings, portableDirHandle, shortcuts]);
 
             const btnStyle = { backgroundColor: settings.toolbarButtonBg, color: settings.textColor };
             const activeBtnStyle = { backgroundColor: settings.accentColor, color: '#FFF' };
@@ -1245,7 +1323,7 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
                     {!hasAcceptedEULA && <EULAModal settings={settings} onAccept={handleAcceptEULA} />}
                     {notification && <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-[9999] px-6 py-2 rounded-full shadow-xl toast-enter flex items-center gap-2 backdrop-blur-md border border-white/20" style={{ backgroundColor: settings.successColor, color: '#FFFFFF' }}><span className="font-bold text-sm">{notification}</span></div>}
                     <div className="flex flex-grow overflow-hidden relative">
-                        <NoveManuscript chapter={activeChapter} onChange={handleContentChange} settings={settings} isFocusMode={isFocusMode} onPlaySound={playSound} notesOpen={notesOpen} onPageInfoChange={setPageInfo} isSpellcheckEnabled={isSpellcheckEnabled} searchTarget={searchTarget} />
+                        <NoveManuscript chapter={activeChapter} onChange={handleContentChange} settings={settings} isFocusMode={isFocusMode} onPlaySound={playSound} notesOpen={notesOpen} onPageInfoChange={setPageInfo} isSpellcheckEnabled={isSpellcheckEnabled} searchTarget={searchTarget} shortcuts={shortcuts} />
                         {isFindReplaceOpen && <FindReplacePanel onClose={() => setIsFindReplaceOpen(false)} settings={settings} chapters={chapters} activeChapterId={activeChapterId} onNavigateMatch={handleNavigateMatch} onReplace={handleReplace} onReplaceAll={handleReplaceAll} />}
                         {notesOpen && !isFocusMode && (
                             <div className="w-80 border-l flex flex-col shadow-xl z-20 flex-shrink-0 transition-colors backdrop-blur-md" style={{backgroundColor: settings.toolbarBg + 'E6', borderColor: settings.toolbarButtonBg}}>
@@ -1275,6 +1353,7 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
                             <button onClick={() => setIsStatsOpen(true)} className="p-2 rounded hover:opacity-80 transition-colors" style={btnStyle} title="Writing Statistics & Goals"><Icons.Stats /></button>
                             <button onClick={() => setNotesOpen(!notesOpen)} className="p-2 rounded hover:opacity-80 transition-colors" style={notesOpen ? activeBtnStyle : btnStyle} title="Chapter Notes"><Icons.Note /></button>
                             <button onClick={() => setIsFindReplaceOpen(true)} className="p-2 rounded hover:opacity-80 transition-colors" style={btnStyle} title="Find and Replace"><Icons.Search /></button>
+                            <button onClick={() => setIsShortcutsOpen(true)} className="p-2 rounded hover:opacity-80 transition-colors" style={btnStyle} title="Text Shortcuts"><Icons.Keyboard /></button>
                             <button onClick={() => setSettings(s => ({...s, transitionStyle: s.transitionStyle === 'scroll' ? 'fade' : 'scroll'}))} className="p-2 rounded hover:opacity-80 transition-colors" style={btnStyle} title="Toggle Page Transition"><Icons.Transition /></button>
                             <button onClick={() => setIsSpellcheckEnabled(!isSpellcheckEnabled)} className="p-2 rounded hover:opacity-80 transition-colors" style={isSpellcheckEnabled ? activeBtnStyle : btnStyle} title="Toggle Spell Check"><Icons.Spellcheck /></button>
                             <button onClick={() => setSettings(s => ({...s, isSoundEnabled: !s.isSoundEnabled}))} className="p-2 rounded hover:opacity-80 transition-colors" style={settings.isSoundEnabled ? activeBtnStyle : btnStyle} title="Toggle Typewriter Sounds">{settings.isSoundEnabled ? <Icons.SoundOn /> : <Icons.SoundOff />}</button>
@@ -1304,6 +1383,7 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
                     {isGalleryOpen && <DesignGalleryModal isOpen={isGalleryOpen} onClose={() => setIsGalleryOpen(false)} settings={settings} onSettingsChange={handleSettingsChange} />}
                     {isStatsOpen && <StatsModal onClose={() => setIsStatsOpen(false)} settings={settings} totalWordCount={totalWordCount} sessionWordCount={sessionCount} goals={writingGoals} onGoalsChange={setWritingGoals} chapters={chapters} />}
                     {isUserGuideOpen && <UserGuideModal onClose={() => setIsUserGuideOpen(false)} settings={settings} />}
+                    {isShortcutsOpen && <ShortcutsModal onClose={() => setIsShortcutsOpen(false)} shortcuts={shortcuts} onUpdateShortcuts={setShortcuts} settings={settings} />}
                     {isFocusMode && <button onClick={() => setIsFocusMode(false)} className="absolute top-4 right-4 p-2 rounded-full bg-black/20 hover:bg-black/40 text-white transition-colors z-50" title="Exit Focus Mode"><Icons.Unfocus /></button>}
                 </div>
             );

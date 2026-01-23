@@ -214,7 +214,6 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (!hasAPIKey()) return onSetError(API_KEY_ERROR, character.id);
         setAiState(prev => ({ ...prev, isGeneratingProfile: character.id, errorMessage: null }));
         try {
-            // Fixed: Removed incorrect backslash escapes from prompt template literal
             const prompt = `Based on these notes, generate a detailed character profile for "${character.name}".
             Notes: ${rawNotes}
             Return JSON: { "summary": "brief summary", "tagline": "short hook", "profile": "full markdown profile", "keywords": ["kw1", "kw2"] }`;
@@ -229,7 +228,6 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (!hasAPIKey()) return onSetError(API_KEY_ERROR, character.id);
         setAiState(prev => ({ ...prev, isGeneratingProfile: character.id, errorMessage: null }));
         try {
-            // Fixed: Removed incorrect backslash escapes from prompt template literal
             const prompt = `Analyze the manuscript to update the profile for "${character.name}".
             Manuscript: ${manuscriptContent.substring(0, 30000)}
             Return JSON: { "summary": "updated summary", "tagline": "updated tagline", "profile": "updated markdown profile", "keywords": ["kw1", "kw2"] }`;
@@ -244,7 +242,6 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (!hasAPIKey()) return onSetError(API_KEY_ERROR, chapter.id);
         setAiState(prev => ({ ...prev, isGeneratingChapter: chapter.id, errorMessage: null }));
         try {
-            // Fixed: Removed incorrect backslash escapes from prompt template literal
             const prompt = `Generate details for Chapter ${chapter.chapterNumber}: ${chapter.title}.
             Notes: ${rawNotes}
             Return JSON: { "summary": "brief summary", "outline": "markdown beat list", "analysis": "markdown conflict analysis", "keywords": ["kw1", "kw2"] }`;
@@ -260,7 +257,6 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setAiState(prev => ({ ...prev, isGeneratingChapter: chapter.id, errorMessage: null }));
         try {
             const tempDiv = document.createElement('div'); tempDiv.innerHTML = chapter.content;
-            // Fixed: Removed incorrect backslash escapes from prompt template literal
             const prompt = `Analyze this chapter text to update summary and outline.
             Text: ${tempDiv.innerText.substring(0, 15000)}
             Return JSON: { "summary": "updated summary", "outline": "updated outline beats", "analysis": "updated conflict analysis", "keywords": ["kw1", "kw2"] }`;
@@ -275,7 +271,6 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (!hasAPIKey()) { onSetError(API_KEY_ERROR, 'snippets'); return false; }
         setAiState(prev => ({ ...prev, isGeneratingSnippets: true, errorMessage: null }));
         try {
-            // Fixed: Removed incorrect backslash escapes from prompt template literal
             const prompt = `Split this text into distinct snippet items. Identify type and character IDs.
             Characters: ${characters.map(c => `[ID: ${c.id}] Name: ${c.name}`).join(', ')}
             Text: ${rawText}
@@ -291,7 +286,6 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const onSuggestPlacement = async (snippet: ISnippet, chapters: IChapter[]) => {
         if (!hasAPIKey()) return API_KEY_ERROR;
         try {
-            // Fixed: Removed incorrect backslash escapes from prompt template literal
             const prompt = `Where should this snippet go?
             Snippet: ${snippet.cleanedText}
             Chapters: ${chapters.map(c => `[ID: ${c.id}] Ch ${c.chapterNumber}: ${c.summary}`).join('\n')}
@@ -306,7 +300,6 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         dispatch({ type: 'SET_PLOT_BRAINSTORM_STATE', payload: { isGeneratingPacingAndStructure: true, isGeneratingCharacters: true, isGeneratingOpportunities: true } });
         try {
             const chapText = chapters.map(c => `Ch ${c.chapterNumber}: ${c.summary}`).join('\n');
-            // Fixed: Removed incorrect backslash escapes from prompt template literal
             const prompt = `Analyze novel plot structure and characters.
             Story: ${chapText}
             Return JSON: { "pacing": { "summary": "...", "points": [{ "chapterNumber": 1, "title": "...", "description": "...", "type": "Inciting Incident" }] }, "characterAnalysis": "markdown", "opportunityAnalysis": "markdown" }`;
@@ -322,7 +315,6 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { isLoading: true } });
         try {
             const char = excerpt.characterIds[0] ? characters.find(c => c.id === excerpt.characterIds[0]) : null;
-            // Fixed: Removed incorrect backslash escapes from prompt template literal
             const prompt = `Create social media content for: "${excerpt.text}"
             Character: ${char ? char.name + ' - ' + char.summary : 'None'}
             Return JSON: { "imagePrompt": "...", "instagram": { "text": "...", "hashtags": ["..."] }, "tiktok": { "text": "...", "hashtags": ["..."] } }`;
@@ -341,7 +333,6 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (!hasAPIKey()) return onSetError(API_KEY_ERROR, item.id);
         setAiState(prev => ({ ...prev, isGeneratingWorldItem: item.id }));
         try {
-            // Fixed: Removed incorrect backslash escapes from prompt template literal
             const prompt = `Refine this world-building entry: ${item.name}. Notes: ${item.rawNotes}. Return JSON: { "summary": "one line", "description": "full markdown codex entry" }`;
             const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
             const data = extractJson<any>(response.text || '');
@@ -354,7 +345,6 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (!hasAPIKey()) return onSetError(API_KEY_ERROR, 'distill');
         setAiState(prev => ({ ...prev, isDistillingWorld: true }));
         try {
-            // Fixed: Removed incorrect backslash escapes from prompt template literal
             const prompt = `Distill world items from these notes. Return JSON array: [{ "name": "...", "type": "Location|Lore|Object|Organization|Concept", "rawNotes": "...", "summary": "..." }]
             Notes: ${text}`;
             const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
@@ -364,14 +354,151 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         finally { setAiState(prev => ({ ...prev, isDistillingWorld: false })); }
     };
 
+    // --- ADDED MISSING AI IMPLEMENTATIONS ---
+    
+    const onRegenerateTextAndHashtags = async (excerpt: Excerpt, platform: 'instagram' | 'tiktok') => {
+        if (!hasAPIKey()) return onSetError(API_KEY_ERROR, 'social');
+        dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { isLoading: true } });
+        try {
+            const prompt = `Generate a new caption and hashtags for this ${platform} post based on the excerpt: "${excerpt.text}".
+            Return JSON: { "text": "...", "hashtags": ["..."] }`;
+            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
+            const data = extractJson<any>(response.text || '');
+            if (data) {
+                if (platform === 'instagram') dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { generatedInstagramPost: data } });
+                else dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { generatedTiktokPost: data } });
+            }
+        } catch (e) { onSetError(`Failed to regenerate ${platform} content.`, 'social'); }
+        finally { dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { isLoading: false } }); }
+    };
+
+    const onExtractExcerpts = async (chapter: IChapter, characters: ICharacter[]) => {
+        if (!hasAPIKey()) return onSetError(API_KEY_ERROR, 'social');
+        dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { isLoading: true } });
+        try {
+            const tempDiv = document.createElement('div'); tempDiv.innerHTML = chapter.content;
+            const prompt = `Extract 3-5 punchy excerpts or dialogue lines from this chapter suitable for social media hooks. Identify which characters are involved in each.
+            Characters: ${characters.map(c => `[ID: ${c.id}] Name: ${c.name}`).join(', ')}
+            Text: ${tempDiv.innerText.substring(0, 15000)}
+            Return JSON array: [{ "text": "...", "characterIds": ["..."] }]`;
+            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
+            const data = extractJson<any[]>(response.text || '');
+            if (data) dispatch({ type: 'ADD_AI_EXCERPTS', payload: data.map(e => ({ ...e, chapterId: chapter.id })) });
+        } catch (e) { onSetError("Failed to extract excerpts.", 'social'); }
+        finally { dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { isLoading: false } }); }
+    };
+
+    const onGeneratePostVariations = async (post: SocialPost, excerpt: Excerpt, platform: 'instagram' | 'tiktok') => {
+        if (!hasAPIKey()) return onSetError(API_KEY_ERROR, 'social');
+        dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { isLoading: true } });
+        try {
+            const prompt = `Generate 3 distinct variations of this ${platform} post for the excerpt: "${excerpt.text}".
+            Current caption: ${post.text}
+            Return JSON array: [{ "text": "...", "hashtags": ["..."] }]`;
+            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
+            const data = extractJson<SocialPost[]>(response.text || '');
+            if (data) dispatch({ type: 'SET_POST_VARIATIONS', payload: { variations: data, platform } });
+        } catch (e) { onSetError("Failed to generate variations.", 'social'); }
+        finally { dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { isLoading: false } }); }
+    };
+
+    const onGenerateFullSynopsis = async () => {
+        if (!hasAPIKey()) return onSetError(API_KEY_ERROR, 'synopsis');
+        dispatch({ type: 'SET_SYNOPSIS_STATE', payload: { isGeneratingMarketAnalysis: true, isGeneratingPromotionalContent: true, isGeneratingSynopsis: true } });
+        try {
+            const chapText = chapters.map(c => `Ch ${c.chapterNumber}: ${c.summary}`).join('\n');
+            const prompt = `Create a comprehensive industry package for this novel.
+            Story: ${chapText}
+            Return JSON: {
+                "market": "markdown (tropes, comp titles, BISAC codes, keywords)",
+                "promo": "markdown (tagline, logline, elevator pitch, reader persona)",
+                "synopsis": "markdown (complete narrative overview from inciting incident to climax)"
+            }`;
+            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
+            const data = extractJson<any>(response.text || '');
+            if (data) dispatch({ type: 'SET_SYNOPSIS_STATE', payload: { marketAnalysis: data.market, promotionalContent: data.promo, synopsis: data.synopsis } });
+        } catch (e) { onSetError("Failed to generate synopsis package.", 'synopsis'); }
+        finally { dispatch({ type: 'SET_SYNOPSIS_STATE', payload: { isGeneratingMarketAnalysis: false, isGeneratingPromotionalContent: false, isGeneratingSynopsis: false } }); }
+    };
+
+    const onRegenerateMarketAnalysis = async () => {
+        if (!hasAPIKey()) return onSetError(API_KEY_ERROR, 'synopsis');
+        dispatch({ type: 'SET_SYNOPSIS_STATE', payload: { isGeneratingMarketAnalysis: true } });
+        try {
+            const chapText = chapters.map(c => `Ch ${c.chapterNumber}: ${c.summary}`).join('\n');
+            const prompt = `Regenerate the market analysis (tropes, comps, BISAC) for this novel. Story: ${chapText}. Return Markdown.`;
+            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+            dispatch({ type: 'SET_SYNOPSIS_STATE', payload: { marketAnalysis: response.text } });
+        } catch (e) { onSetError("Market analysis failed."); }
+        finally { dispatch({ type: 'SET_SYNOPSIS_STATE', payload: { isGeneratingMarketAnalysis: false } }); }
+    };
+
+    const onRegeneratePromotionalContent = async () => {
+        if (!hasAPIKey()) return onSetError(API_KEY_ERROR, 'synopsis');
+        dispatch({ type: 'SET_SYNOPSIS_STATE', payload: { isGeneratingPromotionalContent: true } });
+        try {
+            const chapText = chapters.map(c => `Ch ${c.chapterNumber}: ${c.summary}`).join('\n');
+            const prompt = `Regenerate promotional content (taglines, logline, pitches) for this novel. Story: ${chapText}. Return Markdown.`;
+            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+            dispatch({ type: 'SET_SYNOPSIS_STATE', payload: { promotionalContent: response.text } });
+        } catch (e) { onSetError("Promo content failed."); }
+        finally { dispatch({ type: 'SET_SYNOPSIS_STATE', payload: { isGeneratingPromotionalContent: false } }); }
+    };
+
+    const onRegenerateSynopsis = async () => {
+        if (!hasAPIKey()) return onSetError(API_KEY_ERROR, 'synopsis');
+        dispatch({ type: 'SET_SYNOPSIS_STATE', payload: { isGeneratingSynopsis: true } });
+        try {
+            const chapText = chapters.map(c => `Ch ${c.chapterNumber}: ${c.summary}`).join('\n');
+            const prompt = `Regenerate the complete story synopsis for this novel. Story: ${chapText}. Return Markdown.`;
+            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+            dispatch({ type: 'SET_SYNOPSIS_STATE', payload: { synopsis: response.text } });
+        } catch (e) { onSetError("Synopsis regeneration failed."); }
+        finally { dispatch({ type: 'SET_SYNOPSIS_STATE', payload: { isGeneratingSynopsis: false } }); }
+    };
+
+    const onSuggestLocations = async () => {
+        if (!hasAPIKey()) return onSetError(API_KEY_ERROR, 'map');
+        setAiState(prev => ({ ...prev, isGeneratingMap: true }));
+        try {
+            const chapText = chapters.map(c => `Ch ${c.chapterNumber}: ${c.summary}`).join('\n');
+            const prompt = `Based on these chapter summaries, identify 3-5 distinct map locations. For each, provide a name, a 1-sentence description, and suggested X and Y coordinates as percentages (0-100).
+            Story: ${chapText}
+            Return JSON array: [{ "name": "...", "description": "...", "x": 50, "y": 50 }]`;
+            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
+            const data = extractJson<any[]>(response.text || '');
+            if (data) data.forEach(loc => dispatch({ type: 'ADD_MAP_LOCATION', payload: { ...loc, id: generateId() } }));
+        } catch (e) { onSetError("Location suggestion failed.", 'map'); }
+        finally { setAiState(prev => ({ ...prev, isGeneratingMap: false })); }
+    };
+
+    const onRegenerateImage = async (imagePrompt: string, moodOnly: boolean, character?: ICharacter) => {
+        if (!hasAPIKey()) { onSetError(API_KEY_ERROR, 'social'); return null; }
+        try {
+            let prompt = imagePrompt;
+            if (moodOnly) {
+                prompt = `Atmospheric conceptual art based on: ${imagePrompt}. Highly cinematic, moody lighting, evocative.`;
+            } else if (character) {
+                prompt = `Full body cinematic portrait of ${character.name}. ${character.summary}. Style: ${imagePrompt}.`;
+            }
+            const imgRes = await getAI().models.generateContent({ model: 'gemini-2.5-flash-image', contents: prompt });
+            for (const part of imgRes.candidates[0].content.parts) {
+                if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
+            }
+        } catch (e) { onSetError("Image regeneration failed.", 'social'); }
+        return null;
+    };
+
     const contextValue: any = {
         ...aiState, onGenerateProfile, onUpdateProfile, onGenerateChapterDetails, onUpdateChapterFromManuscript, onAnalyzeSnippets, onSuggestPlacement, onGenerateFullAnalysis,
         onGenerateSocialContent, onRefineWorldItem, onDistillWorldNotes, onSetError,
+        onRegenerateTextAndHashtags, onExtractExcerpts, onGeneratePostVariations,
+        onGenerateFullSynopsis, onRegenerateMarketAnalysis, onRegeneratePromotionalContent, onRegenerateSynopsis,
+        onSuggestLocations, onRegenerateImage,
         onGeneratePacingAnalysis: async () => {
              if (!hasAPIKey()) return onSetError(API_KEY_ERROR, 'pacing');
              dispatch({ type: 'UPDATE_ASSEMBLY_VIEW_STATE', payload: { isGeneratingPacingAnalysis: true } });
              try {
-                 // Fixed: Removed incorrect backslash escapes from prompt template literal
                  const prompt = `Analyze chapter pacing (-1 to 1). Return JSON array: [{ "chapterId": "...", "chapterNumber": 1, "title": "...", "pacingScore": 0.5, "justification": "..." }]
                  Data: ${chapters.map(c => `[ID: ${c.id}] Ch ${c.chapterNumber}: ${c.summary}`).join('\n')}`;
                  const res = await getAI().models.generateContent({ model: 'gemini-3-flash-preview', contents: prompt, config: { responseMimeType: 'application/json' } });
@@ -449,7 +576,7 @@ export const Assembly: React.FC<AssemblyProps> = ({ settings, onSettingsChange, 
                         <CharactersPanel 
                             characters={characters} settings={settings} tileBackgroundStyle={settings.assemblyTileStyle || 'solid'} 
                             selectedIds={selectedIds} onSelect={handleSelect} onUpdate={(id, updates) => dispatch({ type: 'UPDATE_CHARACTER', payload: { id, updates } })} 
-                            onDeleteRequest={setDeleteChapterTarget} onSetCharacters={(c) => dispatch({ type: 'SET_CHARACTERS', payload: c })} 
+                            onDeleteRequest={setDeleteCharacterTarget} onSetCharacters={(c) => dispatch({ type: 'SET_CHARACTERS', payload: c })} 
                             expandedCharacterId={assemblyState.expandedCharacterId} setExpandedCharacterId={(id) => dispatch({ type: 'UPDATE_ASSEMBLY_VIEW_STATE', payload: { expandedCharacterId: id } })}
                         />
                     )}

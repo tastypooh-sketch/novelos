@@ -28,10 +28,21 @@ export interface AssemblyAIContextType extends AssemblyAIState {
     onGenerateFullAnalysis: () => Promise<void>;
     onGenerateSocialContent: (excerpt: Excerpt) => Promise<void>;
     onRegenerateImage: (imagePrompt: string, moodOnly: boolean, character?: ICharacter) => Promise<string | null>;
+    // Added missing social panel functions
+    onRegenerateTextAndHashtags: (excerpt: Excerpt, platform: 'instagram' | 'tiktok') => Promise<void>;
+    onExtractExcerpts: (chapter: IChapter, characters: ICharacter[]) => Promise<void>;
+    onGeneratePostVariations: (post: SocialPost, excerpt: Excerpt, platform: 'instagram' | 'tiktok') => Promise<void>;
+    // Added missing synopsis panel functions
+    onGenerateFullSynopsis: () => Promise<void>;
+    onRegenerateMarketAnalysis: () => Promise<void>;
+    onRegeneratePromotionalContent: () => Promise<void>;
+    onRegenerateSynopsis: () => Promise<void>;
     onRefineWorldItem: (item: IWorldItem) => Promise<void>;
     onDistillWorldNotes: (crucibleText: string) => Promise<void>;
     onSetError: (message: string | null, id?: string | null) => void;
     onGeneratePacingAnalysis: () => Promise<void>;
+    // Added missing world panel functions
+    onSuggestLocations: () => Promise<void>;
 }
 
 export const AssemblyAIContext = createContext<AssemblyAIContextType | undefined>(undefined);

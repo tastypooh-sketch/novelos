@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef, useMemo, useLayoutEffect } from 'react';
 import type { IChapter, EditorSettings, Shortcut, WritingGoals, GalleryItem, INovelState, SearchResult, AppUpdate } from '../../types';
 import { useDebouncedCallback } from 'use-debounce';
@@ -169,7 +168,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
     const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement);
     const [sessionWordCount, setSessionWordCount] = useState(0);
     const [isTransitioning, setIsTransitioning] = useState(false);
-    const [isToolbarAnimating, setIsToolbarAnimating] = useState(false);
     const [notification, setNotification] = useState<string | null>(null);
     const [availableUpdate, setAvailableUpdate] = useState<AppUpdate | null>(null);
     
@@ -183,10 +181,8 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
 
     const editorRef = useRef<HTMLDivElement>(null);
     const editorContainerRef = useRef<HTMLDivElement>(null);
-    const initialTotalWordCountRef = useRef<number | null>(null);
-    const savedSelectionRange = useRef<Range | null>(null);
     const isLocalUpdate = useRef(false);
-    const pendingSearchRef = useRef<SearchResult | null>(null);
+    const localUpdateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isTyping = useRef(false);
     const stableScrollLeft = useRef(0);
     const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -207,11 +203,20 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
 
     const activeChapter = useMemo(() => (chapters.find(ch => ch.id === activeChapterId) || chapters[0]) as IChapter, [chapters, activeChapterId]);
     
-    const shortcutsMap = useMemo(() => {
-        const map = new Map<string, string>();
-        shortcuts.forEach(s => map.set(s.key, s.value));
-        return map;
-    }, [shortcuts]);
+    // Selection preservation mechanism for contentEditable
+    useLayoutEffect(() => {
+        if (!editorRef.current) return;
+        
+        // Prevent React re-renders from wiping DOM content if it was a local change
+        if (isLocalUpdate.current && editorRef.current.innerHTML === activeChapter.content) {
+            return;
+        }
+
+        // Only overwrite if it's truly a remote or cross-chapter change
+        if (editorRef.current.innerHTML !== activeChapter.content) {
+            editorRef.current.innerHTML = activeChapter.content;
+        }
+    }, [activeChapter.id, activeChapter.content]);
 
     const activeChapterWordCount = useMemo(() => {
         if (activeChapter.wordCount !== undefined) return activeChapter.wordCount;
@@ -251,7 +256,7 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
         const contentWidth = editorContainerRef.current.scrollWidth - (2 * layout.sideMargin);
         const totalColumns = stride > 0 ? Math.ceil((contentWidth + GAP_PX) / stride) : 1;
         setPageInfo({ current: currentColumnIndex + 1, total: Math.max(2, totalColumns - 1) });
-    }, []);
+    }, [layout.sideMargin, layout.gap]);
 
     useLayoutEffect(() => {
         const timer = setTimeout(() => {
@@ -263,7 +268,7 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
         }, 16);
         window.addEventListener('resize', calculateLayout);
         return () => { window.removeEventListener('resize', calculateLayout); clearTimeout(timer); };
-    }, [calculateLayout, isNotesPanelOpen, notesPanelWidth, isFocusMode, settings.fontSize, settings.fontFamily, isVisible]);
+    }, [calculateLayout, isNotesPanelOpen, notesPanelWidth, isFocusMode, settings.fontSize, settings.fontFamily, isVisible, layout.stride]);
 
     const snapToSpread = useCallback((targetSpreadIndex: number, useTransition: boolean = true) => {
         if (!editorContainerRef.current || layout.stride === 0) return;
@@ -312,39 +317,120 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
 
     const handleTTSStop = useCallback(() => { if (ttsAudioElementRef.current) { ttsAudioElementRef.current.pause(); ttsAudioElementRef.current = null; } setTtsStatus('idle'); }, []);
 
-    const handleInput = useCallback((e: React.FormEvent<HTMLDivElement>) => {
-        isLocalUpdate.current = true;
-        const editor = e.currentTarget;
-        handleContentChange(editor.innerHTML);
-        
-        // Shortcut expansion & Smart Quotes
+    // --- AUTO-CORRECTION LOGIC ---
+    const shortcutsRef = useRef(shortcuts);
+    useEffect(() => { shortcutsRef.current = shortcuts; }, [shortcuts]);
+
+    const runTextCorrections = useDebouncedCallback(() => {
         const sel = window.getSelection();
-        if (sel && sel.rangeCount > 0) {
-            const range = sel.getRangeAt(0);
-            const node = range.startContainer;
-            if (node.nodeType === Node.TEXT_NODE) {
-                const text = node.textContent || '';
-                const offset = range.startOffset;
-                const lastChar = text[offset - 1];
-                if (lastChar === ' ') {
-                    const words = text.substring(0, offset - 1).split(/\s+/);
-                    const lastWord = words[words.length - 1];
-                    if (shortcutsMap.has(lastWord)) {
-                        const expansion = shortcutsMap.get(lastWord)!;
-                        const start = offset - 1 - lastWord.length;
-                        node.textContent = text.substring(0, start) + expansion + text.substring(offset - 1);
-                        const nr = document.createRange(); nr.setStart(node, start + expansion.length + 1); nr.collapse(true);
-                        sel.removeAllRanges(); sel.addRange(nr);
-                    }
+        if (!sel || sel.rangeCount === 0 || !editorRef.current) return;
+
+        const range = sel.getRangeAt(0);
+        const node = range.startContainer;
+        const offset = range.startOffset;
+
+        if (node.nodeType === Node.TEXT_NODE) {
+            const textContent = node.textContent || '';
+            const textBeforeCursor = textContent.substring(0, offset);
+            
+            // 1. Check for Double Spaces (Convert to Single Space)
+            if (textBeforeCursor.endsWith("  ")) {
+                isLocalUpdate.current = true;
+                const startPos = offset - 2;
+                node.textContent = textContent.substring(0, startPos) + " " + textContent.substring(offset);
+                
+                const newRange = document.createRange();
+                newRange.setStart(node, startPos + 1);
+                newRange.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(newRange);
+                
+                handleContentChange(editorRef.current.innerHTML);
+                return;
+            }
+
+            // 2. Check for Text Shortcuts
+            const currentShortcuts = shortcutsRef.current;
+            const sortedShortcuts = [...currentShortcuts].sort((a, b) => b.key.length - a.key.length);
+            
+            let matchedShortcut = null;
+            let matchType: 'exact' | 'with-trailing' = 'exact';
+            let trailingChar = "";
+
+            for (const s of sortedShortcuts) {
+                // Regex to match shortcut key followed by optional single punctuation or whitespace at the end of the buffer
+                // This ensures "teh " or "teh." or "teh!" matches "teh"
+                const pattern = new RegExp(`(${s.key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})([\\s\\.,!?;:]?)$`);
+                const match = textBeforeCursor.match(pattern);
+                
+                if (match) {
+                    matchedShortcut = s;
+                    trailingChar = match[2] || ""; // The space or punctuation that followed the word
+                    break;
+                }
+            }
+
+            if (matchedShortcut) {
+                isLocalUpdate.current = true;
+                // Calculate how much text to replace (key length + whatever trailing char we found)
+                const totalMatchLen = matchedShortcut.key.length + trailingChar.length;
+                const startPos = offset - totalMatchLen;
+                const replacement = matchedShortcut.value + trailingChar;
+                
+                node.textContent = textContent.substring(0, startPos) + replacement + textContent.substring(offset);
+
+                const newRange = document.createRange();
+                newRange.setStart(node, startPos + replacement.length);
+                newRange.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(newRange);
+
+                handleContentChange(editorRef.current.innerHTML);
+                return; 
+            }
+
+            // 3. Smart Quotes check
+            const lastChar = textBeforeCursor.slice(-1);
+            if (lastChar === '"' || lastChar === "'") {
+                const textBeforeQuote = textBeforeCursor.substring(0, textBeforeCursor.length - 1);
+                const charBefore = textBeforeQuote.slice(-1);
+                const isOpenQuoteCondition = textBeforeQuote.length === 0 || /[\s(\[{“‘\u2014]/.test(charBefore);
+                
+                let replacementChar = null;
+                if (lastChar === '"') {
+                    replacementChar = isOpenQuoteCondition ? '“' : '”';
+                } else {
+                    replacementChar = isOpenQuoteCondition ? '‘' : '’';
+                }
+
+                if (replacementChar && replacementChar !== lastChar) {
+                    isLocalUpdate.current = true;
+                    node.textContent = textBeforeQuote + replacementChar + textContent.substring(offset);
+                    const newRange = document.createRange();
+                    newRange.setStart(node, offset); 
+                    newRange.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(newRange);
+                    handleContentChange(editorRef.current.innerHTML);
                 }
             }
         }
-    }, [handleContentChange, shortcutsMap]);
+    }, 400); // Slightly faster for responsiveness
 
-    // --- HANDLERS FOR EDITOR ---
+    const handleInput = useCallback((e: React.FormEvent<HTMLDivElement>) => {
+        isLocalUpdate.current = true;
+        if (localUpdateTimeoutRef.current) clearTimeout(localUpdateTimeoutRef.current);
+        
+        // Lock local updates for a moment to prevent React from overwriting while user is typing
+        localUpdateTimeoutRef.current = setTimeout(() => {
+            isLocalUpdate.current = false;
+        }, 1000);
 
-    // Define handleWheel for mouse wheel navigation
-    // FIXED: Added missing handleWheel function to handle page turning via mouse wheel.
+        const editor = e.currentTarget;
+        handleContentChange(editor.innerHTML);
+        runTextCorrections();
+    }, [handleContentChange, runTextCorrections]);
+
     const handleWheel = useCallback((e: React.WheelEvent) => {
         if (!editorContainerRef.current || layout.stride === 0) return;
         if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
@@ -359,8 +445,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
         }
     }, [layout.stride, snapToSpread]);
 
-    // Define handleScroll for scrollbar navigation
-    // FIXED: Added missing handleScroll function to update page status and snap to columns when scrolling.
     const handleScroll = useDebouncedCallback(() => {
         if (!editorContainerRef.current || layout.stride === 0) return;
         const container = editorContainerRef.current;
@@ -378,8 +462,6 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
         }
     }, 150);
 
-    // Define handleContextMenu for creative writing tools
-    // FIXED: Added missing handleContextMenu function to show the custom brainstorming and copy menu.
     const handleContextMenu = useCallback((e: React.MouseEvent) => {
         const selection = window.getSelection();
         const selectedText = selection?.toString().trim();
@@ -411,7 +493,7 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
     `;
 
     return (
-        <div className="flex h-full overflow-hidden antialiased bg-transparent">
+        <div className="flex h-full w-full overflow-hidden antialiased bg-transparent">
             <style>{`
                 .editor-content::after { content: ""; display: block; height: 100%; min-height: 100%; break-before: column; -webkit-column-break-before: always; visibility: hidden; }
                 .editor-content { hyphens: auto; -webkit-hyphens: auto; }
@@ -419,14 +501,17 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
                 .toast-enter { animation: slide-in-top 0.3s ease-out forwards; }
                 .book-spine-effect { position: fixed; top: 0; bottom: 0; left: 50%; width: 40px; margin-left: -20px; background: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.12) 30%, rgba(0,0,0,0.25) 50%, rgba(0,0,0,0.12) 70%, rgba(0,0,0,0) 100%); pointer-events: none; z-index: 5; opacity: 0.5; }
             `}</style>
+            
             {notification && (
                 <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-[9999] px-6 py-2 rounded-full shadow-2xl toast-enter flex items-center gap-2 backdrop-blur-md border border-white/10" style={{ backgroundColor: settings.successColor, color: '#FFFFFF' }}>
                     <span className="font-bold text-sm">{notification}</span>
                 </div>
             )}
+
+            {/* Main Editing Area */}
             <div className="flex-grow flex flex-col min-w-0 h-full relative">
                 <div className="flex-grow relative min-h-0 overflow-hidden">
-                    <div id="editorContainer" ref={editorContainerRef} className="absolute inset-0 overflow-x-auto overflow-y-hidden focus:outline-none scroll-smooth" onWheel={handleWheel} onScroll={handleScroll} style={{ overflowAnchor: 'none' }}>
+                    <div id="editorContainer" ref={editorContainerRef} className="absolute inset-0 overflow-x-auto overflow-y-hidden focus:outline-none no-scrollbar" onWheel={handleWheel} onScroll={handleScroll} style={{ overflowAnchor: 'none' }}>
                         {layout.columns === 2 && settings.showBookSpine && <div className="book-spine-effect" />}
                         <div ref={editorRef} contentEditable suppressContentEditableWarning spellCheck={isSpellcheckEnabled} className="editor-content outline-none" style={{ 
                             fontFamily: settings.fontFamily, fontSize: `${settings.fontSize}em`, color: settings.textColor, lineHeight: settings.lineHeight || 1.8, 
@@ -444,10 +529,129 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
                     <Toolbar settings={settings} onSettingsChange={onSettingsChange} chapters={chapters} activeChapterId={activeChapterId} onSelectChapter={onActiveChapterIdChange} isSaving={isSaving} activeChapterWordCount={activeChapterWordCount} sessionWordCount={sessionWordCount} writingGoals={writingGoals} onSaveToFolder={handleManualSave} onDownloadRtf={() => { downloadFile('novel.rtf', generateRtfForChapters(chapters), 'application/rtf'); }} isFocusMode={isFocusMode} onToggleFocusMode={onToggleFocusMode} isNotesPanelOpen={isNotesPanelOpen} onToggleNotesPanel={() => setIsNotesPanelOpen(!isNotesPanelOpen)} onToggleModal={(m) => m === 'findReplace' ? setIsFindReplaceOpen(!isFindReplaceOpen) : setActiveModal(m)} isSoundEnabled={isSoundEnabled} onToggleSound={() => onSettingsChange({ isSoundEnabled: !isSoundEnabled })} isFullscreen={isFullscreen} onToggleFullscreen={() => { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }} isSinglePageView={false} isSpellcheckEnabled={isSpellcheckEnabled} onToggleSpellcheck={() => setIsSpellcheckEnabled(!isSpellcheckEnabled)} onToggleTransitionStyle={() => onSettingsChange({ transitionStyle: settings.transitionStyle === 'scroll' ? 'fade' : 'scroll' })} hasDirectory={!!directoryHandle} onToggleReadAloud={() => setActiveModal('readAloud')} ttsStatus={ttsStatus} onExportNove={() => {}} onImportNove={() => {}} updateAvailable={!!availableUpdate} />
                 </div>
             </div>
-            {activeModal === 'readAloud' && <ReadAloudModal settings={settings} onClose={() => setActiveModal(null)} onPlay={handleTTSPlay} onPause={() => ttsAudioElementRef.current?.pause()} onStop={handleTTSStop} onOpenSettings={() => { setPreviousModal('readAloud'); setActiveModal('voiceSettings'); }} status={ttsStatus} activeChapterTitle={activeChapter.title} />}
-            {activeModal === 'customizeToolbar' && <CustomizeToolbarModal settings={settings} currentVisibility={settings.toolbarVisibility || {}} onSave={(v) => onSettingsChange({ toolbarVisibility: v })} onClose={() => setActiveModal(null)} onSaveProject={onSaveToFolder} hasContent={hasContent} appUpdate={availableUpdate} />}
-            {activeModal === 'designGallery' && <DesignGalleryModal settings={settings} onClose={() => setActiveModal(null)} galleryItems={galleryItems} onGalleryItemsChange={onGalleryItemsChange} onSettingsChange={onSettingsChange} />}
-            {/* FIXED: Render ContextMenu when state is set. */}
+
+            {/* Right-side Notes Panel */}
+            {isNotesPanelOpen && (
+                <div style={{ width: notesPanelWidth }} className="h-full relative flex-shrink-0">
+                    <NotesPanel 
+                        settings={settings} 
+                        activeChapter={activeChapter} 
+                        onChapterDetailsChange={handleChapterDetailsChange} 
+                        initialWidth={notesPanelWidth} 
+                        onWidthChange={setNotesPanelWidth}
+                        allChapters={chapters}
+                        allCharacters={characters}
+                        generateId={generateId}
+                    />
+                </div>
+            )}
+
+            {/* Modal Components */}
+            {isFindReplaceOpen && (
+                <FindReplaceModal 
+                    onClose={() => setIsFindReplaceOpen(false)} 
+                    chapters={chapters} 
+                    activeChapterId={activeChapterId} 
+                    onNavigateMatch={(res) => {
+                        if (res.chapterId !== activeChapterId) onActiveChapterIdChange(res.chapterId);
+                    }} 
+                    onReplace={() => {}} 
+                    onReplaceAll={(f, r, s) => {
+                    }}
+                    settings={settings} 
+                />
+            )}
+            {activeModal === 'stats' && (
+                <StatsDashboardModal 
+                    settings={settings} 
+                    chapters={chapters} 
+                    totalWordCount={totalWordCount} 
+                    goals={writingGoals} 
+                    onGoalsChange={onWritingGoalsChange} 
+                    onClose={() => setActiveModal(null)} 
+                />
+            )}
+            {activeModal === 'shortcuts' && (
+                <ShortcutsModal 
+                    onClose={() => setActiveModal(null)} 
+                    shortcuts={shortcuts} 
+                    onUpdateShortcuts={onShortcutsChange} 
+                    settings={settings} 
+                />
+            )}
+            {activeModal === 'spellCheck' && (
+                <SpellCheckModal 
+                    settings={settings} 
+                    chapter={activeChapter} 
+                    onClose={() => setActiveModal(null)} 
+                    onUpdateContent={handleContentChange} 
+                />
+            )}
+            {activeModal === 'userGuide' && (
+                <UserGuideModal 
+                    settings={settings} 
+                    onClose={() => setActiveModal(null)} 
+                />
+            )}
+            {activeModal === 'history' && (
+                <VersionHistoryModal 
+                    settings={settings} 
+                    activeChapter={activeChapter} 
+                    directoryHandle={directoryHandle} 
+                    onRestore={(content) => {
+                        handleContentChange(content);
+                        setActiveModal(null);
+                    }} 
+                    onClose={() => setActiveModal(null)} 
+                />
+            )}
+            {activeModal === 'voiceSettings' && (
+                <VoiceSettingsModal 
+                    settings={settings} 
+                    characters={characters} 
+                    onClose={() => {
+                        setActiveModal(previousModal);
+                        setPreviousModal(null);
+                    }} 
+                    onSettingsChange={onSettingsChange} 
+                />
+            )}
+            {activeModal === 'readAloud' && (
+                <ReadAloudModal 
+                    settings={settings} 
+                    onClose={() => setActiveModal(null)} 
+                    onPlay={handleTTSPlay} 
+                    onPause={() => ttsAudioElementRef.current?.pause()} 
+                    onStop={handleTTSStop} 
+                    onOpenSettings={() => { 
+                        setPreviousModal('readAloud'); 
+                        setActiveModal('voiceSettings'); 
+                    }} 
+                    status={ttsStatus} 
+                    activeChapterTitle={activeChapter.title} 
+                />
+            )}
+            {activeModal === 'customizeToolbar' && (
+                <CustomizeToolbarModal 
+                    settings={settings} 
+                    currentVisibility={settings.toolbarVisibility || {}} 
+                    onSave={(v) => onSettingsChange({ toolbarVisibility: v })} 
+                    onClose={() => setActiveModal(null)} 
+                    onSaveProject={onSaveToFolder} 
+                    hasContent={hasContent} 
+                    appUpdate={availableUpdate} 
+                />
+            )}
+            {activeModal === 'designGallery' && (
+                <DesignGalleryModal 
+                    settings={settings} 
+                    onClose={() => setActiveModal(null)} 
+                    galleryItems={galleryItems} 
+                    onGalleryItemsChange={onGalleryItemsChange} 
+                    onSettingsChange={onSettingsChange} 
+                />
+            )}
+
             {contextMenu && (
                 <ContextMenu
                     x={contextMenu.x}

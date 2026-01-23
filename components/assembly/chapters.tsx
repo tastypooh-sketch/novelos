@@ -107,14 +107,11 @@ const PacingHeatmap: React.FC<{
     const [tooltip, setTooltip] = useState<{ content: string; x: number; y: number } | null>(null);
 
     const scoreToColor = (score: number) => { // score is -1 to 1
-        // Blue (HSL: 220, 83%, 60%) -> White (HSL: any, 0%, 100%) -> Red (HSL: 0, 84%, 60%)
         if (score < 0) {
-            // Interpolate from white to blue
             const lightness = 100 - (Math.abs(score) * 40); // 100 -> 60
             const saturation = Math.abs(score) * 83; // 0 -> 83
             return `hsl(220, ${saturation}%, ${lightness}%)`;
         } else {
-            // Interpolate from white to red
             const lightness = 100 - (score * 40); // 100 -> 60
             const saturation = score * 84; // 0 -> 84
             return `hsl(0, ${saturation}%, ${lightness}%)`;
@@ -131,11 +128,11 @@ const PacingHeatmap: React.FC<{
     };
 
     return (
-        <div className="relative mb-4">
-            <h4 className="text-sm font-semibold uppercase tracking-wider mb-2 select-none" style={{ color: `${settings.textColor}99` }}>
-                Pacing Heatmap
+        <div className="relative mb-6">
+            <h4 className="text-xs font-bold uppercase tracking-[0.3em] opacity-40 mb-3 ml-1 select-none" style={{ color: settings.textColor }}>
+                Pacing Integrity Heatmap
             </h4>
-            <div className="flex w-full h-8 rounded-md overflow-hidden" onMouseLeave={() => setTooltip(null)}>
+            <div className="flex w-full h-8 rounded-xl overflow-hidden shadow-inner bg-black/10 border border-white/5" onMouseLeave={() => setTooltip(null)}>
                 {analysis.map(info => (
                     <div
                         key={info.chapterId}
@@ -170,6 +167,7 @@ const ExpandedChapterView: React.FC<{
     snippets: ISnippet[];
     onClose: () => void;
     onUpdate: (id: string, updates: Partial<IChapter>) => void;
+    onUpdateChapter: (id: string, updates: Partial<IChapter>) => void;
     onDeleteRequest: (chapter: IChapter) => void;
     settings: EditorSettings;
     scrollContainerRef: React.RefObject<HTMLDivElement>;
@@ -179,7 +177,7 @@ const ExpandedChapterView: React.FC<{
     tileBackgroundStyle: TileBackgroundStyle;
     directoryHandle: FileSystemDirectoryHandle | null;
 }> = React.memo(({
-    chapter, characters, snippets, onClose, onUpdate, onDeleteRequest, settings, scrollContainerRef, onCharacterDragOver, onCharacterDrop, isSelected, tileBackgroundStyle, directoryHandle
+    chapter, characters, snippets, onClose, onUpdate, onUpdateChapter, onDeleteRequest, settings, scrollContainerRef, onCharacterDragOver, onCharacterDrop, isSelected, tileBackgroundStyle, directoryHandle
 }) => {
     const dispatch = useNovelDispatch();
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -269,7 +267,7 @@ const ExpandedChapterView: React.FC<{
                 try {
                     const imageColor = await getImageColor(photoUrl);
                     onUpdate(chapter.id, { photo: photoUrl, imageColor: imageColor, isPhotoLocked: true });
-                } catch (err) {
+                } catch(err) {
                     onUpdate(chapter.id, { photo: photoUrl, isPhotoLocked: true });
                 }
             };
@@ -293,9 +291,7 @@ const ExpandedChapterView: React.FC<{
 
     const handleSendBriefToManuscript = () => {
         const briefingHtml = generateBriefingHtml(chapter, characters, snippets);
-        // Prepend briefing to existing content
         const existingContent = chapter.content || '<div><br></div>';
-        // Basic check to avoid double injection if user clicks multiple times without edit
         if (existingContent.includes('[ CHAPTER BRIEFING ]')) {
              if (!confirm("This chapter already contains a briefing. Add another one?")) {
                  return;
@@ -392,8 +388,8 @@ const ExpandedChapterView: React.FC<{
                         <div className="w-full flex flex-col">
                             <div className="p-4 border-b flex justify-between items-center" style={{ borderColor: `${tileBorderColor}80`}}>
                                  <div className="text-xl font-bold flex items-baseline gap-2 min-w-0" title={`${chapter.title} ${chapter.chapterNumber}`}>
-                                    <span className="flex-shrink-0">{chapter.chapterNumber}.</span>
-                                    <div className="truncate flex-grow">{chapter.title}</div>
+                                    <span className="flex-shrink-0" style={{ color: settings.textColor }}>{chapter.chapterNumber}.</span>
+                                    <div className="truncate flex-grow" style={{ color: settings.textColor }}>{chapter.title}</div>
                                 </div>
                             </div>
                              {linkedCharacters.length > 0 && (
@@ -407,7 +403,7 @@ const ExpandedChapterView: React.FC<{
                                         const handleRemoveCharacter = (e: React.MouseEvent) => {
                                             e.stopPropagation();
                                             const newCharacterIds = chapter.characterIds?.filter(id => id !== char.id);
-                                            onUpdate(chapter.id, { characterIds: newCharacterIds });
+                                            onUpdateChapter(chapter.id, { characterIds: newCharacterIds });
                                         };
 
                                         return (
@@ -434,7 +430,7 @@ const ExpandedChapterView: React.FC<{
 
                             <div className="p-4 space-y-6">
                                 <div>
-                                    <label className="block text-sm font-semibold mb-2 opacity-80">Title</label>
+                                    <label className="block text-sm font-semibold mb-2 opacity-80" style={{ color: settings.textColor }}>Title</label>
                                     <input
                                         type="text"
                                         value={localTitle}
@@ -453,7 +449,7 @@ const ExpandedChapterView: React.FC<{
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-semibold mb-2 opacity-80">Scene Image</label>
+                                    <label className="block text-sm font-semibold mb-2 opacity-80" style={{ color: settings.textColor }}>Scene Image</label>
                                     <div className="relative group">
                                         <div 
                                             className="w-full h-40 rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer hover:border-blue-400 transition-colors select-none relative"
@@ -465,8 +461,8 @@ const ExpandedChapterView: React.FC<{
                                             )}
                                             {!chapter.photo && (
                                                 <div className="text-center">
-                                                    <CameraIcon className="h-8 w-8 mx-auto opacity-50"/>
-                                                    <p className="text-xs mt-1 opacity-70">Click to upload an image</p>
+                                                    <CameraIcon className="h-8 w-8 mx-auto opacity-50" style={{ color: settings.textColor }}/>
+                                                    <p className="text-xs mt-1 opacity-70" style={{ color: settings.textColor }}>Click to upload an image</p>
                                                 </div>
                                             )}
                                         </div>
@@ -485,7 +481,7 @@ const ExpandedChapterView: React.FC<{
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-semibold mb-2 opacity-80">Summary</label>
+                                    <label className="block text-sm font-semibold mb-2 opacity-80" style={{ color: settings.textColor }}>Summary</label>
                                     <textarea
                                         ref={summaryRef} value={summary}
                                         onChange={e => { setSummary(e.target.value); debouncedUpdate({ summary: e.target.value }); }}
@@ -496,7 +492,7 @@ const ExpandedChapterView: React.FC<{
                                 </div>
                                 <div>
                                     <div className="flex justify-between items-center mb-2">
-                                        <label className="block text-sm font-semibold opacity-80">Outline</label>
+                                        <label className="block text-sm font-semibold opacity-80" style={{ color: settings.textColor }}>Outline</label>
                                         <button
                                             onClick={() => setIsEditingOutline(p => !p)}
                                             className="text-xs px-2 py-0.5 rounded"
@@ -526,7 +522,7 @@ const ExpandedChapterView: React.FC<{
                                 </div>
                                 <div>
                                     <div className="flex justify-between items-center mb-2">
-                                        <label className="block text-sm font-semibold opacity-80">Story Analysis</label>
+                                        <label className="block text-sm font-semibold opacity-80" style={{ color: settings.textColor }}>Story Analysis</label>
                                         <button
                                             onClick={() => setIsEditingAnalysis(p => !p)}
                                             className="text-xs px-2 py-0.5 rounded"
@@ -557,11 +553,11 @@ const ExpandedChapterView: React.FC<{
                                 </div>
                                 {linkedSnippets.length > 0 && (
                                     <div>
-                                        <label className="block text-sm font-semibold mb-2 opacity-80">Linked Snippets</label>
+                                        <label className="block text-sm font-semibold mb-2 opacity-80" style={{ color: settings.textColor }}>Linked Snippets</label>
                                         <div className="space-y-2">
                                             {linkedSnippets.map(snippet => (
                                                 <div key={snippet.id} className="p-3 rounded-md flex justify-between items-start gap-3" style={{ backgroundColor: settings.backgroundColor }}>
-                                                    <p className="text-sm opacity-90 whitespace-pre-wrap flex-grow">{snippet.cleanedText}</p>
+                                                    <p className="text-sm opacity-90 whitespace-pre-wrap flex-grow" style={{ color: settings.textColor }}>{snippet.cleanedText}</p>
                                                     <button
                                                         onClick={() => handleSendSnippetBack(snippet.id)}
                                                         className="p-1.5 rounded flex-shrink-0"
@@ -570,7 +566,7 @@ const ExpandedChapterView: React.FC<{
                                                         onMouseLeave={e => e.currentTarget.style.backgroundColor = secondaryButtonBg}
                                                         title="Send snippet back to the repository"
                                                     >
-                                                        <RevertIcon className="h-4 w-4" />
+                                                        <RevertIcon className="h-4 w-4" style={{ color: settings.textColor }} />
                                                     </button>
                                                 </div>
                                             ))}
@@ -578,7 +574,7 @@ const ExpandedChapterView: React.FC<{
                                     </div>
                                 )}
                                 <div>
-                                    <label className="block text-sm font-semibold mb-2 opacity-80">Rough Notes</label>
+                                    <label className="block text-sm font-semibold mb-2 opacity-80" style={{ color: settings.textColor }}>Rough Notes</label>
                                     <textarea
                                         ref={rawNotesRef} value={rawNotes}
                                         onChange={e => { setRawNotes(e.target.value); debouncedUpdate({ rawNotes: e.target.value }); }}
@@ -608,7 +604,7 @@ const ExpandedChapterView: React.FC<{
                                 <button
                                     onClick={handleRevertDetails}
                                     className="px-3 py-1.5 rounded-md text-sm font-medium flex items-center"
-                                    style={{ backgroundColor: secondaryButtonBg }}
+                                    style={{ backgroundColor: secondaryButtonBg, color: settings.textColor }}
                                 >
                                     <RevertIcon className="h-4 w-4 mr-2" />
                                     Revert
@@ -619,7 +615,7 @@ const ExpandedChapterView: React.FC<{
                                         onMouseEnter={() => setShowUpdateConfirm(true)}
                                         onMouseLeave={() => setShowUpdateConfirm(false)}
                                         className="px-3 py-1.5 rounded-md text-sm font-medium flex items-center"
-                                        style={{ backgroundColor: secondaryButtonBg }}
+                                        style={{ backgroundColor: secondaryButtonBg, color: settings.textColor }}
                                     >
                                         <BrushIcon className="h-4 w-4 mr-2" />
                                         Update from Manuscript
@@ -627,14 +623,14 @@ const ExpandedChapterView: React.FC<{
                                     <button
                                         onClick={handleSendBriefToManuscript}
                                         className="px-3 py-1.5 rounded-md text-sm font-medium flex items-center"
-                                        style={{ backgroundColor: secondaryButtonBg }}
+                                        style={{ backgroundColor: secondaryButtonBg, color: settings.textColor }}
                                         title="Sends the chapter summary, characters, and snippets to the manuscript editor as a prompt."
                                     >
                                         <PaperAirplaneIcon className="h-4 w-4 mr-2" />
                                         Send Brief to Manuscript
                                     </button>
                                     {showUpdateConfirm && (
-                                        <div onMouseEnter={() => setShowUpdateConfirm(true)} onMouseLeave={() => setShowUpdateConfirm(false)} className="absolute bottom-full left-0 mb-2 w-64 p-3 rounded-md shadow-lg text-xs z-50" style={{backgroundColor: settings.dropdownBg}}>
+                                        <div onMouseEnter={() => setShowUpdateConfirm(true)} onMouseLeave={() => setShowUpdateConfirm(false)} className="absolute bottom-full left-0 mb-2 w-64 p-3 rounded-md shadow-lg text-xs z-50" style={{backgroundColor: settings.dropdownBg, color: settings.toolbarText }}>
                                             <p>This will analyze the written chapter text to update this chapter's outline and analysis. This will overwrite existing data.</p>
                                             <button onClick={handleUpdateFromManuscript} className="w-full mt-2 py-1.5 rounded-md text-white font-semibold" style={{backgroundColor: settings.accentColor}}>Confirm Update</button>
                                         </div>
@@ -716,6 +712,7 @@ const ChapterThumbnail: React.FC<{
             style={{
                 borderColor: isSelected ? settings.accentColor : (chapter.accentStyle === 'outline' ? accentColor : 'transparent'),
                 ...backgroundStyle,
+                color: settings.textColor
             }}
         >
              {(chapter.accentStyle === 'left-top-ingress' || !chapter.accentStyle) && (
@@ -725,25 +722,23 @@ const ChapterThumbnail: React.FC<{
                 <div className="absolute bottom-0 right-0" style={{
                     width: 0,
                     height: 0,
-                    borderBottom: `32px solid ${accentColor}`,
-                    borderLeft: '32px solid transparent',
+                    borderBottom: `48px solid ${accentColor}`,
+                    borderLeft: '48px solid transparent',
                 }}></div>
             )}
-            {/* Image Area */}
             <div className="mx-2 mt-2 h-3/5 flex-shrink-0 relative overflow-hidden rounded-md">
                 {chapter.photo ? (
                     <img src={chapter.photo} alt={chapter.title} className="w-full h-full object-cover" />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center" style={{backgroundColor: shadeColor(settings.toolbarButtonBg || '#374151', isDarkMode ? -5 : 5)}}>
-                        <BookOpenIcon className="h-10 w-10 opacity-30"/>
+                        <BookOpenIcon className="h-10 w-10 opacity-30" style={{ color: settings.textColor }}/>
                     </div>
                 )}
             </div>
 
-            {/* Info Area */}
             <div className="px-3 pb-3 pt-2 flex-grow flex flex-col justify-between min-h-0">
                 <div>
-                    <h3 className="font-bold text-sm truncate" title={`${chapter.chapterNumber}. ${chapter.title}`}>
+                    <h3 className="font-bold text-sm truncate" title={`${chapter.chapterNumber}. ${chapter.title}`} style={{ color: settings.textColor }}>
                         {chapter.chapterNumber}. {chapter.title}
                     </h3>
                 </div>
@@ -754,7 +749,6 @@ const ChapterThumbnail: React.FC<{
                 </div>
             </div>
             
-            {/* Expand Button */}
             <button
                 className="absolute bottom-2 right-2 cursor-pointer p-1 rounded-full transition-colors z-10"
                 onClick={(e) => { e.stopPropagation(); onToggleExpand(chapter.id); }}
@@ -1035,7 +1029,14 @@ export const ChaptersPanel: React.FC<ChaptersPanelProps> = ({
                  </div>
             </div>
             <div className="w-full h-full flex min-h-0">
-                <div ref={scrollRef} className="flex-grow h-full overflow-y-auto p-4">
+                <div ref={scrollRef} className="flex-grow h-full overflow-y-auto p-6 space-y-6">
+                     <div className="mb-8">
+                        <h2 className="text-3xl font-bold tracking-tight flex items-center gap-3" style={{ color: settings.textColor }}>
+                            <BookOpenIcon className="h-8 w-8 text-yellow-400" /> Manuscript Architecture
+                        </h2>
+                        <p className="text-sm opacity-60 mt-1" style={{ color: settings.textColor }}>Organize chapters, track pacing, and map narrative arcs across acts.</p>
+                    </div>
+
                      {pacingAnalysis && <PacingHeatmap analysis={pacingAnalysis} settings={settings} />}
                      {errorMessage && !expandedChapterId && <AIError message={errorMessage} className="mb-4" />}
                      {expandedChapterId ? (() => {
@@ -1051,6 +1052,8 @@ export const ChaptersPanel: React.FC<ChaptersPanelProps> = ({
                                 snippets={snippets}
                                 settings={settings}
                                 onUpdate={onUpdateChapter}
+                                onUpdateChapter={onUpdateChapter}
+                                /* FIX: replaced undefined variable setDeleteChapterTarget with correct onDeleteRequest prop */
                                 onDeleteRequest={onDeleteRequest}
                                 onClose={() => setExpandedCharacterId(null)}
                                 scrollContainerRef={scrollRef}
@@ -1062,26 +1065,26 @@ export const ChaptersPanel: React.FC<ChaptersPanelProps> = ({
                             />
                         );
                     })() : (
-                        <div className="flex flex-col gap-8">
+                        <div className="flex flex-col gap-10">
                             {(() => {
                                 const isPoolHovered = overAct === 0;
                                 const isPoolEmpty = acts[0].length === 0;
                                 return (
                                     <div>
-                                        <h3 className="text-lg font-bold uppercase tracking-wider mb-4 select-none" style={{ color: `${settings.textColor}99` }}>Chapter Pool</h3>
+                                        <h3 className="text-xl font-bold tracking-tight mb-4 select-none" style={{ color: `${settings.textColor}E6` }}>Chapter Pool</h3>
                                         <div
                                             data-act={0}
                                             onDrop={handleDrop}
                                             onDragOver={handleDragOver}
                                             onDragLeave={() => setOverAct(null)}
-                                            className={`rounded-lg grid grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-4 border-2 border-dashed transition-all duration-300 ${
+                                            className={`rounded-2xl grid grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-4 border transition-all duration-300 ${
                                                 isPoolEmpty && !isPoolHovered
-                                                    ? 'py-3 px-4'
+                                                    ? 'py-4 px-6'
                                                     : 'p-4 min-h-[180px]'
                                             }`}
                                             style={{
-                                                borderColor: `${settings.toolbarInputBorderColor}80`,
-                                                backgroundColor: isPoolHovered ? `${settings.toolbarButtonBg}60` : `${settings.toolbarButtonBg}40`
+                                                borderColor: isPoolHovered ? settings.accentColor : 'rgba(255,255,255,0.05)',
+                                                backgroundColor: isPoolHovered ? `${settings.toolbarButtonBg}80` : `${settings.toolbarButtonBg}40`
                                             }}
                                         >
                                             {acts[0].map(ch => (
@@ -1103,7 +1106,7 @@ export const ChaptersPanel: React.FC<ChaptersPanelProps> = ({
                                                 />
                                             ))}
                                             {isPoolEmpty && (
-                                                <div className="text-sm opacity-50 select-none pointer-events-none col-span-full text-center">Drag chapters here to unassign them from an Act</div>
+                                                <div className="text-sm opacity-50 select-none pointer-events-none col-span-full text-center py-6" style={{ color: settings.textColor }}>Drag chapters here to unassign them from an Act</div>
                                             )}
                                         </div>
                                     </div>
@@ -1115,14 +1118,14 @@ export const ChaptersPanel: React.FC<ChaptersPanelProps> = ({
                                 return (
                                     <div key={actNum}>
                                         <div className="flex justify-between items-baseline mb-4">
-                                            <h3 className="text-lg font-bold uppercase tracking-wider select-none" style={{ color: `${settings.textColor}99` }}>Act {actNum}</h3>
+                                            <h3 className="text-xl font-bold tracking-tight select-none" style={{ color: `${settings.textColor}E6` }}>Act {actNum}</h3>
                                             <input
                                                 type="text"
-                                                placeholder={`Title for Act ${actNum}`}
+                                                placeholder={`Optional Title for Act ${actNum}`}
                                                 value={actTitles[actNum]}
                                                 onChange={e => handleActTitleChange(actNum, e.target.value)}
-                                                className="bg-transparent border-0 border-b-2 text-sm text-right focus:outline-none"
-                                                style={{ color: `${settings.textColor}B3`, borderColor: `${settings.toolbarInputBorderColor}80`, 'caretColor': settings.accentColor } as React.CSSProperties}
+                                                className="bg-transparent border-0 border-b text-sm text-right focus:outline-none transition-colors"
+                                                style={{ color: `${settings.textColor}80`, borderColor: `${settings.toolbarInputBorderColor}40`, 'caretColor': settings.accentColor } as React.CSSProperties}
                                             />
                                         </div>
                                         <div
@@ -1130,14 +1133,14 @@ export const ChaptersPanel: React.FC<ChaptersPanelProps> = ({
                                             onDrop={handleDrop}
                                             onDragOver={handleDragOver}
                                             onDragLeave={() => setOverAct(null)}
-                                            className={`rounded-lg grid grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-4 border-2 border-dashed transition-all duration-300 ${
+                                            className={`rounded-2xl grid grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-4 border transition-all duration-300 ${
                                                 isActEmpty && !isActHovered
-                                                    ? 'py-3 px-4'
+                                                    ? 'py-4 px-6'
                                                     : 'p-4 min-h-[180px]'
                                             }`}
                                             style={{
-                                                borderColor: `${settings.toolbarInputBorderColor}80`,
-                                                backgroundColor: isActHovered ? `${settings.toolbarButtonBg}60` : `${settings.toolbarButtonBg}40`
+                                                borderColor: isActHovered ? settings.accentColor : 'rgba(255,255,255,0.05)',
+                                                backgroundColor: isActHovered ? `${settings.toolbarButtonBg}80` : `${settings.toolbarButtonBg}40`
                                             }}
                                         >
                                             {acts[actNum].map(ch => (
@@ -1159,7 +1162,7 @@ export const ChaptersPanel: React.FC<ChaptersPanelProps> = ({
                                                 />
                                             ))}
                                             {isActEmpty && (
-                                                <div className="text-sm opacity-50 select-none pointer-events-none col-span-full text-center">Drag chapters into Act {actNum}</div>
+                                                <div className="text-sm opacity-50 select-none pointer-events-none col-span-full text-center py-6" style={{ color: settings.textColor }}>Drag chapters into Act {actNum} to organize your story</div>
                                             )}
                                         </div>
                                     </div>
@@ -1174,7 +1177,7 @@ export const ChaptersPanel: React.FC<ChaptersPanelProps> = ({
                 >
                     {isLinkPanelOpen && (
                         <div ref={linkPanelScrollRef} className="flex flex-col gap-3">
-                             <h3 className="text-base font-bold text-center">Drag a character to a chapter</h3>
+                             <h3 className="text-base font-bold text-center mb-2" style={{ color: settings.toolbarText }}>Link Characters</h3>
                             {characters.map(char => (
                                 <div key={char.id} draggable onDragStart={handleCharacterDragStart} onDragEnd={() => setDraggedCharacterId(null)} data-character-id={char.id} className="cursor-grab active:cursor-grabbing">
                                     <div className="relative w-full">
@@ -1199,8 +1202,8 @@ export const ChaptersPanel: React.FC<ChaptersPanelProps> = ({
                                                 {char.isPrimary && <StarIcon className="absolute -top-2 -right-2 h-5 w-5 text-yellow-400" style={{ filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.5))'}}/>}
                                             </div>
                                             <div className="pr-20">
-                                                <h4 className="font-bold text-sm truncate">{char.name}</h4>
-                                                <p className="text-xs opacity-70 mt-1 summary-clamped-2line">{char.summary || char.tagline}</p>
+                                                <h4 className="font-bold text-sm truncate" style={{ color: settings.toolbarText }}>{char.name}</h4>
+                                                <p className="text-xs opacity-70 mt-1 summary-clamped-2line" style={{ color: settings.toolbarText }}>{char.summary || char.tagline}</p>
                                             </div>
                                         </div>
                                     </div>

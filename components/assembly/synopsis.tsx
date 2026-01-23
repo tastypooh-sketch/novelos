@@ -2,7 +2,8 @@ import React, { useCallback, useContext } from 'react';
 import type { EditorSettings, SynopsisState } from '../../types';
 import { useAssemblyAI } from './AssemblyAIContext';
 import MarkdownRenderer from '../common/MarkdownRenderer';
-import { SparklesIconOutline, SpinnerIcon, DocumentTextIcon, RefreshIcon } from '../common/Icons';
+import { SparklesIconOutline, SpinnerIcon, DocumentTextIcon, RefreshIcon, ShareIcon } from '../common/Icons';
+import { AIError } from '../common/AIError';
 
 interface SynopsisSectionProps {
     title: string;
@@ -15,37 +16,36 @@ interface SynopsisSectionProps {
 
 const SynopsisSection: React.FC<SynopsisSectionProps> = ({ title, description, content, isLoading, onRegenerate, settings }) => {
     return (
-        <div className="p-4 rounded-lg flex flex-col" style={{ backgroundColor: settings.toolbarButtonBg }}>
-            <div className="flex justify-between items-center mb-3">
+        <div className="p-8 rounded-3xl border flex flex-col gap-6" style={{ backgroundColor: `${settings.toolbarButtonBg}40`, borderColor: settings.toolbarInputBorderColor }}>
+            <div className="flex justify-between items-start">
                 <div>
-                    <h3 className="text-lg font-semibold">{title}</h3>
-                    <p className="text-xs opacity-70">{description}</p>
+                    <h3 className="text-xs font-bold uppercase tracking-[0.3em] opacity-40 ml-1" style={{ color: settings.textColor }}>{title}</h3>
+                    <p className="text-xs italic opacity-60 mt-1" style={{ color: settings.textColor }}>{description}</p>
                 </div>
                 {content && (
-                    <button 
-                        onClick={onRegenerate} 
-                        disabled={isLoading}
-                        className="p-2 rounded-md flex items-center gap-2 text-xs disabled:opacity-50"
-                        style={{ backgroundColor: settings.toolbarBg }}
-                    >
-                        {isLoading ? <SpinnerIcon className="h-4 w-4" /> : <RefreshIcon className="h-4 w-4" />}
-                        Regenerate
-                    </button>
+                    <div className="flex gap-2">
+                        <button onClick={() => navigator.clipboard.writeText(content)} className="p-2 rounded-xl border border-white/10 hover:bg-white/5 transition-colors" style={{ color: settings.textColor }} title="Copy">
+                            <ShareIcon className="h-4 w-4" />
+                        </button>
+                        <button onClick={onRegenerate} disabled={isLoading} className="p-2 rounded-xl border border-white/10 hover:bg-white/5 transition-colors disabled:opacity-50" style={{ color: settings.textColor }}>
+                            {isLoading ? <SpinnerIcon className="h-4 w-4" /> : <RefreshIcon className="h-4 w-4" />}
+                        </button>
+                    </div>
                 )}
             </div>
-            <div 
-                className="flex-grow p-4 rounded min-h-[10rem] overflow-y-auto"
-                style={{ backgroundColor: settings.backgroundColor }}
-            >
+            <div className="flex-grow p-6 rounded-2xl bg-black/10 min-h-[12rem] overflow-y-auto border border-white/5 shadow-inner">
                 {isLoading ? (
-                    <div className="flex items-center justify-center h-full">
-                        <SpinnerIcon className="h-8 w-8" />
+                    <div className="flex flex-col items-center justify-center h-full gap-4 opacity-30 font-bold tracking-widest text-[10px]" style={{ color: settings.textColor }}>
+                        <SpinnerIcon className="h-10 w-10" />
+                        <span>SYNTHESIZING...</span>
                     </div>
                 ) : content ? (
-                    <MarkdownRenderer source={content} settings={settings} />
+                    <div className="prose-container text-lg leading-relaxed opacity-90">
+                        <MarkdownRenderer source={content} settings={settings} />
+                    </div>
                 ) : (
-                    <div className="flex items-center justify-center h-full text-center text-sm opacity-60">
-                        Analysis will appear here.
+                    <div className="flex items-center justify-center h-full text-center text-sm italic opacity-20" style={{ color: settings.textColor }}>
+                        Awaiting generation.
                     </div>
                 )}
             </div>
@@ -60,83 +60,46 @@ interface SynopsisPanelProps {
 }
 
 export const SynopsisPanel: React.FC<SynopsisPanelProps> = ({ settings, synopsisState }) => {
-    const { 
-        onGenerateFullSynopsis,
-        onRegenerateMarketAnalysis,
-        onRegeneratePromotionalContent,
-        onRegenerateSynopsis,
-    } = useAssemblyAI();
-
-    const { 
-        marketAnalysis, promotionalContent, synopsis,
-        isGeneratingMarketAnalysis, isGeneratingPromotionalContent, isGeneratingSynopsis, error 
-    } = synopsisState;
-    
+    const { onGenerateFullSynopsis, onRegenerateMarketAnalysis, onRegeneratePromotionalContent, onRegenerateSynopsis, onSetError } = useAssemblyAI();
+    const { marketAnalysis, promotionalContent, synopsis, isGeneratingMarketAnalysis, isGeneratingPromotionalContent, isGeneratingSynopsis, error } = synopsisState;
     const hasGeneratedAnything = marketAnalysis || promotionalContent || synopsis;
     const isGeneratingAnything = isGeneratingMarketAnalysis || isGeneratingPromotionalContent || isGeneratingSynopsis;
 
-    const handleGenerate = useCallback(() => {
-        if (isGeneratingAnything) return;
-        onGenerateFullSynopsis();
-    }, [isGeneratingAnything, onGenerateFullSynopsis]);
-    
     return (
-        <div className="w-full h-full flex flex-col p-4" style={{ backgroundColor: `${settings.toolbarButtonBg}60`}}>
-            <div className="flex-shrink-0 flex items-center justify-between gap-2 mb-4">
-                 <div className="flex items-center gap-2">
-                    <DocumentTextIcon className="h-6 w-6" />
-                    <h2 className="text-xl font-bold">Synopsis & Marketing</h2>
-                 </div>
-                 {!hasGeneratedAnything && !isGeneratingAnything && (
-                     <button
-                        onClick={handleGenerate}
-                        className="px-4 py-2 rounded-md text-sm font-medium flex items-center text-white"
-                        style={{ backgroundColor: settings.accentColor }}
-                     >
-                        Generate Synopsis & Marketing
-                     </button>
-                 )}
+        <div className="w-full h-full flex flex-col p-6 gap-6 overflow-y-auto" style={{ color: settings.textColor }}>
+            <div className="flex justify-between items-end">
+                <div>
+                    <h2 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+                        <DocumentTextIcon className="h-8 w-8 text-yellow-400" /> Synopsis & Marketing
+                    </h2>
+                    <p className="text-sm opacity-60 mt-1" style={{ color: settings.textColor }}>Distill your manuscript into industry-ready artifacts.</p>
+                </div>
+                {!hasGeneratedAnything && !isGeneratingAnything && (
+                    <button onClick={onGenerateFullSynopsis} disabled={isGeneratingAnything} className="px-10 py-3 rounded-2xl text-sm font-bold text-white shadow-2xl flex items-center gap-3 transition-transform active:scale-95" style={{ backgroundColor: settings.accentColor }}>
+                        <SparklesIconOutline className="h-5 w-5" />
+                        GENERATE FULL PACKAGE
+                    </button>
+                )}
             </div>
             
-            <div className="flex-grow min-h-0 overflow-y-auto pr-2 space-y-4">
+            <div className="flex-grow space-y-8 pb-10">
                 {!hasGeneratedAnything && !isGeneratingAnything ? (
-                     <div className="w-full h-full flex flex-col items-center justify-center text-center p-8" style={{ color: `${settings.textColor}99` }}>
-                        <DocumentTextIcon className="h-16 w-16 mb-4 opacity-50" />
-                        <h3 className="text-lg font-semibold">Distill Your Story's Essence</h3>
-                        <p className="mt-2 text-sm max-w-lg">
-                           Click the button above for the AI to analyze your entire novel structure and produce professional marketing materials and a full synopsis.
-                        </p>
+                     <div className="flex flex-col items-center justify-center text-center opacity-20 py-20" style={{ color: settings.textColor }}>
+                        <DocumentTextIcon className="h-32 w-32 mb-8" />
+                        <h3 className="text-3xl italic max-w-2xl mx-auto">Prepare your novel for the world.</h3>
+                        <p className="text-lg mt-4 max-w-lg mx-auto leading-relaxed">The AI will analyze your entire story board to generate BISAC codes, taglines, comps, and both short and long synopses.</p>
                     </div>
                 ) : (
-                    <>
-                        <SynopsisSection
-                            title="Market Analysis"
-                            description="BISAC codes, keywords, tropes, and comp titles for positioning your novel."
-                            content={marketAnalysis}
-                            isLoading={isGeneratingMarketAnalysis}
-                            onRegenerate={onRegenerateMarketAnalysis}
-                            settings={settings}
-                        />
-                         <SynopsisSection
-                            title="Promotional Content"
-                            description="Taglines, a logline, song lyrics, and an ideal reader profile."
-                            content={promotionalContent}
-                            isLoading={isGeneratingPromotionalContent}
-                            onRegenerate={onRegeneratePromotionalContent}
-                            settings={settings}
-                        />
-                         <SynopsisSection
-                            title="Synopsis Generation"
-                            description="A short, query-ready synopsis and a detailed long synopsis."
-                            content={synopsis}
-                            isLoading={isGeneratingSynopsis}
-                            onRegenerate={onRegenerateSynopsis}
-                            settings={settings}
-                        />
-                    </>
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 animate-in fade-in duration-1000">
+                        <SynopsisSection title="Positioning & Market" description="Tropes, Comp Titles, and Keywords." content={marketAnalysis} isLoading={isGeneratingMarketAnalysis} onRegenerate={onRegenerateMarketAnalysis} settings={settings} />
+                        <SynopsisSection title="Creative Promotions" description="Taglines, Loglines, and Reader Persona." content={promotionalContent} isLoading={isGeneratingPromotionalContent} onRegenerate={onRegeneratePromotionalContent} settings={settings} />
+                        <div className="xl:col-span-2">
+                             <SynopsisSection title="Story Synopsis" description="Complete narrative overview for queries and outlines." content={synopsis} isLoading={isGeneratingSynopsis} onRegenerate={onRegenerateSynopsis} settings={settings} />
+                        </div>
+                    </div>
                 )}
-                 {error && <p className="text-red-400 text-sm text-center mt-4">{error}</p>}
             </div>
+            {error && <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-full max-w-lg z-50 animate-in fade-in slide-in-from-bottom-5 duration-300"><AIError message={error} onDismiss={() => onSetError(null)} /></div>}
         </div>
     );
 };
