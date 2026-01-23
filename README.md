@@ -2,7 +2,7 @@
 # NOVELOS 
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Version](https://img.shields.io/badge/version-7.3.9-green.svg)
+![Version](https://img.shields.io/badge/version-7.5.8-green.svg)
 ![Status](https://img.shields.io/badge/status-stable-success.svg)
 
 **Novelos** redefines digital storytelling by fusing a distraction-free, horizontal "infinite spread" interface with a deeply integrated, context-aware AI engine. Unlike traditional corkboarding software where AI is merely an add-on, Novelos is architected from the ground up as a responsive "Novel Operating System." 
@@ -105,5 +105,3 @@ Novelos utilizes the Google GenAI SDK. To use the AI features:
 ## 📄 License
 
 This project is open source. See [LICENSE](LICENSE) for details.
-
-*Note: The application includes a mock "License Gate" component for demonstration purposes. In a production environment, this connects to Lemon Squeezy for key validation.*

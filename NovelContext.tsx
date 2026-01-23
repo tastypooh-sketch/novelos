@@ -1,7 +1,6 @@
-
 import React, { createContext, useReducer, useContext, Dispatch, ReactNode } from 'react';
 import { produce } from 'immer';
-import type { INovelState, ICharacter, IChapter, ISnippet, SocialMediaState, AssemblyPanel, Excerpt, AssemblyViewState, BrainstormHistory, SocialPost, PlotBrainstormState, SynopsisState, IWorldItem, ChekhovsGun, WhatIfState, IMapLocation } from './types';
+import type { INovelState, ICharacter, IChapter, ISnippet, SocialMediaState, AssemblyPanel, Excerpt, AssemblyViewState, BrainstormHistory, SocialPost, PlotBrainstormState, SynopsisState, IWorldItem, ChekhovsGun, WhatIfState, IMapLocation, Shortcut } from './types';
 import { generateId } from './utils/common';
 
 // --- ACTION TYPES ---
@@ -27,6 +26,7 @@ export type Action =
   | { type: 'ADD_MAP_LOCATION'; payload: IMapLocation }
   | { type: 'UPDATE_MAP_LOCATION'; payload: { id: string; updates: Partial<IMapLocation> } }
   | { type: 'DELETE_MAP_LOCATION'; payload: string }
+  | { type: 'SET_SHORTCUTS'; payload: Shortcut[] }
   | { type: 'UPDATE_GLOBAL_NOTES'; payload: string }
   | { type: 'UPDATE_SOCIAL_MEDIA_STATE'; payload: Partial<SocialMediaState> }
   | { type: 'INITIATE_SOCIAL_POST'; payload: { text: string; chapterId: string; characterIds: string[] } }
@@ -89,6 +89,43 @@ export const initialNovelState: INovelState = {
   snippets: [],
   worldItems: [],
   mapLocations: [],
+  shortcuts: [
+    // Punctuation & Typography
+    { id: generateId(), key: '--', value: '—' },
+    { id: generateId(), key: '...', value: '…' },
+    { id: generateId(), key: '." he', value: '," he' },
+    { id: generateId(), key: '." she', value: '," she' },
+    { id: generateId(), key: '." I', value: '," I' },
+    // Common Typos & Misspellings
+    { id: generateId(), key: 'taht', value: 'that' },
+    { id: generateId(), key: 'teh', value: 'the' },
+    { id: generateId(), key: 'abd', value: 'and' },
+    { id: generateId(), key: 'adn', value: 'and' },
+    { id: generateId(), key: 'hvae', value: 'have' },
+    { id: generateId(), key: 'wihout', value: 'without' },
+    { id: generateId(), key: 'recieve', value: 'receive' },
+    { id: generateId(), key: 'beleive', value: 'believe' },
+    { id: generateId(), key: 'seperate', value: 'separate' },
+    { id: generateId(), key: 'occured', value: 'occurred' },
+    { id: generateId(), key: 'occurence', value: 'occurrence' },
+    { id: generateId(), key: 'definately', value: 'definitely' },
+    { id: generateId(), key: 'wierd', value: 'weird' },
+    { id: generateId(), key: 'writting', value: 'writing' },
+    { id: generateId(), key: 'lenth', value: 'length' },
+    { id: generateId(), key: 'wich', value: 'which' },
+    { id: generateId(), key: 'comming', value: 'coming' },
+    { id: generateId(), key: 'tommorrow', value: 'tomorrow' },
+    { id: generateId(), key: 'thier', value: 'their' },
+    { id: generateId(), key: 'yuo', value: 'you' },
+    // Contractions & Capitalization
+    { id: generateId(), key: 'dont', value: "don't" },
+    { id: generateId(), key: 'wont', value: "won't" },
+    { id: generateId(), key: 'cant', value: "can't" },
+    { id: generateId(), key: 'didnt', value: "didn't" },
+    { id: generateId(), key: 'theyre', value: "they're" },
+    { id: generateId(), key: 'i', value: 'I' },
+    { id: generateId(), key: "i'm", value: "I'm" },
+  ],
   globalNotes: 'This is where you can keep global notes for your entire project. They will be saved as part of your project file.',
   socialMediaState: {
     isLoading: false,
@@ -295,6 +332,9 @@ const novelReducer = (state: INovelState, action: Action): INovelState => {
       }
       case 'DELETE_MAP_LOCATION':
         draft.mapLocations = draft.mapLocations.filter(l => l.id !== action.payload);
+        break;
+      case 'SET_SHORTCUTS':
+        draft.shortcuts = action.payload;
         break;
       case 'UPDATE_GLOBAL_NOTES': {
         draft.globalNotes = action.payload;

@@ -12,60 +12,41 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({ settings, onClos
     const guideContent = [
         {
             level: 1, 
-            title: "PART I: NOVE (PORTABLE)", 
+            title: "QUICK START OVERVIEW", 
             children: [
                 {
                     level: 2, 
-                    title: "Introduction",
+                    title: "1. Immersive Drafting (Manuscript Mode)",
                     content: [
-                        "Nove is an ultra-portable, single-file, horizontally scrolling word processor designed for creative writers. It challenges the norm of vertically scrolling portrait pages on landscape monitors, maximizing your screen real estate.",
-                        "It is designed to be absolute portable, system-independent, and seamless in its integration with Novelos (the full Desktop suite)."
+                        "• <strong>Infinite Spread:</strong> Maximise your screen with horizontal dual-pane flow. Use the scroll wheel or Page Up/Down to flip pages like a book.",
+                        "• <strong>Focus Mode:</strong> Press <strong>ESC</strong> to instantly hide all UI elements and enter a pure writing state.",
+                        "• <strong>Ambiance:</strong> Toggle typewriter sound effects via the Speaker icon and customise your visual environment in the <strong>Design Gallery</strong>."
                     ]
                 },
                 {
                     level: 2, 
-                    title: "The Interface: The Infinite Spread",
+                    title: "2. Narrative Engineering (Assembly Mode)",
                     content: [
-                        "Nove's interface maximizes writing space through a minimalist design. The dual-pane editor flows horizontally. When a spread is filled, the text snaps forward, mimicking the page-turning rhythm of a physical book.",
-                        "Navigation is simple: use your mouse wheel, drag the scrollbar, or use Page Up/Page Down keys to flip spreads instantly."
+                        "• <strong>Chapters & Acts:</strong> Organise your story into the classic 3-Act structure. Drag and drop tiles to reorder your narrative.",
+                        "• <strong>Character Profiles:</strong> Use the AI to generate deep backgrounds and photorealistic headshots based on your rough notes.",
+                        "• <strong>The World Crucible:</strong> Braindump world-building notes and let the AI distill them into an organised Story Bible (Codex)."
                     ]
                 },
                 {
                     level: 2, 
-                    title: "Iconography Reference",
+                    title: "3. Advanced Intelligence & Analysis",
                     content: [
-                        "• <strong>Focus Mode:</strong> Hides all UI elements instantly. Toggle with ESC.",
-                        "• <strong>Page Transition:</strong> Toggles between Horizontal Scroll and Fade transitions.",
-                        "• <strong>Design Gallery:</strong> Customizes themes and background images.",
-                        "• <strong>Typewriter Sounds:</strong> Provides rhythmic auditory feedback for mechanical keystrokes.",
-                        "• <strong>Stats Dashboard:</strong> Tracks your manuscript and daily goals.",
-                        "• <strong>Find & Replace:</strong> Operates on current chapter or entire manuscript."
-                    ]
-                }
-            ]
-        },
-        {
-            level: 1, 
-            title: "PART II: NOVELOS (ASSEMBLY MODE)", 
-            children: [
-                {
-                    level: 2, 
-                    title: "Structural Engineering",
-                    content: [
-                        "While Nove is for drafting, Assembly Mode is for structural engineering. Use the following panels to manage your story's DNA:",
-                        "• <strong>Chapters:</strong> Outline your book using the Act system (1, 2, and 3). Drag and drop chapters to reorganize them.",
-                        "• <strong>Characters:</strong> Build deep profiles. Link characters to specific chapters to track their presence.",
-                        "• <strong>World:</strong> Use the Crucible to distill messy notes into a structured Story Bible. Map locations on a visual Map Builder.",
-                        "• <strong>Snippets:</strong> A repository for loose ideas. Let AI suggest where in your manuscript they should be placed."
+                        "• <strong>Pacing Heatmap:</strong> Visualise narrative tension across your entire book to spot 'sagging' middles.",
+                        "• <strong>Plot Brainstorm:</strong> Detect plot holes, inconsistencies, and generate character-driven twists.",
+                        "• <strong>Social Media Studio:</strong> Automatically create visual promotional content and captions for Instagram/TikTok from your manuscript excerpts."
                     ]
                 },
                 {
                     level: 2, 
-                    title: "Advanced AI Analysis",
+                    title: "4. Portability & Backups",
                     content: [
-                        "• <strong>Pacing Heatmap:</strong> Visualizes the tension and speed of your narrative across all chapters.",
-                        "• <strong>Plot Brainstorm:</strong> Detects plot holes, suggests twists, and analyzes character arc consistency.",
-                        "• <strong>Social Media Studio:</strong> Automatically generates promotional images and captions for Instagram and TikTok based on your actual manuscript content."
+                        "• <strong>The ZIP Protocol:</strong> Novelos saves your work into timestamped ZIP archives. Keep these in your cloud folder for ultimate safety.",
+                        "• <strong>Nové Portable:</strong> Export a standalone <strong>Nové.html</strong> file to your USB stick. It contains your whole book and works offline in any browser."
                     ]
                 }
             ]
@@ -73,7 +54,7 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({ settings, onClos
     ];
 
     return (
-        <Modal onClose={onClose} settings={settings} title="Novelos User Guide" className="max-w-4xl">
+        <Modal onClose={onClose} settings={settings} title="Novelos Quick Start Guide" className="max-w-4xl">
             <div className="space-y-8 py-2">
                 {guideContent.map((section, sIdx) => (
                     <div key={sIdx} className="space-y-6">
@@ -94,8 +75,23 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({ settings, onClos
                         </div>
                     </div>
                 ))}
+                
+                <div className="p-6 rounded-xl border-2 text-center space-y-3 bg-black/10" style={{ borderColor: settings.accentColor }}>
+                    <h3 className="font-bold text-lg">Need the full documentation?</h3>
+                    <p className="text-sm opacity-80">For a deep dive into every feature, AI prompt engineering, and setup instructions, visit the comprehensive online manual.</p>
+                    <a 
+                        href="https://www.thomascorfield.com/post/novelos-user-guide" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-block px-6 py-2 rounded-lg font-bold text-white transition-transform active:scale-95"
+                        style={{ backgroundColor: settings.accentColor }}
+                    >
+                        View Full User Manual
+                    </a>
+                </div>
+
                 <div className="pt-8 text-center border-t opacity-40 text-xs" style={{ borderColor: settings.toolbarInputBorderColor }}>
-                    <p>Novelos v7.3.9 &mdash; Thomas Corfield</p>
+                    <p>Novelos v7.5.8 &mdash; Thomas Corfield</p>
                 </div>
             </div>
         </Modal>

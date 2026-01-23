@@ -1,6 +1,3 @@
-
-
-
 export interface Shortcut {
   id: string;
   key: string;
@@ -376,6 +373,7 @@ export interface INovelState {
     snippets: ISnippet[];
     worldItems: IWorldItem[];
     mapLocations: IMapLocation[];
+    shortcuts: Shortcut[];
     globalNotes: string;
     socialMediaState: SocialMediaState;
     activeAssemblyPanel: AssemblyPanel;

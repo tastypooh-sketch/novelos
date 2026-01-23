@@ -25,41 +25,6 @@ const DEFAULT_BACKGROUNDS = [
     { url: 'https://static.vecteezy.com/system/resources/thumbnails/033/863/113/small/grunge-paper-background-with-space-for-text-or-image-old-paper-texture-old-paper-sheet-vintage-aged-original-background-or-texture-ai-generated-free-photo.jpg', category: 'Backgrounds' as const },
 ];
 
-const DEFAULT_SHORTCUTS = [
-    { key: '--', value: '—' },
-    { key: '...', value: '…' },
-    { key: '." he', value: '," he' },
-    { key: '." she', value: '," she' },
-    { key: '." I', value: '," I' },
-    { key: 'taht', value: 'that' },
-    { key: 'teh', value: 'the' },
-    { key: 'abd', value: 'and' },
-    { key: 'adn', value: 'and' },
-    { key: 'hvae', value: 'have' },
-    { key: 'wihout', value: 'without' },
-    { key: 'recieve', value: 'receive' },
-    { key: 'beleive', value: 'believe' },
-    { key: 'seperate', value: 'separate' },
-    { key: 'occured', value: 'occurred' },
-    { key: 'occurence', value: 'occurrence' },
-    { key: 'definately', value: 'definitely' },
-    { key: 'dont', value: "don't" },
-    { key: 'wont', value: "won't" },
-    { key: 'cant', value: "can't" },
-    { key: 'didnt', value: "didn't" },
-    { key: 'thier', value: 'their' },
-    { key: 'theyre', value: "they're" },
-    { key: 'yuo', value: 'you' },
-    { key: 'i ', value: 'I ' },
-    { key: "i'm", value: "I'm" },
-    { key: 'wierd', value: 'weird' },
-    { key: 'writting', value: 'writing' },
-    { key: 'lenth', value: 'length' },
-    { key: 'wich', value: 'which' },
-    { key: 'comming', value: 'coming' },
-    { key: 'tommorrow', value: 'tomorrow' },
-];
-
 // Helper to safely encode data for HTML injection
 const safeEncode = (data: any) => {
     try {
@@ -69,7 +34,7 @@ const safeEncode = (data: any) => {
                 return String.fromCharCode(parseInt(p1, 16));
             }));
     } catch (e) {
-        console.error("Failed to encode data for Nové export", e);
+        console.error("Failed to encode data for Nove export", e);
         return "";
     }
 };
@@ -107,9 +72,7 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
     const encodedSettings = safeEncode(exportedSettings);
     const encodedGoals = safeEncode(writingGoals);
     const encodedBackgrounds = safeEncode(DEFAULT_BACKGROUNDS);
-    const encodedShortcuts = safeEncode(DEFAULT_SHORTCUTS);
 
-    // Pre-calculate the favicon link to avoid template literal escaping issues inside the main block
     const faviconHtml = faviconBase64 ? `<link rel="icon" href="${faviconBase64}" />` : '';
 
     return `<!DOCTYPE html>
@@ -118,7 +81,7 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Nové: Portable Manuscript</title>
-    ${faviconHtml}
+    \${faviconHtml}
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
@@ -136,11 +99,14 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
         
         .editor-content div,
         .editor-content p {
-            text-indent: 1em;
+            text-indent: 1.25em;
             margin: 0;
-            orphans: 2; 
-            widows: 2;
+            orphans: 3; 
+            widows: 3;
             min-height: 1em;
+            hyphens: auto;
+            -webkit-hyphens: auto;
+            -ms-hyphens: auto;
         }
         
         .editor-content > div:first-child,
@@ -153,6 +119,7 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
         .editor-content div[align="center"],
         .editor-content p[align="center"] {
             text-indent: 0 !important;
+            hyphens: none !important;
         }
         
         .editor-content div,
@@ -223,11 +190,10 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
             }
         };
 
-        const initialState = safeDecode('${encodedState}');
-        const initialSettings = safeDecode('${encodedSettings}');
-        const initialGoals = safeDecode('${encodedGoals}');
-        const DEFAULT_BGS = safeDecode('${encodedBackgrounds}');
-        const initialShortcuts = safeDecode('${encodedShortcuts}');
+        const initialState = safeDecode('\${encodedState}');
+        const initialSettings = safeDecode('\${encodedSettings}');
+        const initialGoals = safeDecode('\${encodedGoals}');
+        const DEFAULT_BGS = safeDecode('\${encodedBackgrounds}');
         
         const hexToRgb = (hex) => {
             const result = /^#?([a-f\\d]{2})([a-f\\d]{2})([a-f\\d]{2})$/i.exec(hex);
@@ -367,20 +333,20 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
             Focus: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
             Unfocus: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.243 4.243l-4.243-4.243" /></svg>,
             SoundOn: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>,
-            SoundOff: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l-2.25 2.25M19.5 12l2.25-2.25M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>,
+            SoundOff: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l-2.25 2.25M19.5 12l2.25-2.25M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" /></svg>,
             Transition: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>,
             Spellcheck: () => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5"><path d="M0 0h24v24H0z" fill="none"/><text x="2" y="15" fontSize="13" fontWeight="bold" fontFamily="sans-serif" fill="currentColor">abc</text><path d="M21 7L9 19l-5-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+            Keyboard: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>,
             Brush: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z" /></svg>,
             Close: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>,
             Stats: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>,
             Heart: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>,
-            Refresh: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348A4.992 4.992 0 0010.5 6h-1.262a.375.375 0 00-.375.375v3.506a.375.375 0 00.375.375h3.506a.375.375 0 00.375-.375v-1.262a4.993 4.993 0 00-2.828-2.828 4.99 4.99 0 00-3.95 1.056l-1.542 1.542a.375.375 0 000 .53l2.828 2.828a.375.375 0 00.53 0l1.542-1.542a4.99 4.99 0 001.056-3.95z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 9.75-7.5 9.75S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>,
+            Refresh: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348A4.992 4.992 0 0010.5 6h-1.262a.375.375 0 00-.375.375v3.506a.375.375 0 00.375.375h3.506a.375.375 0 00.375-.375v-1.262a4.993 4.993 0 00-2.828-2.828 4.993 4.993 0 00-3.95 1.056l-1.542 1.542a.375.375 0 000 .53l2.828 2.828a.375.375 0 00.53 0l1.542-1.542a4.99 4.99 0 001.056-3.95z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 9.75-7.5 9.75S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>,
             EnterFullscreen: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4" /></svg>,
             ExitFullscreen: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M8 4H4v4M16 4h4v4M8 20H4v-4M16 20h4v-4" /></svg>,
             Help: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>,
             Plus: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>,
             LineHeight: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /><path strokeLinecap="round" strokeLinejoin="round" d="M21 6.75v10.5m0 0l-2.25-2.25M21 17.25l2.25-2.25" /></svg>,
-            Keyboard: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>,
             Trash: () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>,
         };
 
@@ -482,6 +448,41 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
             </div>
         );
 
+        const ShortcutsModal = ({ onClose, shortcuts, onUpdateShortcuts, settings }) => {
+            const [newKey, setNewKey] = useState('');
+            const [newValue, setNewValue] = useState('');
+            const handleAdd = () => {
+                if (newKey.trim() && newValue.trim()) {
+                    onUpdateShortcuts([...shortcuts, { id: Date.now().toString(), key: newKey.trim(), value: newValue.trim() }]);
+                    setNewKey(''); setNewValue('');
+                }
+            };
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm" onClick={onClose}>
+                    <div className="p-6 rounded-lg shadow-xl w-full max-w-lg flex flex-col" style={{ backgroundColor: settings.toolbarBg, color: settings.toolbarText }} onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-xl font-bold">Text Shortcuts</h2>
+                            <button onClick={onClose}><Icons.Close /></button>
+                        </div>
+                        <div className="flex gap-2 mb-4">
+                            <input type="text" placeholder="Key (e.g., Osc)" value={newKey} onChange={e => setNewKey(e.target.value)} className="w-1/4 p-2 rounded border bg-transparent" style={{ borderColor: settings.toolbarInputBorderColor }} />
+                            <input type="text" placeholder="Expanded Text" value={newValue} onChange={e => setNewValue(e.target.value)} className="flex-grow p-2 rounded border bg-transparent" style={{ borderColor: settings.toolbarInputBorderColor }} />
+                            <button onClick={handleAdd} className="px-4 py-2 rounded font-bold text-white" style={{ backgroundColor: settings.accentColor }}>Add</button>
+                        </div>
+                        <div className="max-h-60 overflow-y-auto space-y-2">
+                            {shortcuts.map(s => (
+                                <div key={s.id} className="flex items-center justify-between p-2 rounded" style={{ backgroundColor: settings.toolbarButtonBg }}>
+                                    <div className="text-sm"><span className="font-mono bg-black/20 px-1 rounded">{s.key}</span> → <span>{s.value}</span></div>
+                                    <button onClick={() => onUpdateShortcuts(shortcuts.filter(x => x.id !== s.id))} className="text-red-400 p-1 hover:bg-white/5 rounded"><Icons.Trash /></button>
+                                </div>
+                            ))}
+                            {shortcuts.length === 0 && <p className="text-center opacity-50 py-4">No shortcuts defined.</p>}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         const EULAModal = ({ settings, onAccept }) => {
             const [accepted, setAccepted] = useState(false);
             return (
@@ -565,556 +566,22 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
                                 </div>
                             ))}
                             
+                            <div className="p-6 mt-6 rounded-xl border-2 text-center space-y-3 bg-black/10" style={{ borderColor: settings.accentColor }}>
+                                <h4 className="font-bold text-lg">Need the full Novelos manual?</h4>
+                                <p className="text-sm opacity-80">For a comprehensive guide to the full desktop suite, including AI features and structural tools, visit the online manual.</p>
+                                <a 
+                                    href="https://www.thomascorfield.com/post/novelos-user-guide" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="inline-block px-6 py-2 rounded-lg font-bold text-white transition-transform active:scale-95"
+                                    style={{ backgroundColor: settings.accentColor }}
+                                >
+                                    View Full User Manual
+                                </a>
+                            </div>
+
                             <div className="pt-10 mt-10 border-t text-center opacity-40 text-xs" style={{borderColor: settings.toolbarInputBorderColor}}>
-                                <p>Nové v7.3.9 Portable &mdash; Part of the Novelos Ecosystem</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const StatsModal = ({ onClose, settings, totalWordCount, sessionWordCount, goals, onGoalsChange, chapters }) => {
-            const [daily, setDaily] = useState(goals.dailyGoal.toString());
-            const [manuscript, setManuscript] = useState(goals.manuscriptGoal.toString());
-            const chapterWordCounts = useMemo(() => {
-                return chapters.map(chapter => ({
-                    id: chapter.id,
-                    title: \`\${chapter.title} \${chapter.chapterNumber}\`,
-                    count: getWordCount(chapter.content)
-                })).sort((a,b) => b.count - a.count);
-            }, [chapters]);
-            const progress = Math.min(100, (totalWordCount / (parseInt(manuscript || '1', 10))) * 100);
-            const handleSave = () => {
-                onGoalsChange({ dailyGoal: parseInt(daily || '0', 10), manuscriptGoal: parseInt(manuscript || '0', 10) });
-                onClose();
-            };
-            return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm" onClick={onClose}>
-                    <div className="w-full m-4 rounded-lg shadow-2xl flex flex-col max-w-2xl max-h-[90vh]" style={{backgroundColor: settings.toolbarBg, color: settings.textColor, borderColor: settings.toolbarInputBorderColor}} onClick={e => e.stopPropagation()}>
-                        <div className="p-4 border-b flex justify-between items-center" style={{borderColor: settings.toolbarButtonBg}}>
-                            <h3 className="font-bold">Writing Statistics & Goals</h3>
-                            <button onClick={onClose} className="p-1 hover:bg-white/10 rounded"><Icons.Close /></button>
-                        </div>
-                        <div className="p-6 overflow-y-auto">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-6">
-                                    <div>
-                                        <h3 className="font-semibold mb-2">Manuscript Goal</h3>
-                                        <div className="relative h-6 w-full rounded-full" style={{backgroundColor: settings.toolbarButtonBg}}>
-                                             <div className="absolute top-0 left-0 h-6 rounded-full" style={{width: \`\${progress}%\`, backgroundColor: settings.accentColor}}></div>
-                                             <span className="absolute inset-0 flex items-center justify-center text-xs font-bold" style={{textShadow: '0 1px 2px rgba(0,0,0,0.5)'}}>{totalWordCount.toLocaleString()} / {parseInt(manuscript || '0', 10).toLocaleString()} words</span>
-                                        </div>
-                                        <input type="text" inputMode="numeric" pattern="[0-9]*" value={manuscript} onChange={e => { const val = e.target.value; if (val === '' || /^\\d+$/.test(val)) setManuscript(val); }} className="w-full mt-2 px-2 py-1.5 rounded-md border text-sm" style={{ backgroundColor: settings.backgroundColor, color: settings.textColor, borderColor: settings.toolbarInputBorderColor }} />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold mb-2">Daily Writing Goal</h3>
-                                         <input type="text" inputMode="numeric" pattern="[0-9]*" value={daily} onChange={e => { const val = e.target.value; if (val === '' || /^\\d+$/.test(val)) setDaily(val); }} className="w-full px-2 py-1.5 rounded-md border text-sm" style={{ backgroundColor: settings.backgroundColor, color: settings.textColor, borderColor: settings.toolbarInputBorderColor }} />
-                                    </div>
-                                     <button onClick={handleSave} className="w-full px-4 py-2 rounded-md text-white font-bold" style={{ backgroundColor: settings.successColor || '#16a34a' }}>Save Goals</button>
-                                </div>
-                                <div>
-                                    <h3 className="font-semibold mb-2">Chapter Word Counts</h3>
-                                    <div className="max-h-80 overflow-y-auto pr-2 space-y-2">
-                                        {chapterWordCounts.map(chapter => (
-                                            <div key={chapter.id} className="flex justify-between items-center text-sm p-2 rounded" style={{backgroundColor: settings.toolbarButtonBg}}>
-                                                <span className="truncate pr-4">{chapter.title}</span>
-                                                <span className="font-semibold flex-shrink-0">{chapter.count.toLocaleString()}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const FindReplacePanel = ({ onClose, settings, chapters, activeChapterId, onNavigateMatch, onReplace, onReplaceAll }) => {
-            const [find, setFind] = useState('');
-            const [replaceText, setReplaceText] = useState('');
-            const [results, setResults] = useState([]);
-            const [scope, setScope] = useState('chapter');
-            const [position, setPosition] = useState({ x: window.innerWidth - 340, y: 80 });
-            const [isDragging, setIsDragging] = useState(false);
-            const dragOffset = useRef({ x: 0, y: 0 });
-
-            useEffect(() => {
-                const handleMouseMove = (e) => { if (isDragging) setPosition({ x: e.clientX - dragOffset.current.x, y: e.clientY - dragOffset.current.y }); };
-                const handleMouseUp = () => setIsDragging(false);
-                if (isDragging) { window.addEventListener('mousemove', handleMouseMove); window.addEventListener('mouseup', handleMouseUp); }
-                return () => { window.removeEventListener('mousemove', handleMouseMove); window.removeEventListener('mouseup', handleMouseUp); };
-            }, [isDragging]);
-
-            const performSearch = () => {
-                if(!find) return setResults([]);
-                const regex = new RegExp(find.replace(/[.*+?^$\{ }()|[\\]\\\\]/g, '\\\\$&'), 'gi');
-                const newResults = [];
-                const targetChapters = scope === 'chapter' ? chapters.filter(c => c.id === activeChapterId) : chapters;
-                targetChapters.forEach(ch => {
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = ch.content;
-                    const text = tempDiv.innerText;
-                    let match;
-                    while ((match = regex.exec(text)) !== null) {
-                        const start = Math.max(0, match.index - 20);
-                        const end = Math.min(text.length, match.index + match[0].length + 20);
-                        let context = text.substring(start, end);
-                        if(start > 0) context = '...' + context;
-                        if(end < text.length) context = context + "...";
-                        newResults.push({ id: Math.random().toString(), chapterId: ch.id, chapterName: ch.title, index: match.index, length: match[0].length, context: context });
-                    }
-                });
-                setResults(newResults);
-            };
-
-            return (
-                <div className="fixed z-50 w-80 rounded-lg shadow-2xl border flex flex-col" style={{top: position.y, left: position.x, backgroundColor: settings.toolbarBg, borderColor: settings.toolbarInputBorderColor, color: settings.textColor}}>
-                    <div className="p-3 border-b flex justify-between items-center cursor-move select-none" style={{borderColor: settings.toolbarButtonBg}} onMouseDown={(e) => { setIsDragging(true); const rect = e.currentTarget.parentElement.getBoundingClientRect(); dragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top }; }}>
-                        <h3 className="font-bold text-sm flex items-center gap-2"><Icons.Search /> Find & Replace</h3>
-                        <button onClick={onClose} className="p-1 hover:bg-white/10 rounded"><Icons.Close /></button>
-                    </div>
-                    <div className="p-3 space-y-3" style={{backgroundColor: settings.backgroundColor}}>
-                        <div className="flex bg-black/10 p-1 rounded">
-                            <button onClick={() => setScope('chapter')} className={\`flex-1 py-1 text-xs rounded \${scope === 'chapter' ? 'bg-white/10 shadow-sm' : 'opacity-50'}\`}>Current</button>
-                            <button onClick={() => setScope('manuscript')} className={\`flex-1 py-1 text-xs rounded \${scope === 'manuscript' ? 'bg-white/10 shadow-sm' : 'opacity-50'}\`}>Manuscript</button>
-                        </div>
-                        <input value={find} onChange={e => setFind(e.target.value)} onKeyDown={e => e.key === 'Enter' && performSearch()} placeholder="Find..." className="w-full p-2 rounded text-sm bg-transparent border" style={{borderColor: settings.toolbarInputBorderColor}} />
-                        <input value={replaceText} onChange={e => setReplaceText(e.target.value)} placeholder="Replace..." className="w-full p-2 rounded text-sm bg-transparent border" style={{borderColor: settings.toolbarInputBorderColor}} />
-                        <div className="flex justify-end gap-2"><button onClick={performSearch} className="px-3 py-1 text-xs border rounded" style={{borderColor: settings.toolbarInputBorderColor}}>Find All</button></div>
-                        <div className="flex gap-2 pt-2 border-t" style={{borderColor: settings.toolbarInputBorderColor}}>
-                            <button onClick={() => onReplace(replaceText)} className="flex-1 py-1.5 text-xs rounded border hover:bg-white/5" style={{borderColor: settings.toolbarInputBorderColor}}>Replace</button>
-                            <button onClick={() => onReplaceAll(find, replaceText, scope)} className="flex-1 py-1.5 text-xs rounded text-white hover:opacity-90" style={{backgroundColor: settings.accentColor}}>Replace All</button>
-                        </div>
-                    </div>
-                    <div className="max-h-60 overflow-y-auto border-t pt-0 bg-opacity-50" style={{borderColor: settings.toolbarInputBorderColor, backgroundColor: settings.toolbarBg}}>
-                        <div className="p-2 text-xs opacity-50">{results.length} result{results.length !== 1 ? 's' : ''}</div>
-                        {results.map(r => (
-                            <div key={r.id} onClick={() => onNavigateMatch(r)} className="p-2 hover:bg-white/5 rounded cursor-pointer text-xs border-b border-white/5 last:border-0">
-                                {scope === 'manuscript' && <div className="opacity-50 text-[10px] uppercase font-bold mb-1">{r.chapterName}</div>}
-                                <div dangerouslySetInnerHTML={{__html: r.context.replace(new RegExp(\`(\${find.replace(/[.*+?^$\{ }()|[\\]\\\\]/g, '\\\\$&')})\`, 'gi'), '<span style="background-color: #facc15; color: #000; font-weight: bold;">$1</span>')}} />
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            );
-        };
-
-        const NoveManuscript = ({ chapter, onChange, settings, isFocusMode, onPlaySound, notesOpen, onPageInfoChange, isSpellcheckEnabled, searchTarget, shortcuts }) => {
-            const editorRef = useRef(null);
-            const editorContainerRef = useRef(null);
-            const isTyping = useRef(false);
-            const stableScrollLeft = useRef(0);
-            const typingTimeoutRef = useRef(null);
-            const isLocalUpdate = useRef(false);
-            const localUpdateTimeoutRef = useRef(null);
-            const [layout, setLayout] = useState({ colWidth: 0, stride: 0, gap: 60, sideMargin: 40, columns: 2 });
-            const [pageInfo, setPageInfo] = useState({ current: 1, total: 1 });
-            const [isTransitioning, setIsTransitioning] = useState(false);
-
-            const shortcutsRef = useRef(shortcuts);
-            useEffect(() => { shortcutsRef.current = shortcuts; }, [shortcuts]);
-
-            const calculateLayout = useCallback(() => {
-                if (!editorContainerRef.current) return;
-                const containerWidth = editorContainerRef.current.clientWidth;
-                const minTwoPageColWidth = 450;
-                const GAP_PX = 60;
-                const SIDE_MARGIN_PX = 40;
-                const availableWidthTwo = Math.max(0, containerWidth - GAP_PX - (2 * SIDE_MARGIN_PX));
-                const safeColWidthTwo = Math.floor(availableWidth Two / 2);
-                let columns = 2;
-                let colWidth = safeColWidthTwo;
-                if (safeColWidthTwo < minTwoPageColWidth) {
-                    columns = 1;
-                    const availableWidthOne = Math.max(0, containerWidth - (2 * SIDE_MARGIN_PX));
-                    colWidth = Math.floor(availableWidthOne);
-                }
-                const stride = colWidth + GAP_PX;
-                setLayout({ colWidth, stride, gap: GAP_PX, sideMargin: SIDE_MARGIN_PX, columns });
-                
-                const scrollLeft = editorContainerRef.current.scrollLeft;
-                const currentColumnIndex = stride > 0 ? Math.round(scrollLeft / stride) : 0;
-                const contentWidth = editorContainerRef.current.scrollWidth - (2 * SIDE_MARGIN_PX);
-                const totalColumns = stride > 0 ? Math.ceil((contentWidth + GAP_PX) / stride) : 1;
-                const actualPageCount = Math.max(2, totalColumns - 1);
-                const currentLeftPage = currentColumnIndex + 1;
-                setPageInfo({ current: currentLeftPage, total: actualPageCount });
-            }, []);
-
-            useEffect(() => { if(onPageInfoChange) onPageInfoChange(pageInfo); }, [pageInfo, onPageInfoChange]);
-            useEffect(() => { document.execCommand('defaultParagraphSeparator', false, 'div'); }, []);
-
-            useLayoutEffect(() => {
-                const timer = setTimeout(calculateLayout, 10);
-                window.addEventListener('resize', calculateLayout);
-                return () => { window.removeEventListener('resize', calculateLayout); clearTimeout(timer); }
-            }, [calculateLayout, isFocusMode, settings.fontSize, settings.fontFamily, notesOpen]);
-
-            useLayoutEffect(() => {
-                if (!editorRef.current) return;
-                if (isLocalUpdate.current && editorRef.current.innerHTML === chapter.content) return;
-                if (editorRef.current.innerHTML !== chapter.content) {
-                    editorRef.current.innerHTML = chapter.content;
-                }
-                if (!isLocalUpdate.current) calculateLayout();
-            }, [chapter.id, chapter.content, calculateLayout]);
-
-            const snapToSpread = useCallback((targetSpreadIndex, useTransition = true) => {
-                if (!editorContainerRef.current || layout.stride === 0) return;
-                const currentTotalPages = Math.max(2, Math.ceil((editorContainerRef.current.scrollWidth - (2 * layout.sideMargin)) / layout.stride) + 1);
-                const clampedIndex = Math.max(0, Math.min(targetSpreadIndex, currentTotalPages));
-                const targetScrollLeft = clampedIndex * layout.stride;
-                if (Math.abs(editorContainerRef.current.scrollLeft - targetScrollLeft) < 2) return;
-                if (settings.transitionStyle === 'fade' && useTransition) {
-                    setIsTransitioning(true);
-                    setTimeout(() => {
-                        if (editorContainerRef.current) editorContainerRef.current.scrollTo({ left: targetScrollLeft, behavior: 'instant' });
-                        requestAnimationFrame(() => setIsTransitioning(false));
-                    }, 150);
-                } else {
-                    editorContainerRef.current.scrollTo({ left: targetScrollLeft, behavior: useTransition ? 'smooth' : 'instant' });
-                }
-            }, [layout, settings.transitionStyle]);
-
-            useEffect(() => {
-                if (searchTarget && searchTarget.chapterId === chapter.id) {
-                    const editor = editorRef.current;
-                    if (!editor) return;
-                    const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null);
-                    let currentIndex = 0;
-                    let node;
-                    while((node = walker.nextNode())) {
-                        const nodeLen = node.textContent.length;
-                        if (currentIndex + nodeLen > searchTarget.index) {
-                            const start = searchTarget.index - currentIndex;
-                            const end = Math.min(start + searchTarget.length, nodeLen);
-                            const range = document.createRange();
-                            range.setStart(node, start); range.setEnd(node, end);
-                            const sel = window.getSelection();
-                            sel.removeAllRanges(); sel.addRange(range);
-                            const rect = range.getBoundingClientRect();
-                            const container = editorContainerRef.current;
-                            if (container && rect && layout.stride > 0) {
-                                const relX = (rect.left - container.getBoundingClientRect().left) + container.scrollLeft;
-                                const spread = Math.floor(Math.max(0, relX - layout.sideMargin) / layout.stride);
-                                snapToSpread(spread, true);
-                            }
-                            return;
-                        }
-                        currentIndex += nodeLen;
-                    }
-                }
-            }, [searchTarget, layout, chapter.id, snapToSpread]);
-
-            const updatePageInfo = useCallback(() => {
-                if (!editorContainerRef.current || layout.stride === 0) return;
-                const container = editorContainerRef.current;
-                const scrollLeft = container.scrollLeft;
-                const currentColumnIndex = Math.round(scrollLeft / layout.stride);
-                const contentWidth = container.scrollWidth - (2 * layout.sideMargin);
-                const totalColumns = Math.ceil((contentWidth + layout.gap) / layout.stride);
-                const actualPageCount = Math.max(2, totalColumns - 1);
-                const currentLeftPage = currentColumnIndex + 1;
-                setPageInfo({ current: currentLeftPage, total: actualPageCount });
-            }, [layout]);
-
-            const handleScroll = useDebouncedCallback(() => {
-                if (!editorContainerRef.current || layout.stride === 0) return;
-                updatePageInfo();
-                if (!isTyping.current) {
-                    const currentScroll = editorContainerRef.current.scrollLeft;
-                    const nearestSpread = Math.round(currentScroll / layout.stride);
-                    snapToSpread(nearestSpread, false);
-                }
-            }, 150);
-
-            useEffect(() => {
-                const container = editorContainerRef.current;
-                if (!container) return;
-                const handleNativeScroll = () => {
-                    if (isTyping.current) {
-                        const diff = Math.abs(container.scrollLeft - stableScrollLeft.current);
-                        if (diff > 5) container.scrollLeft = stableScrollLeft.current;
-                    } else {
-                        stableScrollLeft.current = container.scrollLeft;
-                    }
-                };
-                container.addEventListener('scroll', handleNativeScroll, { passive: false });
-                return () => container.removeEventListener('scroll', handleNativeScroll);
-            }, []);
-
-            const checkAndEnforceCaretVisibility = useCallback(() => {
-                const container = editorContainerRef.current;
-                const editor = editorRef.current;
-                if (document.activeElement !== editor && !editor?.contains(document.activeElement)) return;
-                const selection = window.getSelection();
-                if (!container || !editor || !selection || selection.rangeCount === 0 || layout.stride === 0) return;
-                const range = selection.getRangeAt(0);
-                if (!editor.contains(range.commonAncestorContainer)) return;
-                const caretRect = range.getBoundingClientRect();
-                if (caretRect.width === 0 && caretRect.height === 0 && caretRect.x === 0 && caretRect.y === 0) return;
-                const containerRect = container.getBoundingClientRect();
-                const relativeCaretX = (caretRect.left - containerRect.left) + container.scrollLeft;
-                const adjustedCaretX = Math.max(0, relativeCaretX - layout.sideMargin);
-                const columnIndex = Math.floor(adjustedCaretX / layout.stride);
-                const currentScrollIndex = Math.round(container.scrollLeft / layout.stride);
-                if (columnIndex >= currentScrollIndex + layout.columns) snapToSpread(columnIndex - (layout.columns - 1), false);
-                else if (columnIndex < currentScrollIndex) snapToSpread(columnIndex, false);
-                updatePageInfo();
-            }, [layout, snapToSpread, updatePageInfo]);
-
-            const handleBeforeInput = useCallback(() => {
-                if (editorContainerRef.current && layout.stride > 0) {
-                    isTyping.current = true;
-                    const currentScroll = editorContainerRef.current.scrollLeft;
-                    const nearestSpread = Math.round(currentScroll / layout.stride);
-                    stableScrollLeft.current = nearestSpread * layout.stride;
-                    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-                }
-            }, [layout.stride]);
-
-            const runTextCorrections = useDebouncedCallback(() => {
-                const sel = window.getSelection();
-                if (!sel || sel.rangeCount === 0 || !editorRef.current) return;
-                const range = sel.getRangeAt(0);
-                const node = range.startContainer;
-                const offset = range.startOffset;
-
-                if (node.nodeType === 3) { // Node.TEXT_NODE
-                    const text = node.textContent || '';
-                    const textBefore = text.substring(0, offset);
-
-                    if (textBefore.endsWith("  ")) {
-                        isLocalUpdate.current = true;
-                        const startPos = offset - 2;
-                        node.textContent = text.substring(0, startPos) + " " + text.substring(offset);
-                        const newRange = document.createRange();
-                        newRange.setStart(node, startPos + 1);
-                        newRange.collapse(true);
-                        sel.removeAllRanges();
-                        sel.addRange(newRange);
-                        onChange(editorRef.current.innerHTML);
-                        return;
-                    }
-                    
-                    const currentShortcuts = shortcutsRef.current;
-                    const sortedShortcuts = [...currentShortcuts].sort((a, b) => b.key.length - a.key.length);
-                    
-                    for (const s of sortedShortcuts) {
-                        const pattern = new RegExp(\`(\${s.key.replace(/[.*+?^$\{ }()|[\\\]\\\\]/g, '\\\\$&')})([\\\\s\\\\.,!?;:]?)$\`);
-                        const match = textBefore.match(pattern);
-                        if (match) {
-                            isLocalUpdate.current = true;
-                            const keyPart = match[1];
-                            const trailingPart = match[2] || "";
-                            const matchLen = keyPart.length + trailingPart.length;
-                            const startPos = offset - matchLen;
-                            const replacement = s.value + trailingPart;
-                            node.textContent = text.substring(0, startPos) + replacement + text.substring(offset);
-                            const newRange = document.createRange();
-                            newRange.setStart(node, startPos + replacement.length);
-                            newRange.collapse(true);
-                            sel.removeAllRanges();
-                            sel.addRange(newRange);
-                            onChange(editorRef.current.innerHTML);
-                            return;
-                        }
-                    }
-
-                    const lastChar = textBefore.slice(-1);
-                    if (lastChar === '"' || lastChar === "'") {
-                        const textBeforeQuote = textBefore.substring(0, textBefore.length - 1);
-                        const charBefore = textBeforeQuote.slice(-1);
-                        const isOpenQuoteCondition = textBeforeQuote.length === 0 || /[\\\\s(\\\\[{“‘\\\\u2014]/.test(charBefore);
-                        let replacementChar = null;
-                        if (lastChar === '"') {
-                            replacementChar = isOpenQuoteCondition ? '“' : '”';
-                        } else {
-                            replacementChar = isOpenQuoteCondition ? '‘' : '’';
-                        }
-                        if (replacementChar && replacementChar !== lastChar) {
-                            isLocalUpdate.current = true;
-                            node.textContent = textBeforeQuote + replacementChar + text.substring(offset);
-                            const newRange = document.createRange();
-                            newRange.setStart(node, offset); 
-                            newRange.collapse(true);
-                            sel.removeAllRanges();
-                            sel.addRange(newRange);
-                            onChange(editorRef.current.innerHTML);
-                        }
-                    }
-                }
-            }, 400);
-
-            const handleInput = (e) => {
-                isLocalUpdate.current = true;
-                if (localUpdateTimeoutRef.current) clearTimeout(localUpdateTimeoutRef.current);
-                localUpdateTimeoutRef.current = setTimeout(() => { isLocalUpdate.current = false; }, 1000);
-                const editor = e.currentTarget;
-                onChange(editor.innerHTML);
-                runTextCorrections();
-                requestAnimationFrame(() => requestAnimationFrame(() => updatePageInfo()));
-            };
-
-            const handleKeyDown = (e) => {
-                if (editorContainerRef.current && layout.stride > 0) {
-                    isTyping.current = true;
-                    const currentScroll = editorContainerRef.current.scrollLeft;
-                    const nearestSpread = Math.round(currentScroll / layout.stride);
-                    stableScrollLeft.current = nearestSpread * layout.stride;
-                    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-                }
-                if (e.key === 'Backspace') {
-                    const sel = window.getSelection();
-                    if (sel && sel.rangeCount > 0 && sel.isCollapsed) {
-                        const range = sel.getRangeAt(0);
-                        const node = range.startContainer;
-                        let p = node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement;
-                        while(p && p.nodeName !== 'DIV' && p.parentElement !== e.currentTarget) p = p.parentElement;
-                        if (p && p.parentElement === e.currentTarget) {
-                            const isAtStart = (range.startOffset === 0) && (node === p || node === p.firstChild || (node.parentNode === p && node === p.firstChild));
-                            if (isAtStart) {
-                                if (!p.style.textIndent || p.style.textIndent !== '0px') {
-                                    e.preventDefault(); p.style.textIndent = '0px';
-                                    onChange(editorRef.current.innerHTML); return;
-                                }
-                            }
-                        }
-                    }
-                }
-                if (e.key === 'Enter') {
-                    e.preventDefault(); document.execCommand('insertParagraph', false);
-                    const selection = window.getSelection();
-                    if (selection && selection.rangeCount > 0) {
-                        let node = selection.anchorNode;
-                        while (node && (node.nodeType !== Node.ELEMENT_NODE || node.nodeName !== 'DIV') && node.parentNode !== e.currentTarget) node = node.parentNode;
-                        if (node && node.nodeName === 'DIV' && node.style.textIndent === '0px') {
-                            node.style.removeProperty('text-indent');
-                            if (!node.getAttribute('style')) node.removeAttribute('style');
-                        }
-                    }
-                    onPlaySound('enter'); onChange(editorRef.current.innerHTML);
-                    setTimeout(checkAndEnforceCaretVisibility, 10);
-                    return;
-                }
-                if (e.key === 'Enter') onPlaySound('enter'); else if (!['Shift', 'Control', 'Alt', 'Meta', 'CapsLock'].includes(e.key)) onPlaySound('key');
-                if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) setTimeout(checkAndEnforceCaretVisibility, 10);
-                if (e.key === 'PageDown') { e.preventDefault(); const currentScroll = editorContainerRef.current.scrollLeft; const currentSpread = Math.round(currentScroll / layout.stride); snapToSpread(currentSpread + 1); }
-                else if (e.key === 'PageUp') { e.preventDefault(); const currentScroll = editorContainerRef.current.scrollLeft; const currentSpread = Math.round(currentScroll / layout.stride); snapToSpread(currentSpread - 1); }
-            };
-
-            const handleKeyUp = useCallback(() => {
-                if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-                typingTimeoutRef.current = setTimeout(() => {
-                    isTyping.current = false;
-                    if (editorContainerRef.current && layout.stride > 0) {
-                        const currentScroll = editorContainerRef.current.scrollLeft;
-                        const nearestSpread = Math.round(currentScroll / layout.stride);
-                        stableScrollLeft.current = nearestSpread * layout.stride;
-                    }
-                }, 150);
-            }, [layout.stride]);
-
-            const handleWheel = (e) => {
-                if (!editorContainerRef.current || layout.stride === 0) return;
-                if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-                    e.preventDefault();
-                    const currentScroll = editorContainerRef.current.scrollLeft;
-                    const currentSpreadIndex = Math.round(currentScroll / layout.stride);
-                    if (Math.abs(e.deltaY) > 20) {
-                        const direction = Math.sign(e.deltaY);
-                        const nextSpreadIndex = Math.max(0, currentSpreadIndex + direction);
-                        snapToSpread(nextSpreadIndex);
-                    }
-                }
-            };
-
-            const exactContentWidth = layout.colWidth > 0 ? (layout.colWidth * layout.columns) + (layout.gap * (layout.columns - 1)) : '100%';
-            const editorStyle = {
-                fontFamily: settings.fontFamily || 'Lora', fontSize: \`\${settings.fontSize || 1.4}em\`, color: settings.textColor, lineHeight: settings.lineHeight || 1.8,
-                textAlign: settings.textAlign || 'left', hyphens: settings.textAlign === 'justify' ? 'auto' : 'manual', WebkitHyphens: settings.textAlign === 'justify' ? 'auto' : 'manual',
-                height: 'calc(100% - 6rem)', columnFill: 'auto', columnGap: \`\${layout.gap}px\`, columnWidth: \`\${layout.colWidth}px\`, columnCount: layout.columns,
-                width: typeof exactContentWidth === 'number' ? \`\${exactContentWidth}px\` : exactContentWidth,
-                paddingTop: '3rem', paddingBottom: '3rem', paddingLeft: \`\${layout.sideMargin}px\`, paddingRight: \`\${layout.sideMargin}px\`,
-                boxSizing: 'content-box', opacity: isTransitioning ? 0 : 1, transition: 'opacity 0.15s ease-in-out', orphans: 2, widows: 2, transform: 'translateZ(0)'
-            };
-
-            return (
-                <div className="flex-grow relative min-h-0 overflow-hidden">
-                    <div ref={editorContainerRef} className="absolute inset-0 overflow-x-auto overflow-y-hidden focus:outline-none no-scrollbar" onWheel={handleWheel} onScroll={handleScroll} onClick={() => setTimeout(checkAndEnforceCaretVisibility, 10)} style={{ overflowAnchor: 'none' }}>
-                        {layout.columns === 2 && (settings.showBookSpine === true) && <div className="book-spine-effect" />}
-                        <div ref={editorRef} contentEditable suppressContentEditableWarning spellCheck={isSpellcheckEnabled} className="editor-content outline-none" style={editorStyle} onBeforeInput={handleBeforeInput} onInput={handleInput} onKeyDown={handleKeyDown} onKeyUp={handleKeyUp} onBlur={checkAndEnforceCaretVisibility} />
-                    </div>
-                    <div className="absolute bottom-4 right-8 z-10 text-xs font-sans pointer-events-none select-none transition-opacity duration-300 backdrop-blur-sm px-2 py-1 rounded" style={{ color: settings.textColor, opacity: 0.6, backgroundColor: settings.toolbarBg ? \`\${settings.toolbarBg}40\` : 'transparent' }}>
-                        {layout.columns === 1 ? <span>Page {pageInfo.current} of {pageInfo.total}</span> : <span>Pages {pageInfo.current} and {pageInfo.current + 1} of {pageInfo.total}</span>}
-                    </div>
-                </div>
-            );
-        };
-
-        const DesignGalleryModal = ({ isOpen, onClose, settings, onSettingsChange }) => {
-            if (!isOpen) return null;
-            const [newUrl, setNewUrl] = useState('');
-            const handleFileUpload = (e) => {
-                const file = e.target.files[0];
-                if (file) { const reader = new FileReader(); reader.onload = (ev) => onSettingsChange({ backgroundImage: ev.target.result }); reader.readAsDataURL(file); }
-            };
-            return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm" onClick={onClose}>
-                    <div className="w-full max-w-3xl m-4 rounded-lg shadow-2xl flex flex-col overflow-hidden" style={{backgroundColor: settings.toolbarBg, color: settings.textColor}} onClick={e => e.stopPropagation()}>
-                        <div className="p-4 border-b flex justify-between items-center" style={{borderColor: settings.toolbarButtonBg}}>
-                            <h3 className="font-bold">Design Gallery</h3>
-                            <button onClick={onClose}><Icons.Close /></button>
-                        </div>
-                        <div className="p-6 overflow-y-auto max-h-[80vh] space-y-6">
-                            <div>
-                                <h4 className="font-semibold mb-3 opacity-80">Color Themes</h4>
-                                <div className="flex flex-wrap gap-3">
-                                    {Object.keys(THEMES).map(name => ( <button key={name} onClick={() => onSettingsChange({ ...THEMES[name], themeName: name, backgroundImage: null })} className="px-4 py-2 rounded border" style={{borderColor: settings.toolbarButtonBg, backgroundColor: settings.toolbarButtonBg}}>{name}</button> ))}
-                                </div>
-                            </div>
-                            <div>
-                                <h4 className="font-semibold mb-3 opacity-80">Background Image</h4>
-                                <div className="space-y-4">
-                                    <div className="flex gap-2">
-                                        <input type="text" placeholder="Image URL" value={newUrl} onChange={e => setNewUrl(e.target.value)} className="flex-grow px-2 py-1 rounded text-black bg-white border" />
-                                        <button onClick={() => onSettingsChange({ backgroundImage: newUrl })} className="px-3 py-1 rounded text-white" style={{backgroundColor: settings.accentColor}}>Set</button>
-                                        <div className="relative">
-                                            <input type="file" onChange={handleFileUpload} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
-                                            <button className="px-3 py-1 rounded" style={{backgroundColor: settings.toolbarButtonBg, color: settings.textColor}}>Upload</button>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-end gap-4">
-                                        <div className="flex-grow">
-                                            <label className="text-xs block mb-1">Image Opacity: {settings.backgroundImageOpacity}</label>
-                                            <input type="range" min="0" max="1" step="0.1" value={settings.backgroundImageOpacity} onChange={e => onSettingsChange({ backgroundImageOpacity: parseFloat(e.target.value) })} className="w-full" />
-                                        </div>
-                                        {settings.backgroundImage && <button onClick={() => onSettingsChange({ backgroundImage: null })} className="px-3 py-2 rounded text-xs border hover:bg-white/10 transition-colors flex-shrink-0" style={{borderColor: settings.toolbarButtonBg, color: settings.textColor}}>Remove Image</button>}
-                                    </div>
-                                </div>
-                            </div>
-                            <div>
-                                <h4 className="font-semibold mb-3 opacity-80">Novelos Collection</h4>
-                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
-                                    {DEFAULT_BGS.map((bg, i) => ( <div key={i} onClick={() => onSettingsChange({ backgroundImage: bg.url })} className="aspect-square rounded overflow-hidden cursor-pointer hover:opacity-80 border-2 border-transparent hover:border-white transition-all"><img src={bg.url} className="w-full h-full object-cover" loading="lazy" /></div> ))}
-                                </div>
-                            </div>
-                            <div className="border-t pt-4" style={{borderColor: settings.toolbarButtonBg}}>
-                                <h4 className="font-semibold mb-3 opacity-80">Display Options</h4>
-                                <div className="flex items-center gap-4 p-2 rounded-md" style={{backgroundColor: settings.backgroundColor}}>
-                                    <label className="flex items-center select-none cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={settings.showBookSpine === true}
-                                            onChange={(e) => onSettingsChange({ showBookSpine: e.target.checked })}
-                                            className="mr-2 h-4 w-4 rounded cursor-pointer"
-                                            style={{accentColor: settings.accentColor}}
-                                        />
-                                        Show Book Spine Shadow
-                                    </label>
-                                </div>
+                                <p>Nové v7.5.8 Portable &mdash; Part of the Novelos Ecosystem</p>
                             </div>
                         </div>
                     </div>
@@ -1124,6 +591,7 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
 
         const NoveApp = () => {
             const [chapters, setChapters] = useState(initialState?.chapters || []);
+            const [shortcuts, setShortcuts] = useState(initialState?.shortcuts || []);
             const [activeChapterId, setActiveChapterId] = useState(initialState?.chapters[0]?.id || '');
             const [notesOpen, setNotesOpen] = useState(false);
             const [isFocusMode, setIsFocusMode] = useState(false);
@@ -1139,7 +607,6 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
             const [searchTarget, setSearchTarget] = useState(null);
             const [portableDirHandle, setPortableDirHandle] = useState(null);
             const [hasAcceptedEULA, setHasAcceptedEULA] = useState(() => localStorage.getItem('noveli_eula_accepted') === 'true');
-            const [shortcuts, setShortcuts] = useState(initialShortcuts || []);
             const isFirstRun = useRef(true);
             const [notification, setNotification] = useState(null);
             const [settings, setSettings] = useState(initialSettings);
@@ -1149,7 +616,7 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
             const fontOptions = ["Lora", "Merriweather", "Times New Roman", "Bookman Old Style", "Georgia", "Roboto", "Open Sans", "Arial", "Inter", "Inconsolata"];
 
             const activeChapter = chapters.find(c => c.id === activeChapterId) || chapters[0] || { content: '' };
-            const activeChapterWordCount = useMemo(() => activeChapter ? getWordCount(chapter.content) : 0, [activeChapter?.content]);
+            const activeChapterWordCount = useMemo(() => activeChapter ? getWordCount(activeChapter.content) : 0, [activeChapter?.content]);
             const playSound = useTypewriterSound(settings.isSoundEnabled, settings.soundVolume);
             const totalWordCount = useMemo(() => chapters.reduce((acc, c) => acc + getWordCount(c.content), 0), [chapters]);
 
@@ -1270,7 +737,7 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
 
             const handlePortableSave = async (forceNewFolder = false) => {
                 setIsSaving(true);
-                const syncData = { chapters: chapters, settings: settings, shortcuts: shortcuts, timestamp: new Date().toISOString(), source: 'Nové' };
+                const syncData = { chapters: chapters, shortcuts: shortcuts, settings: settings, timestamp: new Date().toISOString(), source: 'Nové' };
                 try {
                     const zip = new JSZip();
                     zip.file("project_data.json", JSON.stringify(syncData, null, 2));

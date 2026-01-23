@@ -1,7 +1,7 @@
 
 {
   "name": "novelos-desktop",
-  "version": "7.3.9",
+  "version": "7.5.8",
   "description": "Novelos Desktop App",
   "main": "electron/main.js",
   "repository": {

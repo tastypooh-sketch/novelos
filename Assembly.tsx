@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useCallback, useEffect, useMemo, useContext } from 'react';
 import { produce } from 'immer';
 import { Type } from "@google/genai";
@@ -192,6 +191,128 @@ const AssemblyHeader: React.FC<AssemblyHeaderProps> = ({ settings, activePanel, 
     );
 };
 
+// --- SCHEMAS ---
+const characterProfileSchema = {
+    type: Type.OBJECT,
+    properties: {
+        summary: { type: Type.STRING, description: "A brief 1-2 sentence summary of the character." },
+        tagline: { type: Type.STRING, description: "A short, catchy hook or tagline for the character." },
+        profile: { type: Type.STRING, description: "A full, detailed character profile in Markdown format." },
+        keywords: { type: Type.ARRAY, items: { type: Type.STRING }, description: "3-5 descriptive keywords for the character." },
+        relationships: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    characterId: { type: Type.STRING },
+                    description: { type: Type.STRING }
+                },
+                required: ["characterId", "description"]
+            }
+        }
+    },
+    required: ["summary", "tagline", "profile", "keywords"]
+};
+
+const chapterDetailsSchema = {
+    type: Type.OBJECT,
+    properties: {
+        summary: { type: Type.STRING, description: "A 1-2 sentence summary of the chapter's plot." },
+        outline: { type: Type.STRING, description: "A markdown beat-by-beat outline of the chapter." },
+        analysis: { type: Type.STRING, description: "A markdown analysis of conflict, stakes, and emotional resonance." },
+        keywords: { type: Type.ARRAY, items: { type: Type.STRING }, description: "3-5 thematic keywords for the chapter." }
+    },
+    required: ["summary", "outline", "analysis", "keywords"]
+};
+
+const snippetsSchema = {
+    type: Type.ARRAY,
+    items: {
+        type: Type.OBJECT,
+        properties: {
+            cleanedText: { type: Type.STRING },
+            type: { type: Type.STRING, description: "One of: Dialogue, Narrative Description, Internal Monologue, Theme Statement, General Action, World-Building Note, Uncategorized" },
+            characterIds: { type: Type.ARRAY, items: { type: Type.STRING } }
+        },
+        required: ["cleanedText", "type", "characterIds"]
+    }
+};
+
+const snippetPlacementSchema = {
+    type: Type.ARRAY,
+    items: {
+        type: Type.OBJECT,
+        properties: {
+            chapterId: { type: Type.STRING },
+            confidence: { type: Type.STRING, description: "One of: High, Medium, Low" },
+            justification: { type: Type.STRING }
+        },
+        required: ["chapterId", "confidence", "justification"]
+    }
+};
+
+const pacingAnalysisSchema = {
+    type: Type.ARRAY,
+    items: {
+        type: Type.OBJECT,
+        properties: {
+            chapterId: { type: Type.STRING },
+            chapterNumber: { type: Type.NUMBER },
+            title: { type: Type.STRING },
+            pacingScore: { type: Type.NUMBER, description: "Score from -1 (very slow/atmospheric) to 1 (very fast/action-packed)" },
+            justification: { type: Type.STRING }
+        },
+        required: ["chapterId", "chapterNumber", "title", "pacingScore", "justification"]
+    }
+};
+
+const socialContentSchema = {
+    type: Type.OBJECT,
+    properties: {
+        imagePrompt: { type: Type.STRING, description: "Detailed prompt for generating a promotional image." },
+        instagram: {
+            type: Type.OBJECT,
+            properties: {
+                text: { type: Type.STRING },
+                hashtags: { type: Type.ARRAY, items: { type: Type.STRING } }
+            },
+            required: ["text", "hashtags"]
+        },
+        tiktok: {
+            type: Type.OBJECT,
+            properties: {
+                text: { type: Type.STRING },
+                hashtags: { type: Type.ARRAY, items: { type: Type.STRING } }
+            },
+            required: ["text", "hashtags"]
+        }
+    },
+    required: ["imagePrompt", "instagram", "tiktok"]
+};
+
+const worldDistillationSchema = {
+    type: Type.ARRAY,
+    items: {
+        type: Type.OBJECT,
+        properties: {
+            name: { type: Type.STRING },
+            type: { type: Type.STRING, description: "One of: Location, Lore, Object, Organization, Concept" },
+            rawNotes: { type: Type.STRING },
+            summary: { type: Type.STRING }
+        },
+        required: ["name", "type", "rawNotes", "summary"]
+    }
+};
+
+const worldRefinementSchema = {
+    type: Type.OBJECT,
+    properties: {
+        summary: { type: Type.STRING },
+        description: { type: Type.STRING, description: "Detailed Markdown codex entry." }
+    },
+    required: ["summary", "description"]
+};
+
 const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { chapters, characters, snippets, worldItems, socialMediaState, assemblyState, plotBrainstormState, synopsisState } = useNovelState();
     const dispatch = useNovelDispatch();
@@ -210,15 +331,27 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setAiState(prev => ({ ...prev, errorMessage: message, errorId: id }));
     };
 
+    // Helper: Map character IDs to names for prompt enrichment
+    const getCharacterNames = useCallback((ids?: string[]) => {
+        if (!ids || ids.length === 0) return "None";
+        return ids.map(id => characters.find(c => c.id === id)?.name).filter(Boolean).join(", ");
+    }, [characters]);
+
     const onGenerateProfile = async (character: ICharacter, rawNotes: string) => {
         if (!hasAPIKey()) return onSetError(API_KEY_ERROR, character.id);
         setAiState(prev => ({ ...prev, isGeneratingProfile: character.id, errorMessage: null }));
         try {
-            const prompt = `Based on these notes, generate a detailed character profile for "${character.name}".
-            Notes: ${rawNotes}
-            Return JSON: { "summary": "brief summary", "tagline": "short hook", "profile": "full markdown profile", "keywords": ["kw1", "kw2"] }`;
-            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
-            const data = extractJson<any>(response.text || '');
+            const prompt = `Based on these notes, generate a detailed character profile for "${character.name}". 
+            Notes: ${rawNotes}`;
+            const response = await getAI().models.generateContent({ 
+                model: 'gemini-3-flash-preview', 
+                contents: prompt, 
+                config: { 
+                    responseMimeType: 'application/json',
+                    responseSchema: characterProfileSchema
+                } 
+            });
+            const data = JSON.parse(response.text || '{}');
             if (data) dispatch({ type: 'UPDATE_CHARACTER', payload: { id: character.id, updates: { ...data, previousProfile: character.summary ? { summary: character.summary, profile: character.profile, tagline: character.tagline, keywords: character.keywords } : undefined } } });
         } catch (e) { onSetError("Failed to generate profile.", character.id); }
         finally { setAiState(prev => ({ ...prev, isGeneratingProfile: null })); }
@@ -228,13 +361,19 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (!hasAPIKey()) return onSetError(API_KEY_ERROR, character.id);
         setAiState(prev => ({ ...prev, isGeneratingProfile: character.id, errorMessage: null }));
         try {
-            const prompt = `Analyze the manuscript to update the profile for "${character.name}".
-            Manuscript: ${manuscriptContent.substring(0, 30000)}
-            Return JSON: { "summary": "updated summary", "tagline": "updated tagline", "profile": "updated markdown profile", "keywords": ["kw1", "kw2"] }`;
-            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
-            const data = extractJson<any>(response.text || '');
+            const prompt = `Analyze the provided manuscript segments to update the profile for character "${character.name}". Focus on consistency and evolution.
+            Manuscript Segment: ${manuscriptContent.substring(0, 30000)}`;
+            const response = await getAI().models.generateContent({ 
+                model: 'gemini-3-flash-preview', 
+                contents: prompt, 
+                config: { 
+                    responseMimeType: 'application/json',
+                    responseSchema: characterProfileSchema
+                } 
+            });
+            const data = JSON.parse(response.text || '{}');
             if (data) dispatch({ type: 'UPDATE_CHARACTER', payload: { id: character.id, updates: { ...data, previousProfile: { summary: character.summary, profile: character.profile, tagline: character.tagline, keywords: character.keywords } } } });
-        } catch (e) { onSetError("Failed to update profile.", character.id); }
+        } catch (e) { onSetError("Failed to update profile from manuscript.", character.id); }
         finally { setAiState(prev => ({ ...prev, isGeneratingProfile: null })); }
     };
 
@@ -242,11 +381,17 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (!hasAPIKey()) return onSetError(API_KEY_ERROR, chapter.id);
         setAiState(prev => ({ ...prev, isGeneratingChapter: chapter.id, errorMessage: null }));
         try {
-            const prompt = `Generate details for Chapter ${chapter.chapterNumber}: ${chapter.title}.
-            Notes: ${rawNotes}
-            Return JSON: { "summary": "brief summary", "outline": "markdown beat list", "analysis": "markdown conflict analysis", "keywords": ["kw1", "kw2"] }`;
-            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
-            const data = extractJson<any>(response.text || '');
+            const prompt = `Generate structural details for Chapter ${chapter.chapterNumber}: "${chapter.title}" based on these rough notes.
+            Notes: ${rawNotes}`;
+            const response = await getAI().models.generateContent({ 
+                model: 'gemini-3-flash-preview', 
+                contents: prompt, 
+                config: { 
+                    responseMimeType: 'application/json',
+                    responseSchema: chapterDetailsSchema
+                } 
+            });
+            const data = JSON.parse(response.text || '{}');
             if (data) dispatch({ type: 'UPDATE_CHAPTER', payload: { id: chapter.id, updates: { ...data, previousDetails: chapter.summary ? { summary: chapter.summary, outline: chapter.outline, analysis: chapter.analysis, keywords: chapter.keywords } : undefined } } });
         } catch (e) { onSetError("Failed to generate details.", chapter.id); }
         finally { setAiState(prev => ({ ...prev, isGeneratingChapter: null })); }
@@ -257,13 +402,19 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setAiState(prev => ({ ...prev, isGeneratingChapter: chapter.id, errorMessage: null }));
         try {
             const tempDiv = document.createElement('div'); tempDiv.innerHTML = chapter.content;
-            const prompt = `Analyze this chapter text to update summary and outline.
-            Text: ${tempDiv.innerText.substring(0, 15000)}
-            Return JSON: { "summary": "updated summary", "outline": "updated outline beats", "analysis": "updated conflict analysis", "keywords": ["kw1", "kw2"] }`;
-            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
-            const data = extractJson<any>(response.text || '');
+            const prompt = `Analyze the actual text of this chapter to update the summary, outline, and analysis based on what was actually written.
+            Text: ${tempDiv.innerText.substring(0, 15000)}`;
+            const response = await getAI().models.generateContent({ 
+                model: 'gemini-3-flash-preview', 
+                contents: prompt, 
+                config: { 
+                    responseMimeType: 'application/json',
+                    responseSchema: chapterDetailsSchema
+                } 
+            });
+            const data = JSON.parse(response.text || '{}');
             if (data) dispatch({ type: 'UPDATE_CHAPTER', payload: { id: chapter.id, updates: { ...data, previousDetails: { summary: chapter.summary, outline: chapter.outline, analysis: chapter.analysis, keywords: chapter.keywords } } } });
-        } catch (e) { onSetError("Failed to update chapter.", chapter.id); }
+        } catch (e) { onSetError("Failed to update chapter details.", chapter.id); }
         finally { setAiState(prev => ({ ...prev, isGeneratingChapter: null })); }
     };
 
@@ -271,12 +422,18 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (!hasAPIKey()) { onSetError(API_KEY_ERROR, 'snippets'); return false; }
         setAiState(prev => ({ ...prev, isGeneratingSnippets: true, errorMessage: null }));
         try {
-            const prompt = `Split this text into distinct snippet items. Identify type and character IDs.
-            Characters: ${characters.map(c => `[ID: ${c.id}] Name: ${c.name}`).join(', ')}
-            Text: ${rawText}
-            Return JSON array: [{ "cleanedText": "...", "type": "Dialogue|...", "characterIds": ["..."] }]`;
-            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
-            const items = extractJson<any[]>(response.text || '');
+            const prompt = `Process this raw block of text into individual story snippets. Identify the type and tag associated characters.
+            Character Directory: ${characters.map(c => `[ID: ${c.id}] Name: ${c.name}`).join(', ')}
+            Input Text: ${rawText}`;
+            const response = await getAI().models.generateContent({ 
+                model: 'gemini-3-flash-preview', 
+                contents: prompt, 
+                config: { 
+                    responseMimeType: 'application/json',
+                    responseSchema: snippetsSchema
+                } 
+            });
+            const items = JSON.parse(response.text || '[]');
             if (items) dispatch({ type: 'ADD_SNIPPETS', payload: items.map(i => ({ ...i, id: generateId(), isUsed: false })) });
             return true;
         } catch (e) { onSetError("Failed to analyze snippets.", 'snippets'); return false; }
@@ -286,27 +443,67 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const onSuggestPlacement = async (snippet: ISnippet, chapters: IChapter[]) => {
         if (!hasAPIKey()) return API_KEY_ERROR;
         try {
-            const prompt = `Where should this snippet go?
+            const prompt = `Determine the best placement for this snippet within the existing chapter structure.
             Snippet: ${snippet.cleanedText}
-            Chapters: ${chapters.map(c => `[ID: ${c.id}] Ch ${c.chapterNumber}: ${c.summary}`).join('\n')}
-            Return top 3 JSON: [{ "chapterId": "...", "confidence": "High", "justification": "..." }]`;
-            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
-            return extractJson<SnippetSuggestion[]>(response.text || '') || "No suggestions found.";
-        } catch (e) { return "Error finding placement."; }
+            Chapter Map (including character presence):
+            ${chapters.map(c => `[ID: ${c.id}] Ch ${c.chapterNumber}: ${c.summary} (Characters: ${getCharacterNames(c.characterIds)})`).join('\n')}`;
+            const response = await getAI().models.generateContent({ 
+                model: 'gemini-3-flash-preview', 
+                contents: prompt, 
+                config: { 
+                    responseMimeType: 'application/json',
+                    responseSchema: snippetPlacementSchema
+                } 
+            });
+            return JSON.parse(response.text || '[]');
+        } catch (e) { return "Error finding placement suggestions."; }
     };
 
     const onGenerateFullAnalysis = async () => {
         if (!hasAPIKey()) return onSetError(API_KEY_ERROR, 'plot');
         dispatch({ type: 'SET_PLOT_BRAINSTORM_STATE', payload: { isGeneratingPacingAndStructure: true, isGeneratingCharacters: true, isGeneratingOpportunities: true } });
         try {
-            const chapText = chapters.map(c => `Ch ${c.chapterNumber}: ${c.summary}`).join('\n');
-            const prompt = `Analyze novel plot structure and characters.
-            Story: ${chapText}
-            Return JSON: { "pacing": { "summary": "...", "points": [{ "chapterNumber": 1, "title": "...", "description": "...", "type": "Inciting Incident" }] }, "characterAnalysis": "markdown", "opportunityAnalysis": "markdown" }`;
-            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
-            const data = extractJson<any>(response.text || '');
+            const chapText = chapters.map(c => `Chapter ${c.chapterNumber}: ${c.summary} [Characters Present: ${getCharacterNames(c.characterIds)}]`).join('\n');
+            const prompt = `Conduct a comprehensive plot and character analysis for the following novel summary:
+            ${chapText}`;
+            const response = await getAI().models.generateContent({ 
+                model: 'gemini-3-pro-preview', 
+                contents: prompt, 
+                config: { 
+                    responseMimeType: 'application/json',
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            pacing: {
+                                type: Type.OBJECT,
+                                properties: {
+                                    summary: { type: Type.STRING },
+                                    points: {
+                                        type: Type.ARRAY,
+                                        items: {
+                                            type: Type.OBJECT,
+                                            properties: {
+                                                chapterNumber: { type: Type.NUMBER },
+                                                title: { type: Type.STRING },
+                                                description: { type: Type.STRING },
+                                                type: { type: Type.STRING }
+                                            },
+                                            required: ["chapterNumber", "title", "description", "type"]
+                                        }
+                                    }
+                                },
+                                required: ["summary", "points"]
+                            },
+                            characterAnalysis: { type: Type.STRING },
+                            opportunityAnalysis: { type: Type.STRING }
+                        },
+                        required: ["pacing", "characterAnalysis", "opportunityAnalysis"]
+                    }
+                } 
+            });
+            const data = JSON.parse(response.text || '{}');
             if (data) dispatch({ type: 'SET_PLOT_BRAINSTORM_STATE', payload: { pacingAndStructureAnalysis: { summary: data.pacing.summary, plotPoints: data.pacing.points.map(p => ({ ...p, id: generateId() })) }, characterAnalysis: data.characterAnalysis, opportunityAnalysis: data.opportunityAnalysis } });
-        } catch (e) { onSetError("Analysis failed.", 'plot'); }
+        } catch (e) { onSetError("Full analysis failed.", 'plot'); }
         finally { dispatch({ type: 'SET_PLOT_BRAINSTORM_STATE', payload: { isGeneratingPacingAndStructure: false, isGeneratingCharacters: false, isGeneratingOpportunities: false } }); }
     };
 
@@ -314,18 +511,27 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (!hasAPIKey()) return onSetError(API_KEY_ERROR, 'social');
         dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { isLoading: true } });
         try {
+            const chapter = chapters.find(c => c.id === excerpt.chapterId);
+            const chapterContext = chapter ? `Chapter Context: ${chapter.summary} [Characters Present: ${getCharacterNames(chapter.characterIds)}]` : '';
             const char = excerpt.characterIds[0] ? characters.find(c => c.id === excerpt.characterIds[0]) : null;
-            const prompt = `Create social media content for: "${excerpt.text}"
-            Character: ${char ? char.name + ' - ' + char.summary : 'None'}
-            Return JSON: { "imagePrompt": "...", "instagram": { "text": "...", "hashtags": ["..."] }, "tiktok": { "text": "...", "hashtags": ["..."] } }`;
-            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
-            const data = extractJson<any>(response.text || '');
+            const prompt = `Generate social media marketing content based on this manuscript excerpt: "${excerpt.text}"
+            ${chapterContext}
+            Associated Character Focus: ${char ? char.name + ' (' + char.summary + ')' : 'General Story Mood'}`;
+            const response = await getAI().models.generateContent({ 
+                model: 'gemini-3-flash-preview', 
+                contents: prompt, 
+                config: { 
+                    responseMimeType: 'application/json',
+                    responseSchema: socialContentSchema
+                } 
+            });
+            const data = JSON.parse(response.text || '{}');
             if (data) {
                 dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { generatedImagePrompt: data.imagePrompt, generatedInstagramPost: data.instagram, generatedTiktokPost: data.tiktok } });
                 const imgRes = await getAI().models.generateContent({ model: 'gemini-2.5-flash-image', contents: data.imagePrompt });
                 for (const part of imgRes.candidates[0].content.parts) if (part.inlineData) dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { generatedImageUrl: `data:image/png;base64,${part.inlineData.data}` } });
             }
-        } catch (e) { onSetError("Social generation failed.", 'social'); }
+        } catch (e) { onSetError("Social content generation failed.", 'social'); }
         finally { dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { isLoading: false } }); }
     };
 
@@ -333,11 +539,19 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (!hasAPIKey()) return onSetError(API_KEY_ERROR, item.id);
         setAiState(prev => ({ ...prev, isGeneratingWorldItem: item.id }));
         try {
-            const prompt = `Refine this world-building entry: ${item.name}. Notes: ${item.rawNotes}. Return JSON: { "summary": "one line", "description": "full markdown codex entry" }`;
-            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
-            const data = extractJson<any>(response.text || '');
+            const prompt = `Refine this world-building entry: "${item.name}" (${item.type}).
+            Rough Notes: ${item.rawNotes}`;
+            const response = await getAI().models.generateContent({ 
+                model: 'gemini-3-flash-preview', 
+                contents: prompt, 
+                config: { 
+                    responseMimeType: 'application/json',
+                    responseSchema: worldRefinementSchema
+                } 
+            });
+            const data = JSON.parse(response.text || '{}');
             if (data) dispatch({ type: 'UPDATE_WORLD_ITEM', payload: { id: item.id, updates: data } });
-        } catch (e) { onSetError("World refinement failed.", item.id); }
+        } catch (e) { onSetError("World item refinement failed.", item.id); }
         finally { setAiState(prev => ({ ...prev, isGeneratingWorldItem: null })); }
     };
 
@@ -345,164 +559,51 @@ const AssemblyAIProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (!hasAPIKey()) return onSetError(API_KEY_ERROR, 'distill');
         setAiState(prev => ({ ...prev, isDistillingWorld: true }));
         try {
-            const prompt = `Distill world items from these notes. Return JSON array: [{ "name": "...", "type": "Location|Lore|Object|Organization|Concept", "rawNotes": "...", "summary": "..." }]
-            Notes: ${text}`;
-            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
-            const items = extractJson<any[]>(response.text || '');
+            const prompt = `Distill the following world-building notes into structured entries. Identify name, type, and summarize key facts.
+            Input Notes: ${text}`;
+            const response = await getAI().models.generateContent({ 
+                model: 'gemini-3-flash-preview', 
+                contents: prompt, 
+                config: { 
+                    responseMimeType: 'application/json',
+                    responseSchema: worldDistillationSchema
+                } 
+            });
+            const items = JSON.parse(response.text || '[]');
             if (items) dispatch({ type: 'ADD_WORLD_ITEMS', payload: items.map(i => ({ ...i, id: generateId(), description: '' })) });
-        } catch (e) { onSetError("Distillation failed.", 'distill'); }
+        } catch (e) { onSetError("World notes distillation failed.", 'distill'); }
         finally { setAiState(prev => ({ ...prev, isDistillingWorld: false })); }
     };
 
-    // --- ADDED MISSING AI IMPLEMENTATIONS ---
-    
-    const onRegenerateTextAndHashtags = async (excerpt: Excerpt, platform: 'instagram' | 'tiktok') => {
-        if (!hasAPIKey()) return onSetError(API_KEY_ERROR, 'social');
-        dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { isLoading: true } });
-        try {
-            const prompt = `Generate a new caption and hashtags for this ${platform} post based on the excerpt: "${excerpt.text}".
-            Return JSON: { "text": "...", "hashtags": ["..."] }`;
-            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
-            const data = extractJson<any>(response.text || '');
-            if (data) {
-                if (platform === 'instagram') dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { generatedInstagramPost: data } });
-                else dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { generatedTiktokPost: data } });
-            }
-        } catch (e) { onSetError(`Failed to regenerate ${platform} content.`, 'social'); }
-        finally { dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { isLoading: false } }); }
-    };
-
-    const onExtractExcerpts = async (chapter: IChapter, characters: ICharacter[]) => {
-        if (!hasAPIKey()) return onSetError(API_KEY_ERROR, 'social');
-        dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { isLoading: true } });
-        try {
-            const tempDiv = document.createElement('div'); tempDiv.innerHTML = chapter.content;
-            const prompt = `Extract 3-5 punchy excerpts or dialogue lines from this chapter suitable for social media hooks. Identify which characters are involved in each.
-            Characters: ${characters.map(c => `[ID: ${c.id}] Name: ${c.name}`).join(', ')}
-            Text: ${tempDiv.innerText.substring(0, 15000)}
-            Return JSON array: [{ "text": "...", "characterIds": ["..."] }]`;
-            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
-            const data = extractJson<any[]>(response.text || '');
-            if (data) dispatch({ type: 'ADD_AI_EXCERPTS', payload: data.map(e => ({ ...e, chapterId: chapter.id })) });
-        } catch (e) { onSetError("Failed to extract excerpts.", 'social'); }
-        finally { dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { isLoading: false } }); }
-    };
-
-    const onGeneratePostVariations = async (post: SocialPost, excerpt: Excerpt, platform: 'instagram' | 'tiktok') => {
-        if (!hasAPIKey()) return onSetError(API_KEY_ERROR, 'social');
-        dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { isLoading: true } });
-        try {
-            const prompt = `Generate 3 distinct variations of this ${platform} post for the excerpt: "${excerpt.text}".
-            Current caption: ${post.text}
-            Return JSON array: [{ "text": "...", "hashtags": ["..."] }]`;
-            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
-            const data = extractJson<SocialPost[]>(response.text || '');
-            if (data) dispatch({ type: 'SET_POST_VARIATIONS', payload: { variations: data, platform } });
-        } catch (e) { onSetError("Failed to generate variations.", 'social'); }
-        finally { dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { isLoading: false } }); }
-    };
-
-    const onGenerateFullSynopsis = async () => {
-        if (!hasAPIKey()) return onSetError(API_KEY_ERROR, 'synopsis');
-        dispatch({ type: 'SET_SYNOPSIS_STATE', payload: { isGeneratingMarketAnalysis: true, isGeneratingPromotionalContent: true, isGeneratingSynopsis: true } });
-        try {
-            const chapText = chapters.map(c => `Ch ${c.chapterNumber}: ${c.summary}`).join('\n');
-            const prompt = `Create a comprehensive industry package for this novel.
-            Story: ${chapText}
-            Return JSON: {
-                "market": "markdown (tropes, comp titles, BISAC codes, keywords)",
-                "promo": "markdown (tagline, logline, elevator pitch, reader persona)",
-                "synopsis": "markdown (complete narrative overview from inciting incident to climax)"
-            }`;
-            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
-            const data = extractJson<any>(response.text || '');
-            if (data) dispatch({ type: 'SET_SYNOPSIS_STATE', payload: { marketAnalysis: data.market, promotionalContent: data.promo, synopsis: data.synopsis } });
-        } catch (e) { onSetError("Failed to generate synopsis package.", 'synopsis'); }
-        finally { dispatch({ type: 'SET_SYNOPSIS_STATE', payload: { isGeneratingMarketAnalysis: false, isGeneratingPromotionalContent: false, isGeneratingSynopsis: false } }); }
-    };
-
-    const onRegenerateMarketAnalysis = async () => {
-        if (!hasAPIKey()) return onSetError(API_KEY_ERROR, 'synopsis');
-        dispatch({ type: 'SET_SYNOPSIS_STATE', payload: { isGeneratingMarketAnalysis: true } });
-        try {
-            const chapText = chapters.map(c => `Ch ${c.chapterNumber}: ${c.summary}`).join('\n');
-            const prompt = `Regenerate the market analysis (tropes, comps, BISAC) for this novel. Story: ${chapText}. Return Markdown.`;
-            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-            dispatch({ type: 'SET_SYNOPSIS_STATE', payload: { marketAnalysis: response.text } });
-        } catch (e) { onSetError("Market analysis failed."); }
-        finally { dispatch({ type: 'SET_SYNOPSIS_STATE', payload: { isGeneratingMarketAnalysis: false } }); }
-    };
-
-    const onRegeneratePromotionalContent = async () => {
-        if (!hasAPIKey()) return onSetError(API_KEY_ERROR, 'synopsis');
-        dispatch({ type: 'SET_SYNOPSIS_STATE', payload: { isGeneratingPromotionalContent: true } });
-        try {
-            const chapText = chapters.map(c => `Ch ${c.chapterNumber}: ${c.summary}`).join('\n');
-            const prompt = `Regenerate promotional content (taglines, logline, pitches) for this novel. Story: ${chapText}. Return Markdown.`;
-            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-            dispatch({ type: 'SET_SYNOPSIS_STATE', payload: { promotionalContent: response.text } });
-        } catch (e) { onSetError("Promo content failed."); }
-        finally { dispatch({ type: 'SET_SYNOPSIS_STATE', payload: { isGeneratingPromotionalContent: false } }); }
-    };
-
-    const onRegenerateSynopsis = async () => {
-        if (!hasAPIKey()) return onSetError(API_KEY_ERROR, 'synopsis');
-        dispatch({ type: 'SET_SYNOPSIS_STATE', payload: { isGeneratingSynopsis: true } });
-        try {
-            const chapText = chapters.map(c => `Ch ${c.chapterNumber}: ${c.summary}`).join('\n');
-            const prompt = `Regenerate the complete story synopsis for this novel. Story: ${chapText}. Return Markdown.`;
-            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-            dispatch({ type: 'SET_SYNOPSIS_STATE', payload: { synopsis: response.text } });
-        } catch (e) { onSetError("Synopsis regeneration failed."); }
-        finally { dispatch({ type: 'SET_SYNOPSIS_STATE', payload: { isGeneratingSynopsis: false } }); }
-    };
-
-    const onSuggestLocations = async () => {
-        if (!hasAPIKey()) return onSetError(API_KEY_ERROR, 'map');
-        setAiState(prev => ({ ...prev, isGeneratingMap: true }));
-        try {
-            const chapText = chapters.map(c => `Ch ${c.chapterNumber}: ${c.summary}`).join('\n');
-            const prompt = `Based on these chapter summaries, identify 3-5 distinct map locations. For each, provide a name, a 1-sentence description, and suggested X and Y coordinates as percentages (0-100).
-            Story: ${chapText}
-            Return JSON array: [{ "name": "...", "description": "...", "x": 50, "y": 50 }]`;
-            const response = await getAI().models.generateContent({ model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: 'application/json' } });
-            const data = extractJson<any[]>(response.text || '');
-            if (data) data.forEach(loc => dispatch({ type: 'ADD_MAP_LOCATION', payload: { ...loc, id: generateId() } }));
-        } catch (e) { onSetError("Location suggestion failed.", 'map'); }
-        finally { setAiState(prev => ({ ...prev, isGeneratingMap: false })); }
-    };
-
-    const onRegenerateImage = async (imagePrompt: string, moodOnly: boolean, character?: ICharacter) => {
-        if (!hasAPIKey()) { onSetError(API_KEY_ERROR, 'social'); return null; }
-        try {
-            let prompt = imagePrompt;
-            if (moodOnly) {
-                prompt = `Atmospheric conceptual art based on: ${imagePrompt}. Highly cinematic, moody lighting, evocative.`;
-            } else if (character) {
-                prompt = `Full body cinematic portrait of ${character.name}. ${character.summary}. Style: ${imagePrompt}.`;
-            }
-            const imgRes = await getAI().models.generateContent({ model: 'gemini-2.5-flash-image', contents: prompt });
-            for (const part of imgRes.candidates[0].content.parts) {
-                if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
-            }
-        } catch (e) { onSetError("Image regeneration failed.", 'social'); }
-        return null;
-    };
-
     const contextValue: any = {
-        ...aiState, onGenerateProfile, onUpdateProfile, onGenerateChapterDetails, onUpdateChapterFromManuscript, onAnalyzeSnippets, onSuggestPlacement, onGenerateFullAnalysis,
-        onGenerateSocialContent, onRefineWorldItem, onDistillWorldNotes, onSetError,
-        onRegenerateTextAndHashtags, onExtractExcerpts, onGeneratePostVariations,
-        onGenerateFullSynopsis, onRegenerateMarketAnalysis, onRegeneratePromotionalContent, onRegenerateSynopsis,
-        onSuggestLocations, onRegenerateImage,
+        ...aiState, 
+        onGenerateProfile, 
+        onUpdateProfile, 
+        onGenerateChapterDetails, 
+        onUpdateChapterFromManuscript, 
+        onAnalyzeSnippets, 
+        onSuggestPlacement, 
+        onGenerateFullAnalysis,
+        onGenerateSocialContent, 
+        onRefineWorldItem, 
+        onDistillWorldNotes, 
+        onSetError,
         onGeneratePacingAnalysis: async () => {
              if (!hasAPIKey()) return onSetError(API_KEY_ERROR, 'pacing');
              dispatch({ type: 'UPDATE_ASSEMBLY_VIEW_STATE', payload: { isGeneratingPacingAnalysis: true } });
              try {
-                 const prompt = `Analyze chapter pacing (-1 to 1). Return JSON array: [{ "chapterId": "...", "chapterNumber": 1, "title": "...", "pacingScore": 0.5, "justification": "..." }]
-                 Data: ${chapters.map(c => `[ID: ${c.id}] Ch ${c.chapterNumber}: ${c.summary}`).join('\n')}`;
-                 const res = await getAI().models.generateContent({ model: 'gemini-3-flash-preview', contents: prompt, config: { responseMimeType: 'application/json' } });
-                 const data = extractJson<ChapterPacingInfo[]>(res.text || '');
+                 const prompt = `Analyze the pacing of the entire novel based on chapter summaries. Score each on speed and tension.
+                 Story Structure (including character presence): 
+                 ${chapters.map(c => `[ID: ${c.id}] Ch ${c.chapterNumber}: ${c.summary} (Characters: ${getCharacterNames(c.characterIds)})`).join('\n')}`;
+                 const res = await getAI().models.generateContent({ 
+                     model: 'gemini-3-flash-preview', 
+                     contents: prompt, 
+                     config: { 
+                         responseMimeType: 'application/json',
+                         responseSchema: pacingAnalysisSchema
+                     } 
+                 });
+                 const data = JSON.parse(res.text || '[]');
                  if (data) dispatch({ type: 'UPDATE_ASSEMBLY_VIEW_STATE', payload: { pacingAnalysis: data } });
              } catch (e) { onSetError("Pacing analysis failed."); }
              finally { dispatch({ type: 'UPDATE_ASSEMBLY_VIEW_STATE', payload: { isGeneratingPacingAnalysis: false } }); }

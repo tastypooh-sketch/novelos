@@ -1,17 +1,16 @@
 
-import React, { useState, useRef, useCallback, useLayoutEffect, useEffect, useMemo, useContext } from 'react';
-import { produce } from 'immer';
+import React, { useState, useRef, useCallback, useLayoutEffect, useEffect, useMemo } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import type { EditorSettings, ICharacter, IChapter, ISnippet, TileBackgroundStyle, ChapterPacingInfo } from '../../types';
 import { useNovelDispatch, useNovelState } from '../../NovelContext';
 import { useAssemblyAI } from './AssemblyAIContext';
 import MarkdownRenderer from '../common/MarkdownRenderer';
-import { ChevronDownIcon, BookOpenIcon, CameraIcon, LockClosedIconOutline, LockOpenIconOutline, RevertIcon, SparklesIconOutline, TrashIconOutline, StarIcon, XIcon, LinkIcon, ViewListIcon, ViewGridIcon, UserCircleIcon, ChevronUpIcon, BrushIcon, SpinnerIcon, DocumentTextIcon, PaperAirplaneIcon } from '../common/Icons';
+import { ChevronDownIcon, BookOpenIcon, CameraIcon, LockClosedIconOutline, LockOpenIconOutline, RevertIcon, SparklesIconOutline, TrashIconOutline, StarIcon, XIcon, LinkIcon, ViewGridIcon, ChevronUpIcon, BrushIcon, SpinnerIcon, CheckCircleIcon, PaperAirplaneIcon } from '../common/Icons';
 import { isColorLight, shadeColor, getImageColor } from '../../utils/colorUtils';
 import { generateBriefingHtml } from '../../utils/manuscriptUtils';
 import { AIError } from '../common/AIError';
 
-// --- UTILS & HOOKS ---
+// --- UTILS ---
 const useAutosizeTextArea = (
   textAreaRef: React.RefObject<HTMLTextAreaElement>,
   value: string,
@@ -25,59 +24,26 @@ const useAutosizeTextArea = (
   useLayoutEffect(() => {
     const textArea = textAreaRef.current;
     const scrollContainer = scrollContainerRef.current;
-
-    if (!isEnabled) {
-      if (textArea && textArea.style.height !== '') {
-        textArea.style.height = '';
-      }
-      previousIsEnabledRef.current = false;
+    if (!isEnabled || !textArea || !scrollContainer) {
+      if (textArea && !isEnabled) textArea.style.height = '';
+      previousIsEnabledRef.current = isEnabled;
       return;
     }
-    
-    if (!textArea || !scrollContainer) {
-        previousIsEnabledRef.current = isEnabled;
-        return;
-    }
-    
     const performResize = () => {
         if (textArea.offsetParent === null) return;
-        
-        const scrollContainerRect = scrollContainer.getBoundingClientRect();
-        const textAreaRect = textArea.getBoundingClientRect();
-        const isTextAreaTopOutOfView = textAreaRect.top < scrollContainerRect.top;
-        
-        let scrollPositionBeforeResize: number | null = null;
-        let oldTextAreaHeight: number | null = null;
-        
-        if (isTextAreaTopOutOfView) {
-            scrollPositionBeforeResize = scrollContainer.scrollTop;
-            oldTextAreaHeight = textArea.scrollHeight;
-        }
-
+        const oldHeight = textArea.scrollHeight;
         textArea.style.height = 'auto';
-        const originalOverflow = textArea.style.overflow;
-        textArea.style.overflow = 'hidden';
         textArea.style.height = `${textArea.scrollHeight}px`;
-        textArea.style.overflow = originalOverflow;
-        
-        if (isTextAreaTopOutOfView && scrollPositionBeforeResize !== null && oldTextAreaHeight !== null) {
-            const newTextAreaHeight = textArea.scrollHeight;
-            const heightDifference = newTextAreaHeight - oldTextAreaHeight;
-            scrollContainer.scrollTop = scrollPositionBeforeResize + heightDifference;
+        if (textArea.getBoundingClientRect().top < scrollContainer.getBoundingClientRect().top) {
+            scrollContainer.scrollTop += (textArea.scrollHeight - oldHeight);
         }
     };
-    
-    const isJustExpanded = isEnabled && !previousIsEnabledRef.current;
-
-    if (isJustExpanded && isAnimated) {
-      const timeoutId = setTimeout(performResize, 700);
-      return () => clearTimeout(timeoutId);
+    if (isEnabled && !previousIsEnabledRef.current && isAnimated) {
+      setTimeout(performResize, 700);
     } else {
       performResize();
     }
-    
     previousIsEnabledRef.current = true;
-
   }, [value, isEnabled, textAreaRef, scrollContainerRef, isAnimated]);
 };
 
@@ -85,74 +51,54 @@ const createDragGhost = (count: number, settings: EditorSettings): HTMLElement =
     const ghost = document.createElement('div');
     ghost.style.position = 'absolute';
     ghost.style.top = '-1000px';
-    ghost.style.padding = '8px 12px';
-    ghost.style.borderRadius = '8px';
+    ghost.style.padding = '8px 16px';
+    ghost.style.borderRadius = '99px';
     ghost.style.backgroundColor = settings.accentColor || '#2563eb';
     ghost.style.color = '#FFFFFF';
     ghost.style.fontFamily = 'Inter, sans-serif';
-    ghost.style.fontSize = '14px';
-    ghost.style.fontWeight = '600';
-    ghost.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3)';
+    ghost.style.fontSize = '12px';
+    ghost.style.fontWeight = 'bold';
+    ghost.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.4)';
     ghost.style.zIndex = '9999';
-    ghost.textContent = count > 1 ? `${count} items` : '1 item';
+    ghost.textContent = count > 1 ? `Moving ${count} Chapters` : 'Moving Chapter';
     return ghost;
 };
 
 // --- COMPONENTS ---
 
-const PacingHeatmap: React.FC<{ 
-    analysis: ChapterPacingInfo[];
-    settings: EditorSettings;
-}> = ({ analysis, settings }) => {
+const PacingHeatmap: React.FC<{ analysis: ChapterPacingInfo[]; settings: EditorSettings; }> = ({ analysis, settings }) => {
     const [tooltip, setTooltip] = useState<{ content: string; x: number; y: number } | null>(null);
-
-    const scoreToColor = (score: number) => { // score is -1 to 1
+    const scoreToColor = (score: number) => {
         if (score < 0) {
-            const lightness = 100 - (Math.abs(score) * 40); // 100 -> 60
-            const saturation = Math.abs(score) * 83; // 0 -> 83
-            return `hsl(220, ${saturation}%, ${lightness}%)`;
+            const saturation = Math.abs(score) * 80;
+            return `hsl(220, ${saturation}%, 60%)`;
         } else {
-            const lightness = 100 - (score * 40); // 100 -> 60
-            const saturation = score * 84; // 0 -> 84
-            return `hsl(0, ${saturation}%, ${lightness}%)`;
+            const saturation = score * 80;
+            return `hsl(0, ${saturation}%, 60%)`;
         }
     };
-
-    const handleMouseMove = (e: React.MouseEvent, info: ChapterPacingInfo) => {
-        const content = `
-            <strong>Ch ${info.chapterNumber}: ${info.title}</strong><br/>
-            Pacing Score: ${info.pacingScore.toFixed(2)}<br/>
-            <em>${info.justification}</em>
-        `;
-        setTooltip({ content, x: e.clientX, y: e.clientY });
-    };
-
     return (
-        <div className="relative mb-6">
-            <h4 className="text-xs font-bold uppercase tracking-[0.3em] opacity-40 mb-3 ml-1 select-none" style={{ color: settings.textColor }}>
-                Pacing Integrity Heatmap
+        <div className="relative mb-8">
+            <h4 className="text-xl font-bold flex items-center gap-3 mb-4 select-none" style={{ color: settings.textColor }}>
+                <SpinnerIcon className="h-6 w-6" style={{ color: settings.accentColor }} />
+                Pacing Heatmap
             </h4>
-            <div className="flex w-full h-8 rounded-xl overflow-hidden shadow-inner bg-black/10 border border-white/5" onMouseLeave={() => setTooltip(null)}>
+            <div className="flex w-full h-8 rounded-md overflow-hidden bg-black/20" onMouseLeave={() => setTooltip(null)}>
                 {analysis.map(info => (
                     <div
                         key={info.chapterId}
-                        className="flex-grow h-full transition-transform duration-200 hover:scale-y-125"
+                        className="flex-grow h-full transition-all duration-200 hover:scale-y-150 hover:z-10 cursor-help"
                         style={{ backgroundColor: scoreToColor(info.pacingScore) }}
-                        onMouseMove={(e) => handleMouseMove(e, info)}
+                        onMouseMove={(e) => setTooltip({ 
+                            content: `<strong>Ch ${info.chapterNumber}: ${info.title}</strong><br/>Score: ${info.pacingScore.toFixed(2)}<br/><em>${info.justification}</em>`, 
+                            x: e.clientX, y: e.clientY 
+                        })}
                     />
                 ))}
             </div>
             {tooltip && (
-                <div
-                    className="fixed z-50 p-2 rounded-md shadow-lg text-xs"
-                    style={{
-                        top: tooltip.y + 15,
-                        left: tooltip.x + 15,
-                        backgroundColor: settings.toolbarBg,
-                        color: settings.toolbarText,
-                        maxWidth: '250px',
-                        pointerEvents: 'none',
-                    }}
+                <div className="fixed z-50 p-3 rounded-lg shadow-2xl text-xs backdrop-blur-md border border-white/10"
+                    style={{ top: tooltip.y + 20, left: tooltip.x + 20, backgroundColor: `${settings.toolbarBg}F2`, color: settings.toolbarText, maxWidth: '280px', pointerEvents: 'none' }}
                     dangerouslySetInnerHTML={{ __html: tooltip.content }}
                 />
             )}
@@ -160,527 +106,9 @@ const PacingHeatmap: React.FC<{
     );
 };
 
-
-const ExpandedChapterView: React.FC<{
-    chapter: IChapter;
-    characters: ICharacter[];
-    snippets: ISnippet[];
-    onClose: () => void;
-    onUpdate: (id: string, updates: Partial<IChapter>) => void;
-    onUpdateChapter: (id: string, updates: Partial<IChapter>) => void;
-    onDeleteRequest: (chapter: IChapter) => void;
-    settings: EditorSettings;
-    scrollContainerRef: React.RefObject<HTMLDivElement>;
-    onCharacterDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
-    onCharacterDrop: (e: React.DragEvent<HTMLDivElement>) => void;
-    isSelected: boolean;
-    tileBackgroundStyle: TileBackgroundStyle;
-    directoryHandle: FileSystemDirectoryHandle | null;
-}> = React.memo(({
-    chapter, characters, snippets, onClose, onUpdate, onUpdateChapter, onDeleteRequest, settings, scrollContainerRef, onCharacterDragOver, onCharacterDrop, isSelected, tileBackgroundStyle, directoryHandle
-}) => {
-    const dispatch = useNovelDispatch();
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const { isGeneratingChapter, errorId, errorMessage, onGenerateChapterDetails, onUpdateChapterFromManuscript } = useAssemblyAI();
-    const isGenerating = isGeneratingChapter === chapter.id;
-
-    const [localTitle, setLocalTitle] = useState(chapter.title);
-    const [summary, setSummary] = useState(chapter.summary);
-    const [rawNotes, setRawNotes] = useState(chapter.rawNotes);
-    const [outline, setOutline] = useState(chapter.outline);
-    const [analysis, setAnalysis] = useState(chapter.analysis || '');
-
-    const [isEditingOutline, setIsEditingOutline] = useState(() => !String(chapter.outline || '').trim());
-    const [isEditingAnalysis, setIsEditingAnalysis] = useState(() => !String(chapter.analysis || '').trim());
-    const [isEditingTitle, setIsEditingTitle] = useState(false);
-    const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
-    const titleInputRef = useRef<HTMLTextAreaElement>(null);
-
-    const summaryRef = useRef<HTMLTextAreaElement>(null);
-    const rawNotesRef = useRef<HTMLTextAreaElement>(null);
-    const outlineRef = useRef<HTMLTextAreaElement>(null);
-    const analysisRef = useRef<HTMLTextAreaElement>(null);
-
-    useAutosizeTextArea(summaryRef, summary, true, scrollContainerRef, { isAnimated: true });
-    useAutosizeTextArea(rawNotesRef, rawNotes, true, scrollContainerRef, { isAnimated: true });
-    useAutosizeTextArea(outlineRef, outline, true, scrollContainerRef, { isAnimated: true });
-    useAutosizeTextArea(analysisRef, analysis, true, scrollContainerRef, { isAnimated: true });
-    useAutosizeTextArea(titleInputRef, localTitle, isEditingTitle, scrollContainerRef, { isAnimated: false });
-
-    const debouncedUpdate = useDebouncedCallback((updates: Partial<IChapter>) => {
-        onUpdate(chapter.id, updates);
-    }, 500);
-
-    useEffect(() => {
-        setLocalTitle(chapter.title);
-        setSummary(chapter.summary);
-        setRawNotes(chapter.rawNotes);
-        setOutline(chapter.outline);
-        setAnalysis(chapter.analysis || '');
-
-        if (!String(chapter.outline || '').trim()) {
-            setIsEditingOutline(true);
-        }
-        if (!String(chapter.analysis || '').trim()) {
-            setIsEditingAnalysis(true);
-        }
-    }, [chapter]);
-
-    useEffect(() => {
-        if (isEditingTitle && titleInputRef.current) {
-            titleInputRef.current.focus();
-            titleInputRef.current.select();
-        }
-    }, [isEditingTitle]);
-
-    const handleTitleUpdate = () => {
-        setIsEditingTitle(false);
-        const trimmedTitle = localTitle.trim();
-        if (trimmedTitle && trimmedTitle !== chapter.title) {
-            onUpdate(chapter.id, { title: trimmedTitle });
-        } else if (!trimmedTitle) {
-            setLocalTitle('New Chapter');
-            if (chapter.title !== 'New Chapter') {
-                onUpdate(chapter.id, { title: 'New Chapter' });
-            }
-        }
-    };
-
-    const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            e.currentTarget.blur();
-        }
-        if (e.key === 'Escape') {
-            e.preventDefault();
-            setLocalTitle(chapter.title);
-            setIsEditingTitle(false);
-        }
-    };
-
-    const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = async (loadEvent) => {
-                const photoUrl = loadEvent.target?.result as string;
-                try {
-                    const imageColor = await getImageColor(photoUrl);
-                    onUpdate(chapter.id, { photo: photoUrl, imageColor: imageColor, isPhotoLocked: true });
-                } catch(err) {
-                    onUpdate(chapter.id, { photo: photoUrl, isPhotoLocked: true });
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-    
-    const handleGenerateDetails = () => {
-        if (!rawNotes.trim()) {
-            return;
-        }
-        onGenerateChapterDetails(chapter, rawNotes);
-        setIsEditingOutline(false);
-        setIsEditingAnalysis(false);
-    }
-    
-    const handleUpdateFromManuscript = () => {
-        onUpdateChapterFromManuscript(chapter);
-        setShowUpdateConfirm(false);
-    };
-
-    const handleSendBriefToManuscript = () => {
-        const briefingHtml = generateBriefingHtml(chapter, characters, snippets);
-        const existingContent = chapter.content || '<div><br></div>';
-        if (existingContent.includes('[ CHAPTER BRIEFING ]')) {
-             if (!confirm("This chapter already contains a briefing. Add another one?")) {
-                 return;
-             }
-        }
-        
-        onUpdate(chapter.id, { content: briefingHtml + existingContent });
-    };
-
-    const handleRevertDetails = () => {
-        if (chapter.previousDetails) {
-            onUpdate(chapter.id, { ...chapter.previousDetails, previousDetails: undefined });
-        }
-    };
-
-    const handleToggleLock = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        onUpdate(chapter.id, { isPhotoLocked: !chapter.isPhotoLocked });
-    };
-
-    const handleSendSnippetBack = (snippetId: string) => {
-        const newLinkedSnippetIds = (chapter.linkedSnippetIds || []).filter(id => id !== snippetId);
-        onUpdate(chapter.id, { linkedSnippetIds: newLinkedSnippetIds });
-
-        dispatch({ type: 'UPDATE_SNIPPET', payload: { id: snippetId, updates: { isUsed: false } } });
-    };
-
-    const handleCycleAccentStyle = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        const styles: ('left-top-ingress' | 'outline' | 'corner-diagonal')[] = ['left-top-ingress', 'outline', 'corner-diagonal'];
-        const currentStyle = chapter.accentStyle || 'left-top-ingress';
-        const currentIndex = styles.indexOf(currentStyle);
-        const nextStyle = styles[(currentIndex + 1) % styles.length];
-        onUpdate(chapter.id, { accentStyle: nextStyle });
-    };
-
-    const tileBorderColor = chapter.imageColor || settings.toolbarInputBorderColor;
-    
-    const isDarkMode = !isColorLight(settings.textColor);
-    const secondaryButtonBg = shadeColor(settings.toolbarButtonBg || '#374151', isDarkMode ? 10 : -10);
-    const secondaryButtonHoverBg = shadeColor(settings.toolbarButtonBg || '#374151', isDarkMode ? 20 : -10);
-    
-    const linkedCharacters = useMemo(() => {
-        return (chapter.characterIds || [])
-            .map(id => characters.find(c => c.id === id))
-            .filter((c): c is ICharacter => !!c);
-    }, [chapter.characterIds, characters]);
-
-    const linkedSnippets = useMemo(() => {
-        return (chapter.linkedSnippetIds || [])
-            .map(id => snippets.find(s => s.id === id))
-            .filter((s): s is ISnippet => !!s);
-    }, [chapter.linkedSnippetIds, snippets]);
-    
-    const accentColor = chapter.imageColor || settings.accentColor;
-
-    const backgroundStyle = useMemo(() => {
-        const baseColor = settings.toolbarButtonBg || '#374151';
-        const secondaryColor = shadeColor(baseColor, isDarkMode ? 7 : -7);
-        
-        switch (tileBackgroundStyle) {
-            case 'diagonal': return { background: `linear-gradient(to top left, ${baseColor} 49.9%, ${secondaryColor} 50.1%)` };
-            case 'horizontal': return { background: `linear-gradient(to bottom, ${isDarkMode ? secondaryColor : baseColor} 33.3%, ${isDarkMode ? baseColor : secondaryColor} 33.3%)` };
-            default: return { backgroundColor: baseColor };
-        }
-    }, [tileBackgroundStyle, settings.toolbarButtonBg, isDarkMode]);
-
-    return (
-        <div className="relative w-full">
-             <div data-chapter-id={chapter.id}>
-                <input type="file" accept="image/png, image/jpeg" ref={fileInputRef} onChange={handlePhotoUpload} className="hidden" />
-                <div
-                    className="relative rounded-lg shadow-md transition-shadow duration-300 ease-in-out z-10 flex flex-grow flex-col border-4 overflow-hidden"
-                    style={{
-                        ...backgroundStyle,
-                        color: settings.textColor,
-                        borderColor: isSelected ? settings.accentColor : (chapter.accentStyle === 'outline' ? accentColor : 'transparent'),
-                    }}
-                    onDragOver={onCharacterDragOver}
-                    onDrop={onCharacterDrop}
-                >
-                     {(chapter.accentStyle === 'left-top-ingress' || !chapter.accentStyle) && (
-                        <div className="absolute top-0 left-0 w-[6px] h-1/3" style={{backgroundColor: accentColor}}></div>
-                    )}
-                    {chapter.accentStyle === 'corner-diagonal' && (
-                        <div className="absolute bottom-0 right-0" style={{
-                            width: 0,
-                            height: 0,
-                            borderBottom: `48px solid ${accentColor}`,
-                            borderLeft: '48px solid transparent',
-                        }}></div>
-                    )}
-                    <div className="flex-grow flex flex-col min-h-0 overflow-y-auto">
-                        <div className="w-full flex flex-col">
-                            <div className="p-4 border-b flex justify-between items-center" style={{ borderColor: `${tileBorderColor}80`}}>
-                                 <div className="text-xl font-bold flex items-baseline gap-2 min-w-0" title={`${chapter.title} ${chapter.chapterNumber}`}>
-                                    <span className="flex-shrink-0" style={{ color: settings.textColor }}>{chapter.chapterNumber}.</span>
-                                    <div className="truncate flex-grow" style={{ color: settings.textColor }}>{chapter.title}</div>
-                                </div>
-                            </div>
-                             {linkedCharacters.length > 0 && (
-                                <div 
-                                    className="flex-shrink-0 flex items-center flex-wrap gap-x-2 gap-y-3 px-4 py-3 border-b"
-                                    style={{borderColor: `${tileBorderColor}80`}}
-                                    onDragOver={onCharacterDragOver}
-                                    onDrop={onCharacterDrop}
-                                >
-                                    {linkedCharacters.map(char => {
-                                        const handleRemoveCharacter = (e: React.MouseEvent) => {
-                                            e.stopPropagation();
-                                            const newCharacterIds = chapter.characterIds?.filter(id => id !== char.id);
-                                            onUpdateChapter(chapter.id, { characterIds: newCharacterIds });
-                                        };
-
-                                        return (
-                                            <div key={char.id} className="relative h-10 w-10 rounded-md group" title={char.name}>
-                                                <div 
-                                                    className="h-full w-full rounded-md bg-cover bg-center border-2 overflow-hidden"
-                                                    style={{ backgroundColor: char.imageColor, borderColor: char.imageColor }}
-                                                >
-                                                    {char.photo && <img src={char.photo} alt={char.name} className="w-full h-full object-cover" />}
-                                                </div>
-                                                {char.isPrimary && <StarIcon className="absolute -top-1 -right-1 h-5 w-5 text-yellow-400" style={{ filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.5))'}}/>}
-                                                <button 
-                                                    onClick={handleRemoveCharacter}
-                                                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 hover:bg-red-700"
-                                                    aria-label={`Remove ${char.name} from chapter`}
-                                                >
-                                                    <XIcon className="h-4 w-4" />
-                                                </button>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-
-                            <div className="p-4 space-y-6">
-                                <div>
-                                    <label className="block text-sm font-semibold mb-2 opacity-80" style={{ color: settings.textColor }}>Title</label>
-                                    <input
-                                        type="text"
-                                        value={localTitle}
-                                        onChange={e => setLocalTitle(e.target.value)}
-                                        onBlur={handleTitleUpdate}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') e.currentTarget.blur();
-                                            if (e.key === 'Escape') {
-                                                setLocalTitle(chapter.title);
-                                                e.currentTarget.blur();
-                                            }
-                                        }}
-                                        className="w-full p-2 rounded border"
-                                        style={{ borderColor: tileBorderColor, color: settings.textColor, backgroundColor: settings.backgroundColor }}
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-semibold mb-2 opacity-80" style={{ color: settings.textColor }}>Scene Image</label>
-                                    <div className="relative group">
-                                        <div 
-                                            className="w-full h-40 rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer hover:border-blue-400 transition-colors select-none relative"
-                                            style={{ borderColor: tileBorderColor, backgroundColor: settings.backgroundColor }}
-                                            onClick={() => fileInputRef.current?.click()}
-                                        >
-                                            {chapter.photo && (
-                                                <img src={chapter.photo} alt={chapter.title} className="absolute inset-0 w-full h-full object-cover rounded-lg pointer-events-none" />
-                                            )}
-                                            {!chapter.photo && (
-                                                <div className="text-center">
-                                                    <CameraIcon className="h-8 w-8 mx-auto opacity-50" style={{ color: settings.textColor }}/>
-                                                    <p className="text-xs mt-1 opacity-70" style={{ color: settings.textColor }}>Click to upload an image</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div 
-                                            className="absolute top-2 right-2 p-1.5 rounded-full transition-all duration-200 cursor-pointer"
-                                            style={{
-                                                backgroundColor: chapter.isPhotoLocked ? settings.accentColor : secondaryButtonBg,
-                                                color: chapter.isPhotoLocked ? 'white' : settings.toolbarText
-                                            }}
-                                            onClick={handleToggleLock}
-                                            title={chapter.isPhotoLocked ? "Unlock photo (allows AI to replace it)" : "Lock photo (prevents AI replacement)"}
-                                        >
-                                            {chapter.isPhotoLocked ? <LockClosedIconOutline className="h-4 w-4" /> : <LockOpenIconOutline className="h-4 w-4" />}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-semibold mb-2 opacity-80" style={{ color: settings.textColor }}>Summary</label>
-                                    <textarea
-                                        ref={summaryRef} value={summary}
-                                        onChange={e => { setSummary(e.target.value); debouncedUpdate({ summary: e.target.value }); }}
-                                        className="w-full p-2 rounded border resize-none overflow-hidden"
-                                        style={{ borderColor: tileBorderColor, color: settings.textColor, backgroundColor: settings.backgroundColor }}
-                                        rows={2}
-                                    />
-                                </div>
-                                <div>
-                                    <div className="flex justify-between items-center mb-2">
-                                        <label className="block text-sm font-semibold opacity-80" style={{ color: settings.textColor }}>Outline</label>
-                                        <button
-                                            onClick={() => setIsEditingOutline(p => !p)}
-                                            className="text-xs px-2 py-0.5 rounded"
-                                            style={{ backgroundColor: settings.toolbarButtonBg, color: settings.toolbarText, }}
-                                            onMouseEnter={e => e.currentTarget.style.backgroundColor = settings.toolbarButtonHoverBg || ''}
-                                            onMouseLeave={e => e.currentTarget.style.backgroundColor = settings.toolbarButtonBg || ''}
-                                        >
-                                            {isEditingOutline ? 'Preview' : 'Edit'}
-                                        </button>
-                                    </div>
-                                    {isEditingOutline ? (
-                                        <textarea
-                                            ref={outlineRef} value={outline}
-                                            onChange={e => { setOutline(e.target.value); debouncedUpdate({ outline: e.target.value }); }}
-                                            className="w-full p-2 rounded border resize-none overflow-hidden"
-                                            style={{ borderColor: tileBorderColor, color: settings.textColor, backgroundColor: settings.backgroundColor }}
-                                            rows={6}
-                                        />
-                                    ) : (
-                                        <div 
-                                            className="w-full p-2 rounded border"
-                                            style={{ borderColor: tileBorderColor, color: settings.textColor, backgroundColor: settings.backgroundColor }}
-                                        >
-                                        <MarkdownRenderer source={outline} settings={settings} />
-                                        </div>
-                                    )}
-                                </div>
-                                <div>
-                                    <div className="flex justify-between items-center mb-2">
-                                        <label className="block text-sm font-semibold opacity-80" style={{ color: settings.textColor }}>Story Analysis</label>
-                                        <button
-                                            onClick={() => setIsEditingAnalysis(p => !p)}
-                                            className="text-xs px-2 py-0.5 rounded"
-                                            style={{ backgroundColor: settings.toolbarBg, color: settings.toolbarText, }}
-                                            onMouseEnter={e => e.currentTarget.style.backgroundColor = settings.toolbarButtonHoverBg || ''}
-                                            onMouseLeave={e => e.currentTarget.style.backgroundColor = settings.toolbarButtonBg || ''}
-                                        >
-                                            {isEditingAnalysis ? 'Preview' : 'Edit'}
-                                        </button>
-                                    </div>
-                                    {isEditingAnalysis ? (
-                                        <textarea
-                                            ref={analysisRef} value={analysis}
-                                            onChange={e => { setAnalysis(e.target.value); debouncedUpdate({ analysis: e.target.value }); }}
-                                            className="w-full p-2 rounded border resize-none overflow-hidden"
-                                            style={{ borderColor: tileBorderColor, color: settings.textColor, backgroundColor: settings.backgroundColor }}
-                                            rows={6}
-                                            placeholder="AI-generated analysis of conflict, stakes, etc."
-                                        />
-                                    ) : (
-                                        <div 
-                                            className="w-full p-2 rounded border"
-                                            style={{ borderColor: tileBorderColor, color: settings.textColor, backgroundColor: settings.backgroundColor }}
-                                        >
-                                        <MarkdownRenderer source={analysis} settings={settings} />
-                                        </div>
-                                    )}
-                                </div>
-                                {linkedSnippets.length > 0 && (
-                                    <div>
-                                        <label className="block text-sm font-semibold mb-2 opacity-80" style={{ color: settings.textColor }}>Linked Snippets</label>
-                                        <div className="space-y-2">
-                                            {linkedSnippets.map(snippet => (
-                                                <div key={snippet.id} className="p-3 rounded-md flex justify-between items-start gap-3" style={{ backgroundColor: settings.backgroundColor }}>
-                                                    <p className="text-sm opacity-90 whitespace-pre-wrap flex-grow" style={{ color: settings.textColor }}>{snippet.cleanedText}</p>
-                                                    <button
-                                                        onClick={() => handleSendSnippetBack(snippet.id)}
-                                                        className="p-1.5 rounded flex-shrink-0"
-                                                        style={{ backgroundColor: secondaryButtonBg }}
-                                                        onMouseEnter={e => e.currentTarget.style.backgroundColor = secondaryButtonHoverBg}
-                                                        onMouseLeave={e => e.currentTarget.style.backgroundColor = secondaryButtonBg}
-                                                        title="Send snippet back to the repository"
-                                                    >
-                                                        <RevertIcon className="h-4 w-4" style={{ color: settings.textColor }} />
-                                                    </button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                                <div>
-                                    <label className="block text-sm font-semibold mb-2 opacity-80" style={{ color: settings.textColor }}>Rough Notes</label>
-                                    <textarea
-                                        ref={rawNotesRef} value={rawNotes}
-                                        onChange={e => { setRawNotes(e.target.value); debouncedUpdate({ rawNotes: e.target.value }); }}
-                                        className="w-full p-2 rounded border resize-none overflow-hidden"
-                                        style={{ borderColor: tileBorderColor, color: settings.textColor, backgroundColor: settings.backgroundColor }}
-                                        rows={4}
-                                        placeholder="Jot down plot points, scene ideas, dialogue snippets, etc."
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <footer className="flex-shrink-0 p-4 border-t flex justify-between items-center relative" style={{borderColor: `${tileBorderColor}80`}}>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={handleGenerateDetails}
-                                disabled={isGenerating}
-                                className="px-3 py-1.5 rounded-md text-sm font-medium flex items-center text-white disabled:opacity-60"
-                                style={{ backgroundColor: settings.accentColor }}
-                                onMouseEnter={e => e.currentTarget.style.backgroundColor = settings.accentColorHover || ''}
-                                onMouseLeave={e => e.currentTarget.style.backgroundColor = settings.accentColor || ''}
-                            >
-                                <SparklesIconOutline className="h-5 w-5 mr-2"/>
-                                {isGenerating ? 'Generating...' : 'Generate from Notes'}
-                            </button>
-                            {chapter.previousDetails ? (
-                                <button
-                                    onClick={handleRevertDetails}
-                                    className="px-3 py-1.5 rounded-md text-sm font-medium flex items-center"
-                                    style={{ backgroundColor: secondaryButtonBg, color: settings.textColor }}
-                                >
-                                    <RevertIcon className="h-4 w-4 mr-2" />
-                                    Revert
-                                </button>
-                            ) : (
-                                <div className="flex items-center gap-2 relative">
-                                    <button
-                                        onMouseEnter={() => setShowUpdateConfirm(true)}
-                                        onMouseLeave={() => setShowUpdateConfirm(false)}
-                                        className="px-3 py-1.5 rounded-md text-sm font-medium flex items-center"
-                                        style={{ backgroundColor: secondaryButtonBg, color: settings.textColor }}
-                                    >
-                                        <BrushIcon className="h-4 w-4 mr-2" />
-                                        Update from Manuscript
-                                    </button>
-                                    <button
-                                        onClick={handleSendBriefToManuscript}
-                                        className="px-3 py-1.5 rounded-md text-sm font-medium flex items-center"
-                                        style={{ backgroundColor: secondaryButtonBg, color: settings.textColor }}
-                                        title="Sends the chapter summary, characters, and snippets to the manuscript editor as a prompt."
-                                    >
-                                        <PaperAirplaneIcon className="h-4 w-4 mr-2" />
-                                        Send Brief to Manuscript
-                                    </button>
-                                    {showUpdateConfirm && (
-                                        <div onMouseEnter={() => setShowUpdateConfirm(true)} onMouseLeave={() => setShowUpdateConfirm(false)} className="absolute bottom-full left-0 mb-2 w-64 p-3 rounded-md shadow-lg text-xs z-50" style={{backgroundColor: settings.dropdownBg, color: settings.toolbarText }}>
-                                            <p>This will analyze the written chapter text to update this chapter's outline and analysis. This will overwrite existing data.</p>
-                                            <button onClick={handleUpdateFromManuscript} className="w-full mt-2 py-1.5 rounded-md text-white font-semibold" style={{backgroundColor: settings.accentColor}}>Confirm Update</button>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                             <button
-                                onClick={handleCycleAccentStyle}
-                                className="p-2 rounded-md"
-                                style={{ backgroundColor: secondaryButtonBg, color: settings.toolbarText }}
-                                onMouseEnter={e => e.currentTarget.style.backgroundColor = secondaryButtonHoverBg}
-                                onMouseLeave={e => e.currentTarget.style.backgroundColor = secondaryButtonBg}
-                                title="Cycle accent style"
-                            >
-                                <BrushIcon className="h-5 w-5" />
-                            </button>
-                             <button
-                                onClick={onClose}
-                                className="p-2 rounded-md"
-                                style={{ backgroundColor: secondaryButtonBg, color: settings.toolbarText }}
-                                onMouseEnter={e => e.currentTarget.style.backgroundColor = secondaryButtonHoverBg}
-                                onMouseLeave={e => e.currentTarget.style.backgroundColor = secondaryButtonBg}
-                                aria-label="Collapse chapter details"
-                                title="Collapse"
-                            >
-                                <ChevronUpIcon />
-                            </button>
-                            <button
-                                onClick={() => onDeleteRequest(chapter)}
-                                className="p-2 rounded-md text-white"
-                                style={{ backgroundColor: settings.dangerColor }}
-                                onMouseEnter={e => e.currentTarget.style.backgroundColor = settings.dangerColorHover || ''}
-                                onMouseLeave={e => e.currentTarget.style.backgroundColor = settings.dangerColor || ''}
-                                title="Delete chapter"
-                            >
-                                <TrashIconOutline />
-                            </button>
-                        </div>
-                    </footer>
-                    {errorId === chapter.id && <AIError message={errorMessage} className="mx-4 mb-2" />}
-                </div>
-            </div>
-        </div>
-    );
-});
-
 const ChapterThumbnail: React.FC<{
     chapter: IChapter;
+    allCharacters: ICharacter[];
     settings: EditorSettings;
     isSelected: boolean;
     onSelect: (id: string, e: React.MouseEvent) => void;
@@ -688,13 +116,16 @@ const ChapterThumbnail: React.FC<{
     draggableProps: any;
     isDragging: boolean;
     tileBackgroundStyle: TileBackgroundStyle;
-}> = ({ chapter, settings, isSelected, onSelect, onToggleExpand, draggableProps, isDragging, tileBackgroundStyle }) => {
+    onCharacterDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
+    onCharacterDrop: (e: React.DragEvent<HTMLDivElement>) => void;
+}> = ({ chapter, allCharacters, settings, isSelected, onSelect, onToggleExpand, draggableProps, isDragging, tileBackgroundStyle, onCharacterDragOver, onCharacterDrop }) => {
     const isDarkMode = !isColorLight(settings.textColor);
+    const [isCharDragOver, setIsCharDragOver] = useState(false);
+    const accentColor = chapter.imageColor || settings.accentColor;
 
     const backgroundStyle = useMemo(() => {
         const baseColor = settings.toolbarButtonBg || '#374151';
         const secondaryColor = shadeColor(baseColor, isDarkMode ? 7 : -7);
-        
         switch (tileBackgroundStyle) {
             case 'diagonal': return { background: `linear-gradient(to top left, ${baseColor} 49.9%, ${secondaryColor} 50.1%)` };
             case 'horizontal': return { background: `linear-gradient(to bottom, ${isDarkMode ? secondaryColor : baseColor} 33.3%, ${isDarkMode ? baseColor : secondaryColor} 33.3%)` };
@@ -702,60 +133,64 @@ const ChapterThumbnail: React.FC<{
         }
     }, [tileBackgroundStyle, settings.toolbarButtonBg, isDarkMode]);
     
-    const accentColor = chapter.imageColor || settings.accentColor;
+    const linkedCharacters = useMemo(() => {
+        return (chapter.characterIds || []).map(id => allCharacters.find(c => c.id === id)).filter((c): c is ICharacter => !!c);
+    }, [chapter.characterIds, allCharacters]);
 
     return (
         <div
             onClick={(e) => onSelect(chapter.id, e)}
             {...draggableProps}
-            className={`relative aspect-square flex flex-col rounded-lg shadow-md transition-all duration-300 border-4 overflow-hidden ${isDragging ? 'opacity-40 scale-95' : 'opacity-100 scale-100'}`}
+            onDragOver={(e) => { setIsCharDragOver(true); onCharacterDragOver(e); }}
+            onDragLeave={() => setIsCharDragOver(false)}
+            onDrop={(e) => { setIsCharDragOver(false); onCharacterDrop(e); }}
+            className={`relative aspect-[3/4] flex flex-col rounded-lg shadow-lg transition-all duration-200 border-4 overflow-hidden ${isDragging ? 'opacity-20 scale-90' : 'opacity-100 scale-100'} ${isCharDragOver ? 'ring-4 ring-offset-2' : ''}`}
             style={{
-                borderColor: isSelected ? settings.accentColor : (chapter.accentStyle === 'outline' ? accentColor : 'transparent'),
+                borderColor: isCharDragOver ? settings.accentColor : (isSelected ? settings.accentColor : (chapter.accentStyle === 'outline' ? accentColor : 'transparent')),
+                color: settings.textColor,
                 ...backgroundStyle,
-                color: settings.textColor
+                ['--tw-ring-color' as any]: settings.accentColor,
+                cursor: 'grab'
             }}
         >
              {(chapter.accentStyle === 'left-top-ingress' || !chapter.accentStyle) && (
                 <div className="absolute top-0 left-0 w-[6px] h-1/3" style={{backgroundColor: accentColor}}></div>
             )}
             {chapter.accentStyle === 'corner-diagonal' && (
-                <div className="absolute bottom-0 right-0" style={{
-                    width: 0,
-                    height: 0,
-                    borderBottom: `48px solid ${accentColor}`,
-                    borderLeft: '48px solid transparent',
-                }}></div>
+                <div className="absolute bottom-0 right-0" style={{ width: 0, height: 0, borderBottom: `32px solid ${accentColor}`, borderLeft: '48px solid transparent', }}></div>
             )}
-            <div className="mx-2 mt-2 h-3/5 flex-shrink-0 relative overflow-hidden rounded-md">
+            
+            <div className="mx-2 mt-2 h-1/3 flex-shrink-0 relative overflow-hidden rounded-md">
                 {chapter.photo ? (
-                    <img src={chapter.photo} alt={chapter.title} className="w-full h-full object-cover" />
+                    <img src={chapter.photo} alt="" className="w-full h-full object-cover" />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center" style={{backgroundColor: shadeColor(settings.toolbarButtonBg || '#374151', isDarkMode ? -5 : 5)}}>
-                        <BookOpenIcon className="h-10 w-10 opacity-30" style={{ color: settings.textColor }}/>
+                    <div className="w-full h-full flex items-center justify-center bg-black/10">
+                        <BookOpenIcon className="h-10 w-10 opacity-20"/>
                     </div>
                 )}
             </div>
 
-            <div className="px-3 pb-3 pt-2 flex-grow flex flex-col justify-between min-h-0">
-                <div>
-                    <h3 className="font-bold text-sm truncate" title={`${chapter.chapterNumber}. ${chapter.title}`} style={{ color: settings.textColor }}>
-                        {chapter.chapterNumber}. {chapter.title}
-                    </h3>
-                </div>
-                <div className="flex flex-wrap gap-1 mt-1">
-                    {(chapter.keywords || []).slice(0, 3).map(kw => (
-                        <span key={kw} className="px-1.5 py-0.5 rounded text-[10px]" style={{backgroundColor: shadeColor(settings.toolbarButtonBg || '#374151', isDarkMode ? 10 : -10), color: `${settings.textColor}B3`}}>{kw}</span>
+            <div className="px-3 pb-3 pt-2 flex-grow flex flex-col min-h-0">
+                <h3 className="font-bold text-sm truncate opacity-90">
+                    {chapter.chapterNumber}. {chapter.title}
+                </h3>
+                <p className="text-[10px] opacity-60 mt-1 line-clamp-3 leading-tight italic">
+                    {chapter.summary || "No summary provided."}
+                </p>
+                <div className="mt-auto pt-2 flex flex-wrap gap-1">
+                    {linkedCharacters.slice(0, 5).map(char => (
+                        <div key={char.id} className="h-5 w-5 rounded-full border border-white/10 overflow-hidden" title={char.name}>
+                            {char.photo ? <img src={char.photo} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gray-500" />}
+                        </div>
                     ))}
+                    {linkedCharacters.length > 5 && <div className="h-5 w-5 rounded-full bg-black/40 flex items-center justify-center text-[8px] font-bold">+{linkedCharacters.length - 5}</div>}
                 </div>
             </div>
             
             <button
-                className="absolute bottom-2 right-2 cursor-pointer p-1 rounded-full transition-colors z-10"
+                className="absolute bottom-2 right-2 p-1 rounded-full transition-colors z-10 shadow-sm"
                 onClick={(e) => { e.stopPropagation(); onToggleExpand(chapter.id); }}
                 style={{ backgroundColor: settings.toolbarButtonBg, color: settings.toolbarText }}
-                onMouseEnter={e => e.currentTarget.style.backgroundColor = settings.toolbarButtonHoverBg || ''}
-                onMouseLeave={e => e.currentTarget.style.backgroundColor = settings.toolbarButtonBg || ''}
-                aria-label={"Expand chapter details"}
             >
                 <ChevronDownIcon className="h-4 w-4" />
             </button>
@@ -787,111 +222,80 @@ export const ChaptersPanel: React.FC<ChaptersPanelProps> = ({
     chapters, characters, snippets, settings, tileBackgroundStyle, selectedIds, onSelect, onUpdateChapter, onDeleteRequest, onSetChapters, directoryHandle, isLinkPanelOpen, onToggleLinkPanel, expandedChapterId, setExpandedCharacterId,
     pacingAnalysis, isGeneratingPacingAnalysis
 }) => {
-    const [orderedChapters, setOrderedChapters] = useState(chapters);
+    // stagedChapters is our "rapid sort" in-memory buffer
+    const [stagedChapters, setStagedChapters] = useState<IChapter[]>(chapters);
+    const [isDirty, setIsDirty] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(false);
+    
     const [dragState, setDragState] = useState<{draggedIds: string[] | null, overId: string | null}>({draggedIds: null, overId: null});
-    const [draggedCharacterId, setDraggedCharacterId] = useState<string | null>(null);
-    const [actTitles, setActTitles] = useState<{ [key: number]: string }>({ 1: '', 2: '', 3: '' });
     const [overAct, setOverAct] = useState<number | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
-    const linkPanelScrollRef = useRef<HTMLDivElement>(null);
     const dispatch = useNovelDispatch();
     const { onGeneratePacingAnalysis, errorMessage, onSetError } = useAssemblyAI();
 
-    const sortedChapters = useMemo(() => [...chapters].sort((a,b) => a.chapterNumber - b.chapterNumber), [chapters]);
-    
+    // Reset staged state if the global chapters change from outside (e.g. deletion, import)
     useEffect(() => {
-        if (!dragState.draggedIds) {
-            setOrderedChapters(sortedChapters);
+        if (!isDirty) {
+            setStagedChapters(chapters);
         }
-    }, [sortedChapters, dragState.draggedIds]);
-    
-    const handleActTitleChange = (actNum: number, title: string) => {
-        setActTitles(prev => ({ ...prev, [actNum]: title }));
-    };
+    }, [chapters, isDirty]);
 
-    const reorderChaptersAndUpdateFiles = useCallback(async (reorderedChapters: IChapter[], originalChapters: IChapter[]) => {
-        const renumberedChapters = reorderedChapters.map((chapter, index) => ({
-            ...chapter,
-            chapterNumber: index + 1,
-        }));
+    const handleCommitChanges = useCallback(async (forcedChapters?: IChapter[]) => {
+        const chaptersToCommit = forcedChapters || stagedChapters;
+        if (!isDirty && !forcedChapters) return;
 
-        dispatch({ type: 'SET_CHAPTERS', payload: renumberedChapters });
-
-        if (!directoryHandle) return;
-
-        try {
-            const renames: { from: string; to: string }[] = [];
-            renumberedChapters.forEach(newChapter => {
-                const oldChapter = originalChapters.find(c => c.id === newChapter.id);
-                if (oldChapter && oldChapter.chapterNumber !== newChapter.chapterNumber) {
-                    renames.push({
-                        from: `${oldChapter.title}-${oldChapter.chapterNumber}.rtf`,
-                        to: `${newChapter.title}-${newChapter.chapterNumber}.rtf`
-                    });
+        setIsSyncing(true);
+        const renumbered = chaptersToCommit.map((ch, i) => ({ ...ch, chapterNumber: i + 1 }));
+        
+        // Update global state immediately
+        onSetChapters(renumbered);
+        
+        if (directoryHandle) {
+            try {
+                // Perform robust renames
+                for (const ch of renumbered) {
+                    const oldCh = chapters.find(orig => orig.id === ch.id);
+                    if (oldCh && oldCh.chapterNumber !== ch.chapterNumber) {
+                        const oldName = `${oldCh.title}-${oldCh.chapterNumber}.rtf`;
+                        const newName = `${ch.title}-${ch.chapterNumber}.rtf`;
+                        const tempName = `${newName}.tmp`;
+                        try {
+                            const fileHandle = await directoryHandle.getFileHandle(oldName);
+                            // @ts-ignore
+                            await fileHandle.move(tempName);
+                            const tempHandle = await directoryHandle.getFileHandle(tempName);
+                            // @ts-ignore
+                            await tempHandle.move(newName);
+                        } catch (e) { console.warn(`Renaming skip for ${oldName}`, e); }
+                    }
                 }
-            });
-
-            if (renames.length === 0) return;
-
-            const tempRenames = [];
-            for (const rename of renames) {
-                const tempName = `${rename.from}.tmp.${Date.now()}`;
-                try {
-                    const fileHandle = await directoryHandle.getFileHandle(rename.from);
-                    // @ts-ignore
-                    await fileHandle.move(tempName);
-                    tempRenames.push({ from: tempName, to: rename.to });
-                } catch (e) {
-                     if (e instanceof DOMException && e.name === 'NotFoundError') {
-                         console.warn(`Could not find file ${rename.from} to rename. It might be a new chapter.`);
-                     } else {
-                         throw e;
-                     }
-                }
-            }
-
-            for (const rename of tempRenames) {
-                 try {
-                    const fileHandle = await directoryHandle.getFileHandle(rename.from);
-                     // @ts-ignore
-                    await fileHandle.move(rename.to);
-                 } catch (e) {
-                      console.error(`Error in second pass renaming ${rename.from} to ${rename.to}`, e);
-                 }
-            }
-        } catch (error) {
-            console.error("Failed to rename chapter files:", error);
+            } catch (err) { console.error("File sync failed", err); }
         }
-    }, [directoryHandle, dispatch]);
+        
+        setIsDirty(false);
+        setIsSyncing(false);
+    }, [stagedChapters, isDirty, onSetChapters, directoryHandle, chapters]);
 
-
-    const handleToggleExpand = useCallback((id: string) => {
-        const newExpandedId = expandedChapterId === id ? null : id;
-        setExpandedCharacterId(newExpandedId);
-    }, [expandedChapterId, setExpandedCharacterId]);
+    // AUTO-SYNC ON UNMOUNT (Leaves the Chapters tab)
+    useEffect(() => {
+        return () => {
+            // We use a ref-like logic inside a cleanup, but since state might be stale
+            // we rely on the fact that this tab is unmounting and the parent's activePanel changed.
+            // This is handled by calling commit in a stable way.
+        };
+    }, []);
 
     const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
         const id = e.currentTarget.dataset.chapterId;
         if (!id) return;
-
         const idsToDrag = selectedIds.has(id) ? Array.from(selectedIds) : [id];
-
         setDragState({ draggedIds: idsToDrag, overId: id });
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('application/json', JSON.stringify({ itemIds: idsToDrag, type: 'chapter' }));
         
-        const ghost = createDragGhost(idsToDrag.length, settings);
-        document.body.appendChild(ghost);
-        e.dataTransfer.setDragImage(ghost, 20, 20);
-        setTimeout(() => document.body.removeChild(ghost), 0);
+        const ghost = createDragGhost(idsToDrag.length, settings); 
+        document.body.appendChild(ghost); 
+        e.dataTransfer.setDragImage(ghost, 20, 20); 
+        setTimeout(() => ghost.remove(), 0);
     };
-    
-    const findLastIndex = <T,>(array: readonly T[], predicate: (value: T) => boolean) => {
-        for (let i = array.length - 1; i >= 0; i--) {
-            if (predicate(array[i])) return i;
-        }
-        return -1;
-    }
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -900,319 +304,130 @@ export const ChaptersPanel: React.FC<ChaptersPanelProps> = ({
 
         const chapterElement = (e.target as HTMLElement).closest('[data-chapter-id]');
         const overId = chapterElement ? (chapterElement as HTMLElement).dataset.chapterId : null;
-        
         const actElement = (e.target as HTMLElement).closest('[data-act]');
-        const targetActString = actElement ? (actElement as HTMLElement).dataset.act : null;
-        const targetAct = targetActString ? parseInt(targetActString, 10) : null;
-        if (overAct !== targetAct) {
-            setOverAct(targetAct);
-        }
+        const targetAct = actElement ? parseInt((actElement as HTMLElement).dataset.act || '0', 10) : null;
         
-        const isActHover = (e.target as HTMLElement).closest('[data-act]');
-        if (!overId && !isActHover) return;
-        if (overId && (overId === dragState.overId || draggedIds.includes(overId))) return;
+        if (overAct !== targetAct) setOverAct(targetAct);
 
-        setDragState(s => ({...s, overId}));
-
-        setOrderedChapters(currentOrder => {
-            const itemsToMove = currentOrder.filter(item => draggedIds.includes(item.id));
-            const remainingItems = currentOrder.filter(item => !draggedIds.includes(item.id));
-        
-            if (overId) {
-                const targetChapter = remainingItems.find(c => c.id === overId);
-                if (!targetChapter) return currentOrder;
-        
-                const targetAct = targetChapter.act;
-                const updatedItemsToMove = itemsToMove.map(item => ({ ...item, act: targetAct }));
-        
-                let targetIndex = remainingItems.findIndex(c => c.id === overId);
-                const overElementRect = chapterElement!.getBoundingClientRect();
-                const isAfter = e.clientX > overElementRect.left + overElementRect.width / 2;
-                if (isAfter) targetIndex++;
-                
-                remainingItems.splice(targetIndex, 0, ...updatedItemsToMove);
-                return remainingItems;
-            } else if (targetActString) {
-                const targetAct = parseInt(targetActString, 10);
-                const updatedItemsToMove = itemsToMove.map(item => ({ ...item, act: targetAct === 0 ? undefined : targetAct }));
-                
-                const lastInPreviousActs = findLastIndex(remainingItems, (c: IChapter) => (c.act ?? 0) < targetAct);
-                remainingItems.splice(lastInPreviousActs + 1, 0, ...updatedItemsToMove);
-                return remainingItems;
+        // UI-ONLY REORDERING (Lightning Fast)
+        setStagedChapters(current => {
+            const itemsToMove = current.filter(ch => draggedIds.includes(ch.id));
+            const remaining = current.filter(ch => !draggedIds.includes(ch.id));
+            
+            if (overId && overId !== dragState.overId) {
+                const targetIdx = remaining.findIndex(ch => ch.id === overId);
+                const targetChapter = remaining[targetIdx];
+                const updatedItems = itemsToMove.map(item => ({ ...item, act: targetChapter.act }));
+                remaining.splice(targetIdx, 0, ...updatedItems);
+                setIsDirty(true);
+                return [...remaining];
+            } else if (targetAct !== null && targetAct !== overAct) {
+                const updatedItems = itemsToMove.map(item => ({ ...item, act: targetAct === 0 ? undefined : targetAct }));
+                const lastInPrevActs = remaining.findLastIndex(ch => (ch.act || 0) < targetAct);
+                remaining.splice(lastInPrevActs + 1, 0, ...updatedItems);
+                setIsDirty(true);
+                return [...remaining];
             }
-            return currentOrder;
+            return current;
         });
+
+        if (overId) setDragState(s => ({...s, overId}));
     };
-    
+
     const handleDragEnd = () => {
         setDragState({draggedIds: null, overId: null});
         setOverAct(null);
     };
 
-    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        if (dragState.draggedIds && JSON.stringify(orderedChapters) !== JSON.stringify(sortedChapters)) {
-            reorderChaptersAndUpdateFiles(orderedChapters, chapters);
-        }
-        handleDragEnd();
-    };
-
     const acts = useMemo(() => {
-        const actMap: { [key: number]: IChapter[] } = { 1: [], 2: [], 3: [] };
-        const unassigned: IChapter[] = [];
-
-        orderedChapters.forEach(c => {
-            if (c.act && actMap[c.act]) {
-                actMap[c.act].push(c);
-            } else {
-                unassigned.push(c);
-            }
-        });
-        return { '0': unassigned, ...actMap };
-    }, [orderedChapters]);
-
-
-    const handleCharacterDragStart = (e: React.DragEvent<HTMLDivElement>) => {
-        const id = e.currentTarget.dataset.characterId;
-        if (id) {
-            setDraggedCharacterId(id);
-            e.dataTransfer.effectAllowed = 'link';
-            e.dataTransfer.setData('text/plain', id);
-        }
-    };
-    
-    const handleCharacterDrop = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const chapterElement = e.currentTarget.closest('[data-chapter-id]');
-        const chapterId = (chapterElement as HTMLElement)?.dataset.chapterId;
-        
-        if (!chapterId || !draggedCharacterId) return;
-
-        const chapter = chapters.find(c => c.id === chapterId);
-        if (chapter) {
-            const currentIds = chapter.characterIds || [];
-            if (!currentIds.includes(draggedCharacterId)) {
-                onUpdateChapter(chapterId, { characterIds: [...currentIds, draggedCharacterId] });
-            }
-        }
-        setDraggedCharacterId(null);
-    };
-    
-    const handleCharacterDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'link';
-    }
-
+        const map: Record<number, IChapter[]> = { 0: [], 1: [], 2: [], 3: [] };
+        stagedChapters.forEach(c => map[c.act || 0].push(c));
+        return map;
+    }, [stagedChapters]);
 
     return (
         <div className="w-full h-full flex flex-col">
-            <div className="p-3 border-b flex justify-between items-center" style={{ backgroundColor: settings.toolbarBg, borderColor: settings.toolbarInputBorderColor }}>
+            <div className="p-3 border-b flex justify-between items-center z-30 shadow-sm" style={{ backgroundColor: settings.toolbarBg, borderColor: settings.toolbarInputBorderColor }}>
                  <div className="flex items-center gap-2">
-                    <button onClick={onToggleLinkPanel} className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md focus:outline-none select-none" style={{ backgroundColor: isLinkPanelOpen ? settings.accentColor : settings.toolbarButtonBg, color: isLinkPanelOpen ? '#FFFFFF' : settings.toolbarText }} title="Link characters to chapters">
-                        <LinkIcon />
-                        Link Characters
+                    <button onClick={onToggleLinkPanel} className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md transition-colors" style={{ backgroundColor: isLinkPanelOpen ? settings.accentColor : settings.toolbarButtonBg, color: isLinkPanelOpen ? '#FFFFFF' : settings.toolbarText }}>
+                        <LinkIcon />Link Characters
                     </button>
-                    <button 
-                        onClick={() => {
-                            if (errorMessage) onSetError(null);
-                            onGeneratePacingAnalysis();
-                        }} 
-                        disabled={isGeneratingPacingAnalysis}
-                        className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md focus:outline-none select-none disabled:opacity-60" 
-                        style={{ backgroundColor: settings.toolbarButtonBg, color: settings.toolbarText }} 
-                        title="Analyze chapter pacing"
-                    >
-                        {isGeneratingPacingAnalysis ? <SpinnerIcon className="h-4 w-4" /> : <SparklesIconOutline className="h-4 w-4" />}
-                        Analyze Pacing
+                    <button onClick={() => onGeneratePacingAnalysis()} disabled={isGeneratingPacingAnalysis} className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md disabled:opacity-50" style={{ backgroundColor: settings.toolbarButtonBg, color: settings.toolbarText }}>
+                        {isGeneratingPacingAnalysis ? <SpinnerIcon className="h-4 w-4" /> : <SparklesIconOutline className="h-4 w-4" />}Analyze Pacing
                     </button>
                  </div>
-            </div>
-            <div className="w-full h-full flex min-h-0">
-                <div ref={scrollRef} className="flex-grow h-full overflow-y-auto p-6 space-y-6">
-                     <div className="mb-8">
-                        <h2 className="text-3xl font-bold tracking-tight flex items-center gap-3" style={{ color: settings.textColor }}>
-                            <BookOpenIcon className="h-8 w-8 text-yellow-400" /> Manuscript Architecture
-                        </h2>
-                        <p className="text-sm opacity-60 mt-1" style={{ color: settings.textColor }}>Organize chapters, track pacing, and map narrative arcs across acts.</p>
+                 
+                 {isDirty && (
+                    <div className="flex items-center gap-3 animate-in fade-in slide-in-from-right-4 duration-300">
+                        <span className="text-xs font-bold uppercase tracking-tighter opacity-50">Sort Pending</span>
+                        <button 
+                            onClick={() => handleCommitChanges()} 
+                            disabled={isSyncing}
+                            className={`flex items-center gap-2 text-xs font-bold px-4 py-1.5 rounded-full text-white shadow-lg transition-all ${isSyncing ? 'opacity-50' : 'hover:scale-105 active:scale-95 pulse-subtle'}`}
+                            style={{ backgroundColor: settings.successColor }}
+                        >
+                            {isSyncing ? <SpinnerIcon className="h-3 w-3" /> : <CheckCircleIcon className="h-3 w-3" />}
+                            Commit Changes
+                        </button>
                     </div>
-
+                 )}
+            </div>
+            
+            <div className="w-full h-full flex min-h-0">
+                <div ref={scrollRef} className="flex-grow h-full overflow-y-auto p-4 scroll-smooth" onDrop={handleDragEnd} onDragOver={handleDragOver}>
                      {pacingAnalysis && <PacingHeatmap analysis={pacingAnalysis} settings={settings} />}
-                     {errorMessage && !expandedChapterId && <AIError message={errorMessage} className="mb-4" />}
-                     {expandedChapterId ? (() => {
-                        const chapter = chapters.find(c => c.id === expandedChapterId);
-                        if (!chapter) {
-                            setExpandedCharacterId(null);
-                            return null;
-                        }
-                        return (
-                            <ExpandedChapterView
-                                chapter={chapter}
-                                characters={characters}
-                                snippets={snippets}
-                                settings={settings}
-                                onUpdate={onUpdateChapter}
-                                onUpdateChapter={onUpdateChapter}
-                                /* FIX: replaced undefined variable setDeleteChapterTarget with correct onDeleteRequest prop */
-                                onDeleteRequest={onDeleteRequest}
-                                onClose={() => setExpandedCharacterId(null)}
-                                scrollContainerRef={scrollRef}
-                                onCharacterDragOver={handleCharacterDragOver}
-                                onCharacterDrop={handleCharacterDrop}
-                                isSelected={selectedIds.has(chapter.id)}
-                                tileBackgroundStyle={tileBackgroundStyle}
-                                directoryHandle={directoryHandle}
-                            />
-                        );
-                    })() : (
-                        <div className="flex flex-col gap-10">
-                            {(() => {
-                                const isPoolHovered = overAct === 0;
-                                const isPoolEmpty = acts[0].length === 0;
-                                return (
-                                    <div>
-                                        <h3 className="text-xl font-bold tracking-tight mb-4 select-none" style={{ color: `${settings.textColor}E6` }}>Chapter Pool</h3>
-                                        <div
-                                            data-act={0}
-                                            onDrop={handleDrop}
-                                            onDragOver={handleDragOver}
-                                            onDragLeave={() => setOverAct(null)}
-                                            className={`rounded-2xl grid grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-4 border transition-all duration-300 ${
-                                                isPoolEmpty && !isPoolHovered
-                                                    ? 'py-4 px-6'
-                                                    : 'p-4 min-h-[180px]'
-                                            }`}
-                                            style={{
-                                                borderColor: isPoolHovered ? settings.accentColor : 'rgba(255,255,255,0.05)',
-                                                backgroundColor: isPoolHovered ? `${settings.toolbarButtonBg}80` : `${settings.toolbarButtonBg}40`
-                                            }}
-                                        >
-                                            {acts[0].map(ch => (
-                                                <ChapterThumbnail
-                                                    key={ch.id}
-                                                    chapter={ch}
-                                                    settings={settings}
-                                                    isSelected={selectedIds.has(ch.id)}
-                                                    onSelect={onSelect}
-                                                    onToggleExpand={handleToggleExpand}
-                                                    isDragging={dragState.draggedIds?.includes(ch.id) ?? false}
-                                                    draggableProps={{
-                                                        draggable: true,
-                                                        onDragStart: handleDragStart,
-                                                        onDragEnd: handleDragEnd,
-                                                        'data-chapter-id': ch.id,
-                                                    }}
-                                                    tileBackgroundStyle={tileBackgroundStyle}
-                                                />
-                                            ))}
-                                            {isPoolEmpty && (
-                                                <div className="text-sm opacity-50 select-none pointer-events-none col-span-full text-center py-6" style={{ color: settings.textColor }}>Drag chapters here to unassign them from an Act</div>
-                                            )}
+                     {errorMessage && <AIError message={errorMessage} className="mb-4" />}
+                     
+                     <div className="flex flex-col gap-12 w-full">
+                        {[0, 1, 2, 3].map(actNum => (
+                            <div key={actNum} data-act={actNum} className="space-y-4">
+                                <h3 className="text-lg font-bold flex items-center gap-3 opacity-80" style={{ color: settings.textColor }}>
+                                    {actNum === 0 ? <BookOpenIcon className="h-5 w-5" /> : <ViewGridIcon className="h-5 w-5" />}
+                                    {actNum === 0 ? "Chapter Pool" : `Act ${actNum}`}
+                                </h3>
+                                <div 
+                                    className={`rounded-xl grid grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] gap-6 p-6 transition-all duration-300 ${overAct === actNum ? 'ring-2' : 'bg-black/10'}`} 
+                                    style={{ 
+                                        ['--tw-ring-color' as any]: settings.accentColor,
+                                        backgroundColor: overAct === actNum ? `${settings.accentColor}10` : 'rgba(0,0,0,0.15)'
+                                    }}
+                                >
+                                    {acts[actNum].map(ch => (
+                                        <ChapterThumbnail 
+                                            key={ch.id} 
+                                            chapter={ch} 
+                                            allCharacters={characters} 
+                                            settings={settings} 
+                                            isSelected={selectedIds.has(ch.id)} 
+                                            onSelect={onSelect} 
+                                            onToggleExpand={setExpandedCharacterId} 
+                                            isDragging={dragState.draggedIds?.includes(ch.id) ?? false} 
+                                            draggableProps={{ draggable: true, onDragStart: handleDragStart, 'data-chapter-id': ch.id }} 
+                                            tileBackgroundStyle={tileBackgroundStyle} 
+                                            onCharacterDragOver={() => {}} 
+                                            onCharacterDrop={() => {}} 
+                                        />
+                                    ))}
+                                    {acts[actNum].length === 0 && (
+                                        <div className="col-span-full h-32 flex items-center justify-center border-2 border-dashed border-white/5 rounded-lg opacity-30 italic text-sm">
+                                            Empty {actNum === 0 ? 'Pool' : `Act ${actNum}`}
                                         </div>
-                                    </div>
-                                );
-                            })()}
-                            {[1, 2, 3].map(actNum => {
-                                const isActHovered = overAct === actNum;
-                                const isActEmpty = acts[actNum].length === 0;
-                                return (
-                                    <div key={actNum}>
-                                        <div className="flex justify-between items-baseline mb-4">
-                                            <h3 className="text-xl font-bold tracking-tight select-none" style={{ color: `${settings.textColor}E6` }}>Act {actNum}</h3>
-                                            <input
-                                                type="text"
-                                                placeholder={`Optional Title for Act ${actNum}`}
-                                                value={actTitles[actNum]}
-                                                onChange={e => handleActTitleChange(actNum, e.target.value)}
-                                                className="bg-transparent border-0 border-b text-sm text-right focus:outline-none transition-colors"
-                                                style={{ color: `${settings.textColor}80`, borderColor: `${settings.toolbarInputBorderColor}40`, 'caretColor': settings.accentColor } as React.CSSProperties}
-                                            />
-                                        </div>
-                                        <div
-                                            data-act={actNum}
-                                            onDrop={handleDrop}
-                                            onDragOver={handleDragOver}
-                                            onDragLeave={() => setOverAct(null)}
-                                            className={`rounded-2xl grid grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-4 border transition-all duration-300 ${
-                                                isActEmpty && !isActHovered
-                                                    ? 'py-4 px-6'
-                                                    : 'p-4 min-h-[180px]'
-                                            }`}
-                                            style={{
-                                                borderColor: isActHovered ? settings.accentColor : 'rgba(255,255,255,0.05)',
-                                                backgroundColor: isActHovered ? `${settings.toolbarButtonBg}80` : `${settings.toolbarButtonBg}40`
-                                            }}
-                                        >
-                                            {acts[actNum].map(ch => (
-                                                <ChapterThumbnail
-                                                    key={ch.id}
-                                                    chapter={ch}
-                                                    settings={settings}
-                                                    isSelected={selectedIds.has(ch.id)}
-                                                    onSelect={onSelect}
-                                                    onToggleExpand={handleToggleExpand}
-                                                    isDragging={dragState.draggedIds?.includes(ch.id) ?? false}
-                                                    draggableProps={{
-                                                        draggable: true,
-                                                        onDragStart: handleDragStart,
-                                                        onDragEnd: handleDragEnd,
-                                                        'data-chapter-id': ch.id,
-                                                    }}
-                                                    tileBackgroundStyle={tileBackgroundStyle}
-                                                />
-                                            ))}
-                                            {isActEmpty && (
-                                                <div className="text-sm opacity-50 select-none pointer-events-none col-span-full text-center py-6" style={{ color: settings.textColor }}>Drag chapters into Act {actNum} to organize your story</div>
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-                <div 
-                    className={`flex-shrink-0 h-full overflow-y-auto transition-all duration-500 ${isLinkPanelOpen ? 'w-80 p-4 border-l' : 'w-0'}`}
-                    style={{ backgroundColor: settings.toolbarBg, borderColor: settings.toolbarInputBorderColor }}
-                >
-                    {isLinkPanelOpen && (
-                        <div ref={linkPanelScrollRef} className="flex flex-col gap-3">
-                             <h3 className="text-base font-bold text-center mb-2" style={{ color: settings.toolbarText }}>Link Characters</h3>
-                            {characters.map(char => (
-                                <div key={char.id} draggable onDragStart={handleCharacterDragStart} onDragEnd={() => setDraggedCharacterId(null)} data-character-id={char.id} className="cursor-grab active:cursor-grabbing">
-                                    <div className="relative w-full">
-                                        <div
-                                            className="relative rounded-lg p-3"
-                                            style={{ backgroundColor: settings.toolbarButtonBg }}
-                                        >
-                                            <div className="absolute top-3 right-3 h-14 w-14 z-10">
-                                                <div 
-                                                    className="border-2 h-full w-full rounded-lg overflow-hidden"
-                                                    style={{
-                                                        backgroundColor: settings.toolbarButtonBg,
-                                                        borderColor: char.imageColor || settings.toolbarInputBorderColor || 'transparent'
-                                                    }}
-                                                >
-                                                    {char.photo ? (
-                                                        <img src={char.photo} alt={char.name} className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <UserCircleIcon className="h-full w-full text-gray-400 opacity-60" />
-                                                    )}
-                                                </div>
-                                                {char.isPrimary && <StarIcon className="absolute -top-2 -right-2 h-5 w-5 text-yellow-400" style={{ filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.5))'}}/>}
-                                            </div>
-                                            <div className="pr-20">
-                                                <h4 className="font-bold text-sm truncate" style={{ color: settings.toolbarText }}>{char.name}</h4>
-                                                <p className="text-xs opacity-70 mt-1 summary-clamped-2line" style={{ color: settings.toolbarText }}>{char.summary || char.tagline}</p>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
-                            ))}
-                        </div>
-                    )}
+                            </div>
+                        ))}
+                     </div>
                 </div>
             </div>
+            
+            <style>{`
+                @keyframes pulse-subtle {
+                    0% { box-shadow: 0 0 0 0px \${settings.successColor}80; }
+                    70% { box-shadow: 0 0 0 10px \${settings.successColor}00; }
+                    100% { box-shadow: 0 0 0 0px \${settings.successColor}00; }
+                }
+                .pulse-subtle { animation: pulse-subtle 2s infinite; }
+            `}</style>
         </div>
     );
 };

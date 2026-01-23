@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import type { IChapter, EditorSettings, Palette, WritingGoals, ToolbarVisibility } from '../../types';
 import { 
@@ -53,7 +52,7 @@ const ToolbarButton = React.memo<ToolbarButtonProps>(({ title, onClick, isActive
             style={buttonStyle}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
-            onMouseDown={(e) => e.preventDefault()} // Prevent focus stealing
+            onMouseDown={(e) => e.preventDefault()}
         >
             {children}
         </button>
@@ -90,7 +89,7 @@ interface ToolbarProps {
   onToggleReadAloud: () => void;
   ttsStatus: TTSStatus;
   onExportNove: () => void;
-  onImportNove: () => void;
+  onExportStandaloneNove: () => void;
   updateAvailable?: boolean;
 }
 
@@ -103,6 +102,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     isSoundEnabled, onToggleSound, isFullscreen, onToggleFullscreen,
     isSinglePageView, isSpellcheckEnabled, onToggleSpellcheck, onToggleTransitionStyle,
     hasDirectory, onToggleReadAloud, ttsStatus,
+    onExportNove,
+    onExportStandaloneNove,
     updateAvailable = false
 }) => {
   const fontOptions = ["Lora", "Merriweather", "Times New Roman", "Bookman Old Style", "Georgia", "Roboto", "Open Sans", "Arial", "Inter", "Inconsolata"];
@@ -110,7 +111,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   const [isSaveMenuOpen, setIsSaveMenuOpen] = useState(false);
   const saveMenuRef = useRef<HTMLDivElement>(null);
 
-  
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (saveMenuRef.current && !saveMenuRef.current.contains(event.target as Node)) {
@@ -274,7 +274,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         <ToolbarButton title={isFullscreen ? "Exit Full Screen" : "Enter Full Screen"} onClick={onToggleFullscreen} settings={settings} isVisible={settings.toolbarVisibility?.fullscreen} isActive={isFullscreen}>{isFullscreen ? <ExitFullscreenIcon /> : <EnterFullscreenIcon />}</ToolbarButton>
         <ToolbarButton title="Toggle Focus Mode (Esc)" onClick={onToggleFocusMode} settings={settings} isVisible={settings.toolbarVisibility?.focus} isActive={isFocusMode}>{isFocusMode ? <UnfocusIcon /> : <FocusIcon />}</ToolbarButton>
         
-        {/* Settings Button with Update Badge */}
         <div className="relative">
             <ToolbarButton title="Customize Toolbar" onClick={() => onToggleModal('customizeToolbar')} settings={settings}>
                 <CogIcon />
@@ -306,12 +305,17 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 Save
             </button>
             {isSaveMenuOpen && (
-                <div className="absolute bottom-full right-0 mb-2 w-64 rounded-md shadow-lg z-10 py-1"
+                <div className="absolute bottom-full right-0 mb-2 w-72 rounded-md shadow-lg z-10 py-1"
                     style={{ backgroundColor: settings.dropdownBg }}
                 >
+                    <div className="px-4 py-2 text-[10px] uppercase font-bold tracking-widest opacity-50" style={{ color: settings.toolbarText }}>File Management</div>
                     <button {...menuItemHoverProps} onClick={() => { onSaveToFolder(); setIsSaveMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm cursor-pointer" style={{color: settings.toolbarText, backgroundColor: 'transparent'}}>Save Project to Folder (Ctrl+S)</button>
+                    <button {...menuItemHoverProps} onClick={() => { onDownloadRtf(); setIsSaveMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm cursor-pointer" style={{color: settings.toolbarText, backgroundColor: 'transparent'}}>Export Chapters as RTF</button>
+                    
                     <div className="border-t my-1 mx-2" style={{borderColor: settings.toolbarInputBorderColor || 'transparent'}}></div>
-                    <button {...menuItemHoverProps} onClick={() => { onDownloadRtf(); setIsSaveMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm cursor-pointer" style={{color: settings.toolbarText, backgroundColor: 'transparent'}}>Download Manuscript as RTF</button>
+                    
+                    <div className="px-4 py-2 text-[10px] uppercase font-bold tracking-widest opacity-50" style={{ color: settings.toolbarText }}>Deployment & Distribution</div>
+                    <button {...menuItemHoverProps} onClick={() => { onExportNove(); setIsSaveMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm cursor-pointer" style={{color: settings.toolbarText, backgroundColor: 'transparent'}}>Export Portable Nové (.zip)</button>
                 </div>
             )}
         </div>

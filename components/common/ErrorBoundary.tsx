@@ -16,52 +16,57 @@ interface ErrorBoundaryState {
 /**
  * ErrorBoundary component to catch rendering errors and provide a rescue backup option.
  */
-// FIX: Using named imports and extending Component directly ensures that inherited properties like state and props are correctly resolved by the TypeScript compiler.
+// Fix: Inherit from Component directly from named imports to ensure inheritance is correctly recognized by TypeScript
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  public state: ErrorBoundaryState = {
+    hasError: false,
+    error: null,
+    errorInfo: null
+  };
+
   constructor(props: ErrorBoundaryProps) {
+    // super(props) is essential for React class components
     super(props);
-    // Initialize state with proper typing for error tracking
-    // FIX: Initializing state property which is inherited from the base Component class.
-    this.state = {
-      hasError: false,
-      error: null,
-      errorInfo: null
-    };
   }
 
-  public static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    // Update state so the next render will show the fallback UI.
     return { hasError: true, error, errorInfo: null };
   }
 
-  // Catch errors in children components and store the stack trace
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Uncaught error:", error, errorInfo);
-    // FIX: Accessing setState which is inherited from the base Component class.
+  // Handle errors caught during the render phase
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("Uncaught rendering error in Novelos:", error, errorInfo);
+    // Fix: Access setState inherited from the Component base class
     this.setState({ errorInfo });
   }
 
-  // Generate and download a JSON backup of the current novel state to mitigate data loss during crashes
+  // Generate a clean state snapshot that can be re-imported in case of emergency
   private handleEmergencySave = () => {
     try {
-        // FIX: Accessing this.props which is an inherited property from the base Component class.
-        const backupData = JSON.stringify(this.props.state, null, 2);
+        const stateToSave = {
+            // Fix: Access inherited props from the Component base class
+            ...this.props.state,
+            // Ensure UI transient states are reset in the backup to avoid carrying over error states
+            whatIfState: { isOpen: false, isLoading: false, originalText: null, suggestions: null, error: null, position: null }
+        };
+        const backupData = JSON.stringify(stateToSave, null, 2);
         const blob = new Blob([backupData], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        a.download = `novelos_rescue_backup_${timestamp}.json`;
+        a.download = `novelos_emergency_recovery_${timestamp}.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
     } catch (e) {
-        alert("Failed to generate backup file. Please check console for data.");
-        console.error("Backup failed:", e);
-        // FIX: Safe property access check on inherited props.
-        if (this.props && this.props.state) {
-            console.log("Current State:", this.props.state);
-        }
+        alert("Emergency snapshot failed. Please check the browser console to copy your data manually.");
+        console.error("State snapshot failed:", e);
+        // Fallback: log state to console
+        // Fix: Access inherited props from the Component base class
+        console.log("Current Application State (Rescue this!):", this.props.state);
     }
   };
 
@@ -69,50 +74,56 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     window.location.reload();
   };
 
-  // Render method handles switching between the normal UI and the emergency rescue view
-  public render(): ReactNode {
-    // FIX: Accessing this.state which is an inherited property from the base Component class.
+  render(): ReactNode {
+    // Check local state to determine if we should render the error UI
     if (this.state.hasError) {
       return (
-        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-gray-900 text-white p-8 text-center font-sans">
-          <div className="bg-red-900/20 border border-red-500/50 p-8 rounded-xl max-w-2xl shadow-2xl backdrop-blur-md">
-            <h1 className="text-3xl font-bold text-red-400 mb-4">Novelos Encountered a Problem</h1>
-            <p className="text-gray-300 mb-6 text-lg">
-              Don't worry, your data is safe in memory. We recommend downloading a rescue backup immediately.
+        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-slate-900 text-white p-8 text-center font-sans">
+          <div className="bg-red-950/40 border border-red-500/50 p-10 rounded-2xl max-w-2xl shadow-2xl backdrop-blur-xl">
+            <div className="mb-6 inline-flex p-4 rounded-full bg-red-500/10 border border-red-500/20">
+               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-12 h-12 text-red-400">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+               </svg>
+            </div>
+            
+            <h1 className="text-3xl font-serif font-bold text-red-400 mb-2">Rescue Protocol Triggered</h1>
+            <p className="text-slate-300 mb-6 text-lg">
+              A serious error occurred. Your work is still held in memory. Save a recovery snapshot now to avoid losing progress.
             </p>
             
-            <div className="bg-black/50 p-4 rounded text-left overflow-auto max-h-48 mb-8 font-mono text-xs text-red-300 border border-red-500/20">
-              {/* FIX: Accessing error and errorInfo from the inherited state object. */}
+            <div className="bg-black/40 p-4 rounded-lg text-left overflow-auto max-h-40 mb-8 font-mono text-xs text-red-300/80 border border-red-500/10">
+              {/* Display error message and stack trace if available */}
               {this.state.error && this.state.error.toString()}
               <br />
               {this.state.errorInfo && this.state.errorInfo.componentStack}
             </div>
 
-            <div className="flex items-center justify-center gap-4 mt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button 
                 onClick={this.handleEmergencySave}
-                className="flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-green-600 hover:bg-green-700 transition-colors font-bold text-white shadow-lg"
+                className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 transition-all font-bold text-white shadow-lg active:scale-95"
               >
                 <SaveIcon className="h-5 w-5" />
-                Download Rescue Backup
+                Download Snapshot
               </button>
               <button 
                 onClick={this.handleReload}
-                className="flex items-center justify-center gap-2 px-3 py-3 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors font-semibold border border-gray-600"
+                className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-slate-800 hover:bg-slate-700 transition-all font-semibold border border-slate-700 active:scale-95"
               >
                 <RefreshIcon className="h-5 w-5" />
-                Reload Application
+                Reload & Restart
               </button>
             </div>
-            <p className="mt-6 text-xs text-gray-500 text-center">
-              After downloading the backup, you can import it via the "Import" button if your data does not load automatically upon reload.
-            </p>
+            
+            <div className="mt-8 pt-6 border-t border-slate-700/50 text-xs text-slate-500 leading-relaxed">
+              <p>Tip: After reloading, if your project does not load automatically, use the recovery file you just downloaded to import your work.</p>
+            </div>
           </div>
         </div>
       );
     }
 
-    // FIX: Inherited property access for children is now correctly recognized by the compiler.
+    // Fix: Access inherited props from the Component base class
     return this.props.children;
   }
 }
