@@ -21,6 +21,7 @@ import { VoiceSettingsModal } from './modals/VoiceSettingsModal';
 import { ReadAloudModal } from './modals/ReadAloudModal';
 import { DesignGalleryModal } from './modals/DesignGalleryModal';
 import { SpellCheckModal } from './modals/SpellCheckModal';
+import { ConsistencyAuditorModal } from './modals/ConsistencyAuditorModal';
 import { UserGuideModal } from './modals/UserGuideModal';
 import { ImportNovelModal } from '../assembly/modals/ImportNovelModal';
 import { UnfocusIcon, PauseIcon, PlayIcon, StopIcon } from '../common/Icons';
@@ -50,7 +51,7 @@ interface ManuscriptProps {
     onOpenProjectFolder: () => void;
 }
 
-type ModalType = 'findReplace' | 'shortcuts' | 'stats' | 'customizeToolbar' | 'history' | 'voiceSettings' | 'designGallery' | 'readAloud' | 'spellCheck' | 'userGuide' | 'importNovel';
+type ModalType = 'findReplace' | 'shortcuts' | 'stats' | 'customizeToolbar' | 'history' | 'voiceSettings' | 'designGallery' | 'readAloud' | 'spellCheck' | 'userGuide' | 'importNovel' | 'consistencyAudit';
 type TTSStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'error';
 
 const createWavUrl = (pcmData: Uint8Array, sampleRate: number): string => {
@@ -654,6 +655,30 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
         }
     }, [handleContentChange, shortcutsMap, layout]);
 
+    useEffect(() => {
+        const handleGlobalKeyDown = (e: KeyboardEvent) => {
+            // Only handle if no modal is open and not typing in another input
+            const isModalOpen = !!activeModal || isFindReplaceOpen;
+            const isInputFocused = ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName || '');
+            const isEditorFocused = document.activeElement === editorRef.current;
+            
+            if (isModalOpen || isInputFocused) return;
+
+            if (e.key === 'PageDown') {
+                e.preventDefault();
+                const currentSpread = Math.round((editorContainerRef.current?.scrollLeft || 0) / layout.stride);
+                snapToSpread(currentSpread + 1, true);
+            } else if (e.key === 'PageUp') {
+                e.preventDefault();
+                const currentSpread = Math.round((editorContainerRef.current?.scrollLeft || 0) / layout.stride);
+                snapToSpread(currentSpread - 1, true);
+            }
+        };
+
+        window.addEventListener('keydown', handleGlobalKeyDown);
+        return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+    }, [activeModal, isFindReplaceOpen, layout, snapToSpread]);
+
     const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
         if (editorContainerRef.current && layout.stride > 0) {
             isTyping.current = true; stableScrollLeft.current = Math.round(editorContainerRef.current.scrollLeft / layout.stride) * layout.stride;
@@ -844,7 +869,7 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
                         {layout.columns === 2 && (settings.showBookSpine !== false) && <div className="book-spine-effect" />}
                         
                         {/* Chapter Heading (Matched to Nove.html) */}
-                        <div className="sticky left-0 top-0 w-full z-30 pointer-events-none" style={{ paddingLeft: `${layout.sideMargin}px`, paddingRight: `${layout.sideMargin}px`, paddingTop: '1.25rem' }}>
+                        <div className="absolute left-0 top-0 w-full z-30 pointer-events-none" style={{ paddingLeft: `${layout.sideMargin}px`, paddingRight: `${layout.sideMargin}px`, paddingTop: '1.25rem' }}>
                             <div className="flex items-center gap-2 pointer-events-auto border-b border-dashed pb-0.5 transition-colors focus-within:border-opacity-100" style={{ color: settings.textColor, borderColor: `${settings.textColor}40`, width: layout.columns === 2 ? `${layout.colWidth}px` : '100%' }}>
                                 <span className="text-xs font-mono opacity-40 select-none shrink-0" style={{ fontFamily: 'monospace' }}>CH {activeChapter.chapterNumber} :</span>
                                 <input
@@ -866,7 +891,7 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
                             className="editor-content outline-none" 
                             style={{ 
                                 fontFamily: settings.fontFamily, fontSize: `${settings.fontSize}em`, color: settings.textColor, lineHeight: settings.lineHeight || 1.8, textAlign: settings.textAlign === 'justify' ? 'justify' : 'left', 
-                                hyphens: settings.textAlign === 'justify' ? 'auto' : 'manual', WebkitHyphens: settings.textAlign === 'justify' ? 'auto' : 'manual', height: 'calc(100% - 6rem)', columnFill: 'auto', columnGap: `${layout.gap}px`, columnWidth: `${layout.colWidth}px`, columnCount: layout.columns, boxSizing: 'content-box', width: typeof layout.colWidth === 'number' ? `${(layout.colWidth * layout.columns) + (layout.gap * (layout.columns - 1))}px` : '100%', paddingTop: '4rem', paddingBottom: '2rem', paddingLeft: `${layout.sideMargin}px`, paddingRight: `${layout.sideMargin}px`, orphans: 3, widows: 3, opacity: isTransitioning ? 0 : 1, transition: 'opacity 0.15s ease-in-out', transform: 'translateZ(0)' 
+                                hyphens: settings.textAlign === 'justify' ? 'auto' : 'manual', WebkitHyphens: settings.textAlign === 'justify' ? 'auto' : 'manual', height: 'calc(100% - 3.5rem)', columnFill: 'auto', columnGap: `${layout.gap}px`, columnWidth: `${layout.colWidth}px`, columnCount: layout.columns, boxSizing: 'content-box', width: typeof layout.colWidth === 'number' ? `${(layout.colWidth * layout.columns) + (layout.gap * (layout.columns - 1))}px` : '100%', paddingTop: '1.5rem', paddingBottom: '2rem', paddingLeft: `${layout.sideMargin}px`, paddingRight: `${layout.sideMargin}px`, orphans: 3, widows: 3, opacity: isTransitioning ? 0 : 1, transition: 'opacity 0.15s ease-in-out', transform: 'translateZ(0)' 
                             }} 
                             onBeforeInput={handleBeforeInput} onInput={handleInput} onKeyDown={handleKeyDown} onBlur={checkAndEnforceCaretVisibility} onContextMenu={handleContextMenu} 
                         />
@@ -882,19 +907,20 @@ export const Manuscript: React.FC<ManuscriptProps> = ({
                     <div className="absolute bottom-4 right-8 z-10 text-xs font-sans pointer-events-none select-none transition-opacity duration-300 backdrop-blur-sm px-2 py-1 rounded" style={{ color: settings.textColor, opacity: 0.6, backgroundColor: settings.toolbarBg ? `${settings.toolbarBg}40` : 'transparent' }}>{layout.columns === 1 ? <span>Page {pageInfo.current} of {pageInfo.total}</span> : <span>Pages {pageInfo.current} and {pageInfo.current + 1} of {pageInfo.total}</span>}</div>
                 </div>
                 <div className={toolbarContainerClasses}>
-                    <Toolbar settings={settings} onSettingsChange={settings => onSettingsChange(settings)} chapters={chapters} activeChapterId={activeChapterId} onSelectChapter={onActiveChapterIdChange} isSaving={isSaving} activeChapterWordCount={activeChapterWordCount} sessionWordCount={sessionWordCount} writingGoals={writingGoals} onSaveToFolder={async (forceNewFolder?: boolean) => { if (isSavingProp) return false; return onSaveToFolder(forceNewFolder).then(() => true); }} onDownloadRtf={() => { const rtf = generateRtfForChapters(chapters); downloadFile('novel.rtf', rtf, 'application/rtf'); }} isFocusMode={isFocusMode} onToggleFocusMode={onToggleFocusMode} isNotesPanelOpen={isNotesPanelOpen} onToggleNotesPanel={handleToggleNotesPanel} onToggleModal={(modal) => modal === 'findReplace' ? setIsFindReplaceOpen(p => !p) : setActiveModal(modal)} isSoundEnabled={isSoundEnabled} onToggleSound={() => onSettingsChange({ isSoundEnabled: !isSoundEnabled })} isFullscreen={isFullscreen} onToggleFullscreen={() => { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); setIsFullscreen(!isFullscreen); }} isSinglePageView={false} isSpellcheckEnabled={isSpellcheckEnabled} onToggleSpellcheck={() => setIsSpellcheckEnabled(p => !p)} onToggleTransitionStyle={() => onSettingsChange({ transitionStyle: settings.transitionStyle === 'scroll' ? 'fade' : 'scroll' })} hasDirectory={!!directoryHandle || !!projectPath} onToggleReadAloud={() => setActiveModal('readAloud')} ttsStatus={ttsStatus} onExportNove={handleExportNove} onExportStandaloneNove={handleExportStandaloneNove} onExportBlankNove={handleExportBlankNove} onImportNove={() => setActiveModal('importNovel')} onOpenProjectFolder={onOpenProjectFolder} updateAvailable={!!availableUpdate} />
+                    <Toolbar settings={settings} onSettingsChange={settings => onSettingsChange(settings)} chapters={chapters} activeChapterId={activeChapterId} onSelectChapter={onActiveChapterIdChange} isSaving={isSaving} activeChapterWordCount={activeChapterWordCount} sessionWordCount={sessionWordCount} writingGoals={writingGoals} onSaveToFolder={async (forceNewFolder?: boolean) => { if (isSavingProp) return false; return onSaveToFolder(forceNewFolder).then(() => true); }} onDownloadRtf={() => { const rtf = generateRtfForChapters(chapters); downloadFile('novel.rtf', rtf, 'application/rtf'); }} isFocusMode={isFocusMode} onToggleFocusMode={onToggleFocusMode} isNotesPanelOpen={isNotesPanelOpen} onToggleNotesPanel={handleToggleNotesPanel} onToggleModal={(modal) => modal === 'findReplace' ? setIsFindReplaceOpen(p => !p) : setActiveModal(modal)} isFindReplaceActive={isFindReplaceOpen} isSoundEnabled={isSoundEnabled} onToggleSound={() => onSettingsChange({ isSoundEnabled: !isSoundEnabled })} isFullscreen={isFullscreen} onToggleFullscreen={() => { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); setIsFullscreen(!isFullscreen); }} isSinglePageView={false} isSpellcheckEnabled={isSpellcheckEnabled} onToggleSpellcheck={() => setIsSpellcheckEnabled(p => !p)} onToggleTransitionStyle={() => onSettingsChange({ transitionStyle: settings.transitionStyle === 'scroll' ? 'fade' : 'scroll' })} hasDirectory={!!directoryHandle || !!projectPath} onToggleReadAloud={() => setActiveModal('readAloud')} ttsStatus={ttsStatus} onExportNove={handleExportNove} onExportStandaloneNove={handleExportStandaloneNove} onExportBlankNove={handleExportBlankNove} onImportNove={() => setActiveModal('importNovel')} onOpenProjectFolder={onOpenProjectFolder} updateAvailable={!!availableUpdate} />
                 </div>
             </div>
             {isNotesPanelOpen && <div className="flex-shrink-0 h-full relative border-l" style={{ width: `${notesPanelWidth}px`, borderColor: settings.toolbarInputBorderColor }}><NotesPanel settings={settings} activeChapter={activeChapter} onChapterDetailsChange={handleChapterDetailsChange} initialWidth={notesPanelWidth} onWidthChange={setNotesPanelWidth} allChapters={chapters} allCharacters={characters} generateId={generateId} /></div>}
             {activeModal === 'stats' && <StatsDashboardModal settings={settings} chapters={chapters} totalWordCount={totalWordCount} goals={writingGoals} onGoalsChange={onWritingGoalsChange} onClose={() => setActiveModal(null)} />}
             {isFindReplaceOpen && <FindReplaceModal settings={settings} chapters={chapters} activeChapterId={activeChapterId} onNavigateMatch={handleNavigateMatch} onReplace={handleFindReplaceUpdate} onReplaceAll={handleGlobalReplace} onClose={() => setIsFindReplaceOpen(false)} />}
             {activeModal === 'shortcuts' && <ShortcutsModal settings={settings} shortcuts={shortcuts} onUpdateShortcuts={onShortcutsChange} onClose={() => setActiveModal(null)} />}
-            {activeModal === 'customizeToolbar' && <CustomizeToolbarModal settings={settings} currentVisibility={settings.toolbarVisibility || {}} onSave={(newVisibility, apiKey, bookTitle) => onSettingsChange({ toolbarVisibility: newVisibility, geminiApiKey: apiKey, bookTitle })} onClose={() => setActiveModal(null)} onSaveProject={onSaveToFolder} hasContent={hasContent} appUpdate={availableUpdate} />}
+            {activeModal === 'customizeToolbar' && <CustomizeToolbarModal settings={settings} currentVisibility={settings.toolbarVisibility || {}} onSave={(newVisibility, apiKey, bookTitle) => onSettingsChange({ toolbarVisibility: newVisibility, geminiApiKey: apiKey, bookTitle })} onClose={() => setActiveModal(null)} onSaveProject={onSaveToFolder} hasContent={hasContent} appUpdate={availableUpdate} projectPath={projectPath} />}
             {activeModal === 'designGallery' && <DesignGalleryModal settings={settings} onClose={() => setActiveModal(null)} galleryItems={galleryItems} onGalleryItemsChange={onGalleryItemsChange} onSettingsChange={onSettingsChange} />}
             {activeModal === 'voiceSettings' && <VoiceSettingsModal settings={settings} characters={characters} onClose={() => { if (previousModal) { setActiveModal(previousModal); setPreviousModal(null); } else setActiveModal(null); }} onSettingsChange={onSettingsChange} />}
             {activeModal === 'history' && <VersionHistoryModal settings={settings} activeChapter={activeChapter} directoryHandle={directoryHandle} projectPath={projectPath} onRestore={(content) => handleChapterDetailsChange(activeChapterId, { content })} onClose={() => setActiveModal(null)} />}
             {activeModal === 'readAloud' && <ReadAloudModal settings={settings} onClose={() => setActiveModal(null)} onPlay={handleTTSPlay} onPause={handleTTSPause} onStop={handleTTSStop} onOpenSettings={() => { setPreviousModal('readAloud'); setActiveModal('voiceSettings'); }} status={ttsStatus} activeChapterTitle={`${activeChapter.chapterNumber}. ${activeChapter.title}`} />}
             {activeModal === 'spellCheck' && <SpellCheckModal settings={settings} chapter={activeChapter} onClose={() => setActiveModal(null)} onUpdateContent={(newContent) => handleChapterDetailsChange(activeChapter.id, { content: newContent })} />}
+            {activeModal === 'consistencyAudit' && <ConsistencyAuditorModal settings={settings} onClose={() => setActiveModal(null)} />}
             {activeModal === 'importNovel' && <ImportNovelModal settings={settings} onClose={() => setActiveModal(null)} directoryHandle={directoryHandle} />}
             {activeModal === 'userGuide' && <UserGuideModal settings={settings} onClose={() => setActiveModal(null)} />}
             {contextMenu && <ContextMenu x={contextMenu.x} y={contextMenu.y} actions={contextMenu.actions} onClose={() => setContextMenu(null)} settings={settings} />}

@@ -253,10 +253,10 @@ export const ChapterSpreadsheet: React.FC<ChapterSpreadsheetProps> = ({
                         }}
                         className="flex items-center gap-2 p-1.5 px-3 rounded text-[10px] uppercase font-bold tracking-wider transition-all border hover:bg-black/10"
                         style={{ borderColor, color: settings.textColor }}
-                        title="Sync all chapters with the manuscript"
+                        title="Update all chapters from the manuscript"
                     >
                         <SparklesIconOutline className="w-3.5 h-3.5" />
-                        Sync All
+                        Update All
                     </button>
                 </div>
                 <div className="text-[10px] opacity-40 italic">
@@ -380,21 +380,21 @@ export const ChapterSpreadsheet: React.FC<ChapterSpreadsheetProps> = ({
                                                             if (updates) onUpdate(chapter.id, updates);
                                                         }}
                                                         disabled={isSyncing}
-                                                        className={`p-1 rounded transition-colors ${isSyncing ? 'animate-spin' : 'hover:bg-blue-500/20 text-blue-500'}`}
-                                                        title="Sync with Manuscript"
+                                                        className={isSyncing ? 'animate-spin opacity-50' : 'btn-nuanced-primary'}
+                                                        title="Update from Manuscript"
                                                     >
                                                         {isSyncing ? <SpinnerIcon className="w-3.5 h-3.5" /> : <BrushIcon className="w-3.5 h-3.5" />}
                                                     </button>
                                                     <button 
                                                         onClick={() => handleAddChapter(index + 1)}
-                                                        className="p-1 rounded hover:bg-green-500/20 text-green-500 transition-colors"
+                                                        className="btn-nuanced-success"
                                                         title="Insert chapter below"
                                                     >
                                                         <PlusIcon className="w-3.5 h-3.5" />
                                                     </button>
                                                     <button 
                                                         onClick={() => handleDeleteChapter(chapter.id)}
-                                                        className={`p-1 rounded transition-colors ${confirmDeleteId === chapter.id ? 'bg-red-600 text-white' : 'hover:bg-red-500/20 text-red-500'}`}
+                                                        className={confirmDeleteId === chapter.id ? 'btn-nuanced-lg-danger px-2 py-1 h-auto text-[8px]' : 'btn-nuanced-danger'}
                                                         title={confirmDeleteId === chapter.id ? "Confirm Delete" : "Delete chapter"}
                                                     >
                                                         {confirmDeleteId === chapter.id ? <span className="text-[8px] font-bold px-1 whitespace-nowrap">SURE?</span> : <TrashIconOutline className="w-3.5 h-3.5" />}

@@ -203,6 +203,7 @@ export interface ICharacter {
   characterGroup?: number; // 0 (Pool), 1, 2, 3
   voice?: string;
   relationships?: ICharacterRelationship[];
+  birthYear?: number;
   previousProfile?: {
     summary: string;
     profile: string;
@@ -220,7 +221,7 @@ export interface ISnippet {
   isUsed: boolean;
 }
 
-export type AssemblyPanel = 'chapters' | 'characters' | 'snippets' | 'social' | 'world' | 'plot' | 'synopsis';
+export type AssemblyPanel = 'chapters' | 'characters' | 'snippets' | 'social' | 'world' | 'plot' | 'synopsis' | 'chronicle';
 
 export interface Excerpt {
     id: string;
@@ -321,6 +322,39 @@ export interface NarrativeArchitectState {
     feedback: string;
 }
 
+export interface ConsistencyIssue {
+    id: string;
+    type: 'Character' | 'World' | 'Plot' | 'Timeline';
+    severity: 'High' | 'Medium' | 'Low';
+    description: string;
+    suggestion: string;
+    relatedEntityIds: string[]; // Character IDs, Chapter IDs, World Item IDs
+}
+
+export interface ConsistencyAuditState {
+    lastAuditTimestamp: number | null;
+    issues: ConsistencyIssue[];
+    isAuditing: boolean;
+    error: string | null;
+    isOpen: boolean;
+}
+
+export interface ChronicleEvent {
+    id: string;
+    title: string;
+    description: string;
+    year: number;
+    characterIds?: string[];
+    chapterId?: string;
+    type?: 'Major' | 'Minor' | 'World' | 'Character';
+}
+
+export interface ChronicleState {
+    worldEvents: ChronicleEvent[];
+    currentYear: number;
+    isOpen: boolean;
+}
+
 export interface PlotBrainstormState {
     pacingAndStructureAnalysis: {
         summary: string;
@@ -408,7 +442,10 @@ export interface AssemblyViewState {
     characterZoomLevel: number; // 0 (normal), 1, 2, 3 (max zoom out)
     isContinuousView?: boolean;
     isSpreadsheetView?: boolean;
+    isSnippetSpreadsheetView?: boolean;
+    isSnippetDropboxCollapsed?: boolean;
     snippetDropboxText: string;
+    useSnippetTypeColors?: boolean;
 }
 
 export interface ImportNovelState {
@@ -462,8 +499,10 @@ export interface INovelState {
     synopsisState: SynopsisState;
     whatIfState: WhatIfState;
     importNovelState: ImportNovelState;
-    characterGroups?: ICharacterGroup[];
-    lockedChest?: LockedChestItem[];
-    actNames?: Record<number, string>;
+    consistencyAuditState: ConsistencyAuditState;
+    chronicleState: ChronicleState;
+    characterGroups: ICharacterGroup[];
+    lockedChest: LockedChestItem[];
+    actNames: Record<number, string>;
     source?: string;
 }

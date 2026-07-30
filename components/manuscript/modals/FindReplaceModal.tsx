@@ -160,6 +160,10 @@ export const FindReplaceModal: React.FC<FindReplaceModalProps> = ({
     // Keyboard Nav
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                onClose();
+                return;
+            }
             if (e.key === 'F3' || (e.ctrlKey && e.key === 'g') || (e.metaKey && e.key === 'g')) {
                 e.preventDefault();
                 // Next match
@@ -192,7 +196,7 @@ export const FindReplaceModal: React.FC<FindReplaceModalProps> = ({
                 <h3 className="font-bold text-sm flex items-center gap-2">
                     <SearchIcon className="h-4 w-4"/> Find & Replace
                 </h3>
-                <button onClick={onClose} className="p-1 rounded hover:bg-black/10"><XIcon /></button>
+                <button onClick={onClose} className="p-1 rounded hover:bg-black/10 transition-colors" title="Close (Esc)"><XIcon className="h-4 w-4" /></button>
             </div>
 
             {/* Controls */}

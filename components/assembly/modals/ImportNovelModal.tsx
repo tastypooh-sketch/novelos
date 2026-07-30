@@ -353,7 +353,7 @@ export const ImportNovelModal: React.FC<ImportNovelModalProps> = ({ settings, on
                     <div className="flex bg-black/20 p-1 rounded-lg">
                         <button 
                             onClick={() => setActiveTab('import')}
-                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'import' ? 'shadow-sm shadow-black/20' : 'opacity-50'}`}
+                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'import' ? 'opacity-100 shadow-sm shadow-black/20' : 'opacity-40 hover:opacity-60'}`}
                             style={{ 
                                 backgroundColor: activeTab === 'import' ? settings.toolbarButtonBg : 'transparent',
                                 color: settings.textColor
@@ -363,7 +363,7 @@ export const ImportNovelModal: React.FC<ImportNovelModalProps> = ({ settings, on
                         </button>
                         <button 
                             onClick={() => setActiveTab('chest')}
-                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'chest' ? 'shadow-sm shadow-black/20' : 'opacity-50'}`}
+                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'chest' ? 'opacity-100 shadow-sm shadow-black/20' : 'opacity-40 hover:opacity-60'}`}
                             style={{ 
                                 backgroundColor: activeTab === 'chest' ? settings.toolbarButtonBg : 'transparent',
                                 color: settings.textColor
@@ -403,15 +403,15 @@ export const ImportNovelModal: React.FC<ImportNovelModalProps> = ({ settings, on
                         <div className="space-y-6">
                             {/* Import Options */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <button 
-                                    onClick={() => zipInputRef.current?.click()}
-                                    className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed transition-all hover:bg-white/5 group"
-                                    style={{ borderColor: settings.toolbarInputBorderColor }}
-                                >
-                                    <div className="p-3 rounded-full bg-blue-500/20 text-blue-400 mb-3 group-hover:scale-110 transition-transform">
-                                        <ImportIcon className="h-8 w-8" />
-                                    </div>
-                                    <h4 className="font-bold">Import from Nové (.zip)</h4>
+                                    <button 
+                                        onClick={() => zipInputRef.current?.click()}
+                                        className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed transition-all hover:bg-blue-500/5 group"
+                                        style={{ borderColor: settings.toolbarInputBorderColor }}
+                                    >
+                                        <div className="p-3 rounded-full bg-blue-500/10 text-blue-400 mb-3 group-hover:scale-110 transition-transform border border-blue-500/20">
+                                            <ImportIcon className="h-8 w-8" />
+                                        </div>
+                                        <h4 className="font-bold opacity-80 group-hover:opacity-100 transition-opacity">Import from Nové (.zip)</h4>
                                     <p className="text-xs opacity-60 text-center mt-1">Load a full project backup including characters and world notes.</p>
                                     <input 
                                         type="file" 
@@ -422,15 +422,15 @@ export const ImportNovelModal: React.FC<ImportNovelModalProps> = ({ settings, on
                                     />
                                 </button>
 
-                                <button 
-                                    onClick={() => { setImportType('text'); fileInputRef.current?.click(); }}
-                                    className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed transition-all hover:bg-white/5 group"
-                                    style={{ borderColor: settings.toolbarInputBorderColor }}
-                                >
-                                    <div className="p-3 rounded-full bg-purple-500/20 text-purple-400 mb-3 group-hover:scale-110 transition-transform">
-                                        <SparklesIconOutline className="h-8 w-8" />
-                                    </div>
-                                    <h4 className="font-bold">Import Manuscript (.txt)</h4>
+                                    <button 
+                                        onClick={() => { setImportType('text'); fileInputRef.current?.click(); }}
+                                        className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed transition-all hover:bg-purple-500/5 group"
+                                        style={{ borderColor: settings.toolbarInputBorderColor }}
+                                    >
+                                        <div className="p-3 rounded-full bg-purple-500/10 text-purple-400 mb-3 group-hover:scale-110 transition-transform border border-purple-500/20">
+                                            <SparklesIconOutline className="h-8 w-8" />
+                                        </div>
+                                        <h4 className="font-bold opacity-80 group-hover:opacity-100 transition-opacity">Import Manuscript (.txt)</h4>
                                     <p className="text-xs opacity-60 text-center mt-1">Import a raw text file and use AI to reconstruct your project.</p>
                                     <input 
                                         type="file" 
@@ -480,8 +480,7 @@ export const ImportNovelModal: React.FC<ImportNovelModalProps> = ({ settings, on
                                         <button
                                             onClick={handleDetectChapters}
                                             disabled={!text.trim()}
-                                            className="px-6 py-2 rounded-md font-medium disabled:opacity-50"
-                                            style={{ backgroundColor: settings.accentColor, color: getContrastColor(settings.accentColor || '#000000') }}
+                                            className="btn-nuanced-lg-primary px-8 py-3 opacity-100 disabled:opacity-50"
                                         >
                                             Detect Chapters
                                         </button>
@@ -524,25 +523,24 @@ export const ImportNovelModal: React.FC<ImportNovelModalProps> = ({ settings, on
                                     <p className="font-semibold">{progress}</p>
                                 </div>
                             ) : (
-                                <div className="flex justify-end pt-4 gap-3">
-                                    <button
-                                        onClick={handleStandardImport}
-                                        disabled={detectedChapters.length === 0}
-                                        className="px-6 py-2 rounded-md font-medium opacity-80 hover:opacity-100 transition-opacity"
-                                        style={{ border: `1px solid ${settings.accentColor}`, color: settings.textColor }}
-                                    >
-                                        Standard Import
-                                    </button>
-                                    <button
-                                        onClick={handleAIProcessing}
-                                        disabled={detectedChapters.length === 0}
-                                        className="px-6 py-2 rounded-md font-medium flex items-center gap-2 disabled:opacity-50 shadow-lg"
-                                        style={{ backgroundColor: settings.accentColor, color: getContrastColor(settings.accentColor || '#000000') }}
-                                    >
-                                        <SparklesIconOutline className="h-5 w-5" />
-                                        Analyze & Import
-                                    </button>
-                                </div>
+                                    <div className="flex justify-end pt-4 gap-3">
+                                        <button
+                                            onClick={handleStandardImport}
+                                            disabled={detectedChapters.length === 0}
+                                            className="btn-nuanced-lg px-8 opacity-60 hover:opacity-100"
+                                            style={{ border: `1px solid ${settings.accentColor}40`, color: settings.textColor }}
+                                        >
+                                            Standard Import
+                                        </button>
+                                        <button
+                                            onClick={handleAIProcessing}
+                                            disabled={detectedChapters.length === 0}
+                                            className="btn-nuanced-lg-primary px-8"
+                                        >
+                                            <SparklesIconOutline className="h-5 w-5" />
+                                            Analyze & Import
+                                        </button>
+                                    </div>
                             )}
                             {error && <AIError message={error} onDismiss={() => setError(null)} className="text-center text-sm mt-4" />}
                         </div>
@@ -557,8 +555,7 @@ export const ImportNovelModal: React.FC<ImportNovelModalProps> = ({ settings, on
                             </p>
                             <button
                                 onClick={onClose}
-                                className="px-8 py-2 rounded-md font-medium mt-4"
-                                style={{ backgroundColor: settings.successColor, color: getContrastColor(settings.successColor || '#000000') }}
+                                className="btn-nuanced-lg-success px-12 py-4 text-lg"
                             >
                                 Go to Assembly
                             </button>
@@ -580,14 +577,13 @@ export const ImportNovelModal: React.FC<ImportNovelModalProps> = ({ settings, on
                     <div className="flex justify-end gap-3">
                         <button 
                             onClick={() => setShowBlankWarning(false)}
-                            className="px-4 py-2 rounded-md font-medium opacity-70 hover:opacity-100 transition-opacity"
+                            className="btn-nuanced px-6 py-2"
                         >
                             Cancel
                         </button>
                         <button 
                             onClick={confirmBlankImport}
-                            className="px-6 py-2 rounded-md font-medium shadow-lg"
-                            style={{ backgroundColor: settings.accentColor, color: getContrastColor(settings.accentColor || '#000000') }}
+                            className="btn-nuanced-lg-primary px-8 py-2"
                         >
                             Import Anyway
                         </button>

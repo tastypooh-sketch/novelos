@@ -133,7 +133,7 @@ export const PostVariationsModal: React.FC<PostVariationsModalProps> = ({
                                                 <span className="text-[10px] opacity-40 font-mono">{settings.bookTitle || 'Novelis'}, Ch {chapter?.chapterNumber || '?'}</span>
                                                 <button 
                                                     onClick={(e) => handleDeleteExcerpt(excerpt.id, e)}
-                                                    className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400 opacity-40 hover:opacity-100 transition-all active:scale-90"
+                                                    className="btn-nuanced-danger"
                                                     title="Delete Excerpt"
                                                 >
                                                     <TrashIcon className="h-3 w-3" />

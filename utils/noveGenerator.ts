@@ -115,6 +115,10 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
             text-indent: 0;
         }
 
+        .editor-content > *:first-child {
+            margin-top: 3.5rem;
+        }
+
         .editor-content div[style*="text-align: center"],
         .editor-content p[style*="text-align: center"],
         .editor-content div[align="center"],
@@ -1044,6 +1048,27 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
                 updatePageInfo();
             }, [layout, snapToSpread, updatePageInfo]);
 
+            useEffect(() => {
+                const handleGlobalKeyDown = (e) => {
+                    const isInputFocused = ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName || '');
+                    if (isInputFocused) return;
+                    
+                    if (e.key === 'PageDown') {
+                        e.preventDefault();
+                        const currentScroll = editorContainerRef.current?.scrollLeft || 0;
+                        const currentSpread = Math.round(currentScroll / layout.stride);
+                        snapToSpread(currentSpread + 1);
+                    } else if (e.key === 'PageUp') {
+                        e.preventDefault();
+                        const currentScroll = editorContainerRef.current?.scrollLeft || 0;
+                        const currentSpread = Math.round(currentScroll / layout.stride);
+                        snapToSpread(currentSpread - 1);
+                    }
+                };
+                window.addEventListener('keydown', handleGlobalKeyDown);
+                return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+            }, [layout, snapToSpread]);
+
             const handleBeforeInput = useCallback(() => {
                 if (editorContainerRef.current && layout.stride > 0) {
                     isTyping.current = true;
@@ -1182,9 +1207,9 @@ export const generateNoveHTML = (state: INovelState, settings: EditorSettings, w
             const editorStyle = {
                 fontFamily: settings.fontFamily || 'Lora', fontSize: \`\${settings.fontSize || 1.4}em\`, color: settings.textColor, lineHeight: settings.lineHeight || 1.8,
                 textAlign: settings.textAlign || 'left', hyphens: settings.textAlign === 'justify' ? 'auto' : 'manual', WebkitHyphens: settings.textAlign === 'justify' ? 'auto' : 'manual',
-                height: 'calc(100% - 6rem)', columnFill: 'auto', columnGap: \`\${layout.gap}px\`, columnWidth: \`\${layout.colWidth}px\`, columnCount: layout.columns,
+                height: 'calc(100% - 3.5rem)', columnFill: 'auto', columnGap: \`\${layout.gap}px\`, columnWidth: \`\${layout.colWidth}px\`, columnCount: layout.columns,
                 width: typeof exactContentWidth === 'number' ? \`\${exactContentWidth}px\` : exactContentWidth,
-                paddingTop: '4rem', paddingBottom: '2rem', paddingLeft: \`\${layout.sideMargin}px\`, paddingRight: \`\${layout.sideMargin}px\`,
+                paddingTop: '1.5rem', paddingBottom: '2rem', paddingLeft: \`\${layout.sideMargin}px\`, paddingRight: \`\${layout.sideMargin}px\`,
                 boxSizing: 'content-box', opacity: isTransitioning ? 0 : 1, transition: 'opacity 0.15s ease-in-out', orphans: 2, widows: 2, transform: 'translateZ(0)'
             };
 

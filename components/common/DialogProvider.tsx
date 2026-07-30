@@ -120,9 +120,8 @@ export const DialogProvider: React.FC<{ children: ReactNode; settings: EditorSet
                             <div className="w-full space-y-3 pt-4">
                                 <button
                                     onClick={() => handleClose(true)}
-                                    className="w-full py-3 px-4 rounded-xl font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+                                    className={dialog.type === 'error' ? 'btn-nuanced-lg-danger w-full py-3' : 'btn-nuanced-lg-success w-full py-3'}
                                     style={{
-                                        backgroundColor: dialog.type === 'error' ? (settings.dangerColor || '#be123c') : settings.accentColor,
                                         color: '#FFFFFF'
                                     }}
                                 >
@@ -131,7 +130,7 @@ export const DialogProvider: React.FC<{ children: ReactNode; settings: EditorSet
                                 {dialog.type === 'confirm' && (
                                     <button
                                         onClick={() => handleClose(false)}
-                                        className="w-full py-3 px-4 rounded-xl font-medium opacity-60 hover:opacity-100 transition-all"
+                                        className="btn-nuanced-lg w-full py-3 opacity-60 hover:opacity-100"
                                     >
                                         {dialog.cancelLabel}
                                     </button>

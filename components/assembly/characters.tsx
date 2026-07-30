@@ -5,10 +5,11 @@ import type { EditorSettings, ICharacter, TileBackgroundStyle, ICharacterGroup }
 import { useNovelState, useNovelDispatch } from '../../NovelContext';
 import { useAssemblyAI } from './AssemblyAIContext';
 import MarkdownRenderer from '../common/MarkdownRenderer';
-import { ChevronDownIcon, SparklesIconOutline, RevertIcon, TrashIconOutline, StarIcon, StarIconOutline, CameraIcon, UserCircleIcon, BrushIcon, LockClosedIconOutline, LockOpenIconOutline, ChevronUpIcon, UserGroupIcon, ViewGridIcon, PlusIcon, ArchiveIcon, DownloadIcon } from '../common/Icons';
+import { ChevronDownIcon, SparklesIconOutline, RevertIcon, TrashIconOutline, StarIcon, StarIconOutline, CameraIcon, UserCircleIcon, BrushIcon, LockClosedIconOutline, LockOpenIconOutline, ChevronUpIcon, UserGroupIcon, ViewGridIcon, PlusIcon, ArchiveIcon, DownloadIcon, MessageIcon } from '../common/Icons';
 import { isColorLight, shadeColor, getImageColor, harmonizeColor, getContrastColor } from '../../utils/colorUtils';
 import { AIError } from '../common/AIError';
 import { LockedChestTab, useLockedChestSelection } from '../common/LockedChest';
+import { CharacterInterviewModal } from './modals/CharacterInterviewModal';
 
 // --- UTILS & HOOKS ---
 const useAutosizeTextArea = (
@@ -154,6 +155,7 @@ interface CharacterTileProps {
     isDragging: boolean;
     isSelected: boolean;
     onToggleExpand: (id: string) => void;
+    onInterview: (character: ICharacter) => void;
     onUpdate: (id: string, updates: Partial<ICharacter>) => void;
     onDeleteRequest: (character: ICharacter) => void;
     onSelect: (id: string, e: React.MouseEvent) => void;
@@ -178,6 +180,7 @@ const GroupHeader: React.FC<GroupHeaderProps> = ({ group, settings, onUpdateGrou
     const [isEditing, setIsEditing] = useState(false);
     const [name, setName] = useState(group.name);
     const inputRef = useRef<HTMLInputElement>(null);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     useEffect(() => {
         if (isEditing && inputRef.current) {
@@ -201,6 +204,15 @@ const GroupHeader: React.FC<GroupHeaderProps> = ({ group, settings, onUpdateGrou
             setName(group.name);
             setIsEditing(false);
         }
+    };
+
+    const handleDelete = () => {
+        if (!showDeleteConfirm) {
+            setShowDeleteConfirm(true);
+            setTimeout(() => setShowDeleteConfirm(false), 3000);
+            return;
+        }
+        onDeleteGroup?.(group.id);
     };
 
     return (
@@ -229,12 +241,12 @@ const GroupHeader: React.FC<GroupHeaderProps> = ({ group, settings, onUpdateGrou
             </h3>
             {group.id > 3 && onDeleteGroup && (
                 <button 
-                    onClick={() => onDeleteGroup(group.id)}
-                    className="p-1.5 rounded opacity-0 group-hover/header:opacity-100 transition-opacity"
-                    style={{ backgroundColor: settings.toolbarButtonBg, color: settings.toolbarText }}
-                    title="Delete category"
+                    onClick={handleDelete}
+                    className="btn-nuanced-danger"
+                    title={showDeleteConfirm ? "Click again to confirm" : "Delete category"}
                 >
                     <TrashIconOutline className="h-4 w-4" />
+                    {showDeleteConfirm && <span className="text-[10px] font-bold uppercase tracking-tighter whitespace-nowrap">Sure?</span>}
                 </button>
             )}
         </div>
@@ -242,7 +254,7 @@ const GroupHeader: React.FC<GroupHeaderProps> = ({ group, settings, onUpdateGrou
 };
 
 const CharacterTile: React.FC<CharacterTileProps> = React.memo(({ 
-    character, isExpanded, isDragging, isSelected, onToggleExpand, onUpdate, onDeleteRequest, onSelect, settings,
+    character, isExpanded, isDragging, isSelected, onToggleExpand, onInterview, onUpdate, onDeleteRequest, onSelect, settings,
     draggableProps, scrollContainerRef, tileBackgroundStyle, variant = 'default', allCharacters, zoomLevel
 }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -360,11 +372,6 @@ const CharacterTile: React.FC<CharacterTileProps> = React.memo(({
         if (character.previousProfile) {
             onUpdate(character.id, { ...character.previousProfile, previousProfile: undefined });
         }
-    };
-
-    const handleToggleLock = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        onUpdate(character.id, { isPhotoLocked: !character.isPhotoLocked });
     };
 
     const handleExportPhoto = async (e: React.MouseEvent) => {
@@ -577,21 +584,10 @@ const CharacterTile: React.FC<CharacterTileProps> = React.memo(({
                                     )}
                                 </div>
 
-                                {/* Lock Icon */}
-                                <div 
-                                    className="absolute top-2 right-2 p-1.5 rounded-full transition-all duration-200 z-20 shadow-md"
-                                    style={{ backgroundColor: character.isPhotoLocked ? settings.accentColor : secondaryButtonBg, color: character.isPhotoLocked ? getContrastColor(settings.accentColor) : getContrastColor(secondaryButtonBg) }}
-                                    onClick={handleToggleLock}
-                                    title={character.isPhotoLocked ? "Unlock photo" : "Lock photo"}
-                                >
-                                    {character.isPhotoLocked ? <LockClosedIconOutline className="h-3 w-3" /> : <LockOpenIconOutline className="h-3 w-3" />}
-                                </div>
-
-                                {/* Export Icon */}
+                                {/* Download Icon */}
                                 {character.photo && (
                                     <div 
-                                        className="absolute top-10 right-2 p-1.5 rounded-full transition-all duration-200 z-20 shadow-md"
-                                        style={{ backgroundColor: secondaryButtonBg, color: getContrastColor(secondaryButtonBg) }}
+                                        className="absolute top-2 right-2 btn-nuanced z-20 shadow-md bg-black/30 hover:bg-black/50"
                                         onClick={handleExportPhoto}
                                         title="Export headshot"
                                     >
@@ -700,6 +696,15 @@ const CharacterTile: React.FC<CharacterTileProps> = React.memo(({
                                 <SparklesIconOutline className="h-5 w-5 mr-2"/>
                                 {isGenerating ? 'Generating...' : 'Generate Profile'}
                             </button>
+
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onInterview(character); }}
+                                className="px-4 py-2 rounded-lg text-sm font-bold flex items-center shadow-lg transition-transform active:scale-95"
+                                style={{ backgroundColor: actionButtonBg, color: actionButtonText }}
+                            >
+                                <MessageIcon className="h-5 w-5 mr-2"/>
+                                Interview
+                            </button>
                             
                             {character.previousProfile ? (
                                 <button
@@ -749,8 +754,7 @@ const CharacterTile: React.FC<CharacterTileProps> = React.memo(({
                             </button>
                             <button
                                 onClick={(e) => { e.stopPropagation(); onToggleExpand(character.id); }}
-                                className="p-2.5 rounded-lg transition-colors"
-                                style={{ backgroundColor: actionButtonBg, color: actionButtonText }}
+                                className="btn-nuanced p-2.5"
                                 aria-label="Collapse character details"
                                 title="Collapse"
                             >
@@ -758,8 +762,7 @@ const CharacterTile: React.FC<CharacterTileProps> = React.memo(({
                             </button>
                             <button
                                 onClick={() => onDeleteRequest(character)}
-                                className="p-2.5 rounded-lg transition-colors"
-                                style={{ backgroundColor: settings.dangerColor, color: getContrastColor(settings.dangerColor) }}
+                                className="btn-nuanced-danger"
                                 title="Delete character"
                             >
                                 <TrashIconOutline className="h-5 w-5" />
@@ -782,7 +785,7 @@ const CharacterTile: React.FC<CharacterTileProps> = React.memo(({
             
             <div
                 onClick={(e) => onSelect(character.id, e)}
-                className={`relative aspect-[4/5] flex flex-col rounded-lg shadow-md transition-shadow duration-300 ease-in-out z-10 border-4 overflow-hidden ${zoomLevel >= 3 ? 'aspect-square' : ''}`}
+                className={`relative aspect-[4/5] flex flex-col rounded-lg shadow-md transition-shadow duration-300 ease-in-out z-10 border-4 overflow-hidden group ${zoomLevel >= 3 ? 'aspect-square' : ''}`}
                 style={{
                     color: tileTextColor,
                     borderColor: isSelected ? settings.accentColor : (character.accentStyle === 'outline' ? accentColor : 'transparent'),
@@ -801,6 +804,18 @@ const CharacterTile: React.FC<CharacterTileProps> = React.memo(({
                         borderLeft: '48px solid transparent',
                     }}></div>
                 )}
+
+                {/* Interview Button - Collapsed View overlay */}
+                <div className="absolute top-2 left-2 z-30 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); onInterview(character); }}
+                        className="p-1.5 rounded-md shadow-lg transition-transform active:scale-90"
+                        style={{ backgroundColor: settings.accentColor, color: getContrastColor(settings.accentColor) }}
+                        title={`Interview ${character.name}`}
+                    >
+                        <MessageIcon className="h-4 w-4" />
+                    </button>
+                </div>
                 
                 <div className={`p-4 flex-grow min-h-0 block ${zoomLevel >= 2 ? 'p-2' : ''} ${zoomLevel >= 3 ? 'p-0 h-full' : ''}`}>
                     {/* Headshot */}
@@ -863,11 +878,8 @@ const CharacterTile: React.FC<CharacterTileProps> = React.memo(({
                             </div>
                         )}
                         <button
-                            className="cursor-pointer p-1.5 rounded-full transition-colors z-20"
+                            className="cursor-pointer btn-nuanced p-1.5 z-20"
                             onClick={(e) => { e.stopPropagation(); onToggleExpand(character.id); }}
-                            style={{ backgroundColor: secondaryButtonBg, color: getContrastColor(secondaryButtonBg) }}
-                            onMouseEnter={e => e.currentTarget.style.backgroundColor = secondaryButtonHoverBg || ''}
-                            onMouseLeave={e => e.currentTarget.style.backgroundColor = secondaryButtonBg || ''}
                             aria-label={"Expand character details"}
                         >
                             <ChevronDownIcon className={zoomLevel >= 2 ? 'h-3 w-3' : 'h-4 w-4'} />
@@ -909,6 +921,7 @@ export const CharactersPanel: React.FC<CharactersPanelProps> = ({
     const [orderedCharacters, setOrderedCharacters] = useState(characters);
     const [dragState, setDragState] = useState<{draggedIds: string[] | null, overId: string | null}>({draggedIds: null, overId: null});
     const [overGroup, setOverGroup] = useState<number | null>(null);
+    const [interviewCharacter, setInterviewCharacter] = useState<ICharacter | null>(null);
     const [activeTab, setActiveTab] = useState<'content' | 'chest'>('content');
     const { renderContextMenu, renderTaggingModal } = useLockedChestSelection('characters', settings);
     const lastSortUpdate = useRef<number>(0);
@@ -934,6 +947,10 @@ export const CharactersPanel: React.FC<CharactersPanelProps> = ({
              }, 100);
         }
     }, [expandedCharacterId, setExpandedCharacterId]);
+
+    const handleInterview = useCallback((character: ICharacter) => {
+        setInterviewCharacter(character);
+    }, []);
 
     const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
         const id = e.currentTarget.dataset.characterId;
@@ -1114,6 +1131,7 @@ export const CharactersPanel: React.FC<CharactersPanelProps> = ({
                                 isDragging={false}
                                 isSelected={selectedIds.has(char.id)}
                                 onToggleExpand={handleToggleExpand}
+                                onInterview={handleInterview}
                                 onUpdate={onUpdate}
                                 onDeleteRequest={onDeleteRequest}
                                 onSelect={onSelect}
@@ -1153,6 +1171,7 @@ export const CharactersPanel: React.FC<CharactersPanelProps> = ({
                                             isDragging={dragState.draggedIds?.includes(character.id) ?? false}
                                             isSelected={selectedIds.has(character.id)}
                                             onToggleExpand={handleToggleExpand}
+                                            onInterview={handleInterview}
                                             onUpdate={onUpdate}
                                             onDeleteRequest={onDeleteRequest}
                                             onSelect={onSelect}
@@ -1180,6 +1199,13 @@ export const CharactersPanel: React.FC<CharactersPanelProps> = ({
                     </div>
                 )}
             </div>
+            {interviewCharacter && (
+                <CharacterInterviewModal 
+                    character={interviewCharacter} 
+                    onClose={() => setInterviewCharacter(null)} 
+                    settings={settings} 
+                />
+            )}
         </div>
     );
 };

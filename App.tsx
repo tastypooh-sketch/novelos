@@ -70,6 +70,10 @@ const GlobalStyles: React.FC<{ settings: EditorSettings }> = ({ settings }) => (
         text-indent: 0;
       }
 
+      .editor-content > *:first-child {
+        margin-top: 3.5rem;
+      }
+
       /* Scene Breaks (Centered): No Indent */
       .editor-content div[style*="text-align: center"],
       .editor-content p[style*="text-align: center"],

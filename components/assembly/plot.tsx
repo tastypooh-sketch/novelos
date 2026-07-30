@@ -151,8 +151,7 @@ const RelationshipMapper: React.FC<{
                 <button
                     onClick={handleGenerate}
                     disabled={!selectedCharacter1IdForRelationship || !selectedCharacter2IdForRelationship || isGeneratingRelationshipAnalysis}
-                    className="px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 disabled:opacity-50"
-                    style={{ backgroundColor: settings.accentColor, color: getContrastColor(settings.accentColor || '#000000') }}
+                    className="btn-nuanced-primary px-4 py-2 opacity-100 disabled:opacity-50"
                 >
                     {isGeneratingRelationshipAnalysis ? <SpinnerIcon className="h-4 w-4" /> : <SparklesIconOutline className="h-4 w-4" />}
                     Analyze Dynamics
@@ -256,36 +255,35 @@ export const PlotBrainstormPanel: React.FC<{
                 </h2>
                 
                 <div className="flex items-center gap-4">
-                    <div className="flex bg-black/20 p-1 rounded-lg">
-                        <button 
-                            onClick={() => setActiveTab('content')}
-                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'content' ? 'shadow-sm' : 'opacity-50'}`}
-                            style={{ 
-                                backgroundColor: activeTab === 'content' ? settings.toolbarButtonBg : 'transparent',
-                                color: settings.textColor
-                            }}
-                        >
-                            Content
-                        </button>
-                        <button 
-                            onClick={() => setActiveTab('chest')}
-                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'chest' ? 'shadow-sm' : 'opacity-50'}`}
-                            style={{ 
-                                backgroundColor: activeTab === 'chest' ? settings.toolbarButtonBg : 'transparent',
-                                color: settings.textColor
-                            }}
-                        >
-                            <ArchiveIcon className="w-4 h-4" />
-                            Locked Chest
-                        </button>
-                    </div>
+                <div className="flex bg-black/20 p-1 rounded-lg">
+                    <button 
+                        onClick={() => setActiveTab('content')}
+                        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'content' ? 'opacity-100 shadow-sm shadow-black/20' : 'opacity-40 hover:opacity-60'}`}
+                        style={{ 
+                            backgroundColor: activeTab === 'content' ? settings.toolbarButtonBg : 'transparent',
+                            color: settings.textColor
+                        }}
+                    >
+                        Content
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('chest')}
+                        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'chest' ? 'opacity-100 shadow-sm shadow-black/20' : 'opacity-40 hover:opacity-60'}`}
+                        style={{ 
+                            backgroundColor: activeTab === 'chest' ? settings.toolbarButtonBg : 'transparent',
+                            color: settings.textColor
+                        }}
+                    >
+                        <ArchiveIcon className="w-4 h-4" />
+                        Locked Chest
+                    </button>
+                </div>
 
                     <div className="flex items-center gap-2">
                         {!hasAnyAnalysis && !isGeneratingAny && activeTab === 'content' && (
                             <button
                                 onClick={onGenerateFullAnalysis}
-                                className="px-6 py-2 rounded-lg text-sm font-bold flex items-center transition-all active:scale-95 shadow-lg"
-                                style={{ backgroundColor: settings.accentColor, color: getContrastColor(settings.accentColor || '#000000') }}
+                                className="btn-nuanced-lg-primary px-6 py-2 opacity-100"
                             >
                                 <SparklesIconOutline className="h-4 w-4 mr-2" />
                                 Run Full Analysis
@@ -293,8 +291,7 @@ export const PlotBrainstormPanel: React.FC<{
                         )}
                         <button
                             onClick={() => dispatch({ type: 'SET_PLOT_BRAINSTORM_STATE', payload: { narrativeArchitect: { ...(plotState.narrativeArchitect || {}), isOpen: true } } })}
-                            className="px-4 py-2 rounded-lg text-sm font-bold flex items-center transition-all active:scale-95 border border-white/10 hover:bg-white/5 shadow-md"
-                            style={{ color: settings.accentColor, borderColor: `${settings.accentColor}40` }}
+                            className="btn-nuanced-lg-primary px-4 py-2 border border-blue-500/10 opacity-100"
                         >
                             <SparklesIconOutline className="h-4 w-4 mr-2" />
                             Narrative Architect

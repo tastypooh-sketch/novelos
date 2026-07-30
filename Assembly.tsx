@@ -13,6 +13,7 @@ import { SocialMediaPanel } from './components/assembly/social';
 import { PlotBrainstormPanel } from './components/assembly/plot';
 import { SynopsisPanel } from './components/assembly/synopsis';
 import { WorldPanel } from './components/assembly/world';
+import { ChroniclePanel } from './components/assembly/ChroniclePanel';
 import { PlusIcon, DocumentTextIcon, TileBackgroundIcon, ImportIcon, SparklesIconOutline } from './components/common/Icons';
 import { generateId, extractJson } from './utils/common';
 import { generateInitialChapterRtf } from './utils/manuscriptUtils';
@@ -137,8 +138,9 @@ const AssemblyHeader: React.FC<AssemblyHeaderProps> = ({ settings, activePanel, 
         plot: 'Plot Brainstorm',
         synopsis: 'Synopsis',
         social: 'Social Media',
+        chronicle: 'Chronicle',
     };
-    const tabs: AssemblyPanel[] = ['chapters', 'characters', 'snippets', 'social', 'world', 'plot', 'synopsis'];
+    const tabs: AssemblyPanel[] = ['chapters', 'characters', 'chronicle', 'snippets', 'social', 'world', 'plot', 'synopsis'];
     const canAdd = ['characters', 'chapters', 'snippets', 'world'].includes(activePanel);
 
     const getAddItemLabel = () => {
@@ -1175,6 +1177,7 @@ export const Assembly: React.FC<AssemblyProps> = ({ settings, onSettingsChange, 
                     {activePanel === 'plot' && <PlotBrainstormPanel settings={settings} plotState={plotBrainstormState} />}
                     {activePanel === 'synopsis' && <SynopsisPanel settings={settings} synopsisState={synopsisState} />}
                     {activePanel === 'world' && <WorldPanel settings={settings} />}
+                    {activePanel === 'chronicle' && <ChroniclePanel settings={settings} />}
                 </div>
 
                 {deleteCharacterTarget && (

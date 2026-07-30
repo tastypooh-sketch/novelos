@@ -28,8 +28,7 @@ const SynopsisSection: React.FC<SynopsisSectionProps> = ({ title, description, c
                     <button 
                         onClick={onRegenerate} 
                         disabled={isLoading}
-                        className="p-2 rounded-lg flex items-center gap-2 text-xs disabled:opacity-50 transition-colors bg-black/20 hover:bg-black/40"
-                        style={{ color: settings.toolbarText }}
+                        className="btn-nuanced px-3 py-1.5 opacity-100 disabled:opacity-50 border border-white/5"
                     >
                         {isLoading ? <SpinnerIcon className="h-4 w-4" /> : <RefreshIcon className="h-4 w-4" />}
                         Regenerate
@@ -100,7 +99,7 @@ export const SynopsisPanel: React.FC<SynopsisPanelProps> = ({ settings, synopsis
                     <div className="flex bg-black/20 p-1 rounded-lg">
                         <button 
                             onClick={() => setActiveTab('content')}
-                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'content' ? 'shadow-sm' : 'opacity-50'}`}
+                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'content' ? 'opacity-100 shadow-sm shadow-black/20' : 'opacity-40 hover:opacity-60'}`}
                             style={{ 
                                 backgroundColor: activeTab === 'content' ? settings.toolbarButtonBg : 'transparent',
                                 color: settings.textColor
@@ -110,7 +109,7 @@ export const SynopsisPanel: React.FC<SynopsisPanelProps> = ({ settings, synopsis
                         </button>
                         <button 
                             onClick={() => setActiveTab('chest')}
-                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'chest' ? 'shadow-sm' : 'opacity-50'}`}
+                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'chest' ? 'opacity-100 shadow-sm shadow-black/20' : 'opacity-40 hover:opacity-60'}`}
                             style={{ 
                                 backgroundColor: activeTab === 'chest' ? settings.toolbarButtonBg : 'transparent',
                                 color: settings.textColor
@@ -124,8 +123,7 @@ export const SynopsisPanel: React.FC<SynopsisPanelProps> = ({ settings, synopsis
                     {!hasGeneratedAnything && !isGeneratingAnything && activeTab === 'content' && (
                         <button
                             onClick={handleGenerate}
-                            className="px-6 py-2 rounded-lg text-sm font-bold flex items-center transition-all active:scale-95 shadow-lg"
-                            style={{ backgroundColor: settings.accentColor, color: getContrastColor(settings.accentColor || '#000000') }}
+                            className="btn-nuanced-lg-primary px-6 py-2 opacity-100"
                         >
                             <SparklesIconOutline className="h-4 w-4 mr-2" />
                             Generate Professional Suite

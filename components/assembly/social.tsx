@@ -3,7 +3,7 @@ import React, { useCallback, useContext, useEffect, useState, useRef } from 'rea
 import type { EditorSettings, IChapter, ICharacter, Excerpt, SocialPost } from '../../types';
 import { useNovelState, useNovelDispatch } from '../../NovelContext';
 import { useAssemblyAI } from './AssemblyAIContext';
-import { SpinnerIcon, SparklesIconOutline, RefreshIcon, ShareIcon, CameraIcon, UserCircleIcon, ArchiveIcon, TrashIcon } from '../common/Icons';
+import { SpinnerIcon, SparklesIconOutline, RefreshIcon, ShareIcon, CameraIcon, UserCircleIcon, ArchiveIcon, TrashIconOutline } from '../common/Icons';
 import AutosizeTextarea from '../common/AutosizeTextarea';
 import { PostDisplay } from '../social/PostDisplay';
 import { PostVariationsModal } from '../social/PostVariationsModal';
@@ -59,10 +59,10 @@ const ExcerptItem: React.FC<{
                     </div>
                     <button 
                         onClick={(e) => onDelete(excerpt.id, e)}
-                        className="p-1.5 rounded-lg hover:bg-red-500/20 text-red-400 opacity-40 hover:opacity-100 transition-all active:scale-90 ml-2"
+                        className="btn-nuanced-danger ml-2"
                         title="Delete Excerpt"
                     >
-                        <TrashIcon className="h-3.5 w-3.5" />
+                        <TrashIconOutline className="h-3.5 w-3.5" />
                     </button>
                 </div>
             </div>
@@ -110,11 +110,7 @@ const ConfirmNewExcerptModal: React.FC<{
                 <div className="mt-6 flex justify-end gap-4">
                     <button 
                         onClick={onCancel} 
-                        className="rounded px-4 py-2" 
-                        style={{ 
-                            backgroundColor: settings.toolbarButtonBg,
-                            color: getContrastColor(settings.toolbarButtonBg || '#000000')
-                        }} 
+                        className="btn-nuanced px-4 py-2" 
                         onMouseEnter={e => e.currentTarget.style.backgroundColor = settings.toolbarButtonHoverBg || ''} 
                         onMouseLeave={e => e.currentTarget.style.backgroundColor = settings.toolbarButtonBg || ''}
                     >
@@ -122,11 +118,7 @@ const ConfirmNewExcerptModal: React.FC<{
                     </button>
                     <button 
                         onClick={onConfirm} 
-                        className="rounded px-4 py-2" 
-                        style={{ 
-                            backgroundColor: settings.dangerColor, 
-                            color: getContrastColor(settings.dangerColor || '#000000')
-                        }} 
+                        className="btn-nuanced-danger px-4 py-2" 
                         onMouseEnter={e => e.currentTarget.style.backgroundColor = settings.dangerColorHover || ''} 
                         onMouseLeave={e => e.currentTarget.style.backgroundColor = settings.dangerColor || ''}
                     >
@@ -341,8 +333,7 @@ export const SocialMediaPanel: React.FC<{ settings: EditorSettings }> = ({ setti
                 <div className="flex items-center gap-4">
                     <button 
                         onClick={() => dispatch({ type: 'UPDATE_SOCIAL_MEDIA_STATE', payload: { isOpen: true } })}
-                        className="px-4 py-1.5 rounded-lg text-sm font-medium transition-all hover:opacity-80 flex items-center gap-2 border border-white/5"
-                        style={{ backgroundColor: settings.toolbarButtonBg, color: settings.textColor }}
+                        className="btn-nuanced px-4 py-1.5 text-sm flex items-center gap-2"
                     >
                         <SparklesIconOutline className="h-4 w-4" /> Open Full Studio
                     </button>
@@ -396,7 +387,7 @@ export const SocialMediaPanel: React.FC<{ settings: EditorSettings }> = ({ setti
                                      <button
                                         onClick={handleGenerate}
                                         disabled={!selectedExcerptId || isLoading}
-                                        className="px-6 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50 transition-all active:scale-95 shadow-lg"
+                                        className="btn-nuanced-primary px-6 py-2 text-sm flex items-center justify-center gap-2 disabled:opacity-50"
                                         style={{ backgroundColor: settings.accentColor, color: getContrastColor(settings.accentColor || '#000000') }}
                                     >
                                         {isLoading && selectedExcerptId ? <SpinnerIcon className="h-4 w-4" /> : <SparklesIconOutline className="h-4 w-4" />}
@@ -405,8 +396,7 @@ export const SocialMediaPanel: React.FC<{ settings: EditorSettings }> = ({ setti
                                     <button
                                         onClick={handleGenerateAiExcerpts}
                                         disabled={!selectedChapterId || isLoading}
-                                        className="px-4 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
-                                        style={{ backgroundColor: settings.toolbarButtonBg, color: settings.textColor }}
+                                        className="btn-nuanced px-4 py-2 text-xs flex items-center justify-center gap-2 disabled:opacity-50"
                                     >
                                         {isLoading && !selectedExcerptId ? <SpinnerIcon className="h-3 w-3" /> : <RefreshIcon className="h-3 w-3" />}
                                         Suggest Excerpts
@@ -522,8 +512,8 @@ export const SocialMediaPanel: React.FC<{ settings: EditorSettings }> = ({ setti
                                     </div>
                                     {generatedImagePrompt && (
                                         <div className="mt-8 flex justify-center gap-3">
-                                            <button onClick={() => handleRegenImage(false)} disabled={isLoading || isRegeneratingImage} className="text-[10px] px-4 py-2 rounded-full flex items-center gap-2 disabled:opacity-50 transition-colors border border-white/5" style={{backgroundColor: settings.toolbarBg, color: settings.toolbarText}}><UserCircleIcon className="h-4 w-4" /> Character</button>
-                                            <button onClick={() => handleRegenImage(true)} disabled={isLoading || isRegeneratingImage} className="text-[10px] px-4 py-2 rounded-full flex items-center gap-2 disabled:opacity-50 transition-colors border border-white/5" style={{backgroundColor: settings.toolbarBg, color: settings.toolbarText}}><RefreshIcon className="h-4 w-4"/> Mood</button>
+                                            <button onClick={() => handleRegenImage(false)} disabled={isLoading || isRegeneratingImage} className="btn-nuanced px-4 py-2 text-[10px] flex items-center gap-2 disabled:opacity-50 transition-colors"><UserCircleIcon className="h-4 w-4" /> Character</button>
+                                            <button onClick={() => handleRegenImage(true)} disabled={isLoading || isRegeneratingImage} className="btn-nuanced px-4 py-2 text-[10px] flex items-center gap-2 disabled:opacity-50 transition-colors"><RefreshIcon className="h-4 w-4"/> Mood</button>
                                         </div>
                                     )}
                                 </div>

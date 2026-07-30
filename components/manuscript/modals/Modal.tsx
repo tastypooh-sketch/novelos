@@ -55,10 +55,8 @@ export const Modal: React.FC<ModalProps> = ({ onClose, children, settings, title
           <h2 className="text-lg font-semibold">{title}</h2>
           <button
             onClick={onClose}
-            className="p-1 rounded-full"
+            className="btn-nuanced rounded-full p-2"
             style={{ color: settings.toolbarText }}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = settings.toolbarButtonHoverBg || ''}
-            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
             aria-label="Close modal"
           >
             <XIcon />

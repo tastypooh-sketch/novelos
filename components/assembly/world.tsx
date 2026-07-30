@@ -21,6 +21,8 @@ const PinEditor: React.FC<{
     const [description, setDescription] = useState(pin.description);
     const ref = useRef<HTMLDivElement>(null);
 
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (ref.current && !ref.current.contains(event.target as Node)) {
@@ -36,8 +38,17 @@ const PinEditor: React.FC<{
         onClose();
     };
 
+    const handleDelete = () => {
+        if (!showDeleteConfirm) {
+            setShowDeleteConfirm(true);
+            setTimeout(() => setShowDeleteConfirm(false), 3000);
+            return;
+        }
+        onDelete(pin.id);
+    };
+
     return (
-        <div ref={ref} className="absolute z-20 w-64 p-3 rounded-lg shadow-xl" style={{ backgroundColor: settings.toolbarBg, color: getContrastColor(settings.toolbarBg || '#000000'), transform: 'translate(20px, -50%)' }}>
+        <div ref={ref} className="absolute z-20 w-64 p-3 rounded-lg shadow-xl pin-editor" style={{ backgroundColor: settings.toolbarBg, color: getContrastColor(settings.toolbarBg || '#000000'), transform: 'translate(20px, -50%)' }}>
             <div className="space-y-3">
                 <input
                     type="text"
@@ -56,9 +67,16 @@ const PinEditor: React.FC<{
                     style={{ backgroundColor: settings.backgroundColor, color: settings.textColor, borderColor: settings.toolbarInputBorderColor }}
                 />
             </div>
-            <div className="flex justify-between items-center mt-3">
-                <button onClick={() => onDelete(pin.id)} className="p-2 rounded-md" style={{ backgroundColor: settings.dangerColor, color: getContrastColor(settings.dangerColor || '#000000') }}><TrashIconOutline /></button>
-                <button onClick={handleSave} className="px-4 py-1.5 text-sm rounded-md" style={{ backgroundColor: settings.accentColor, color: getContrastColor(settings.accentColor || '#000000') }}>Save</button>
+            <div className="flex justify-between items-center mt-3 gap-2">
+                <button 
+                    onClick={handleDelete} 
+                    className="btn-nuanced-danger flex-shrink-0" 
+                    title={showDeleteConfirm ? "Click again to confirm" : "Delete location"}
+                >
+                    <TrashIconOutline className="h-5 w-5" />
+                    {showDeleteConfirm && <span className="text-[10px] font-bold uppercase tracking-tighter">Sure?</span>}
+                </button>
+                <button onClick={handleSave} className="flex-grow btn-nuanced-primary py-1.5 text-sm" style={{ backgroundColor: settings.accentColor, color: getContrastColor(settings.accentColor || '#000000') }}>Save</button>
             </div>
         </div>
     );
@@ -207,14 +225,14 @@ const MapBuilder: React.FC<{ settings: EditorSettings }> = ({ settings }) => {
                 </div>
             </div>
              <div className="absolute top-4 left-4 flex flex-col gap-2">
-                <button onClick={() => setMapState({ zoom: Math.min(5, mapState.zoom * 1.2) })} className="p-2 rounded-md" style={{backgroundColor: settings.toolbarButtonBg, color: settings.toolbarText}}><PlusIcon/></button>
-                <button onClick={() => setMapState({ zoom: Math.max(0.2, mapState.zoom / 1.2) })} className="p-2 rounded-md" style={{backgroundColor: settings.toolbarButtonBg, color: settings.toolbarText}}><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" /></svg></button>
+                <button onClick={() => setMapState({ zoom: Math.min(5, mapState.zoom * 1.2) })} className="btn-nuanced p-2"><PlusIcon/></button>
+                <button onClick={() => setMapState({ zoom: Math.max(0.2, mapState.zoom / 1.2) })} className="btn-nuanced p-2"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" /></svg></button>
             </div>
              <div className="absolute top-4 right-4">
                 <button
                     onClick={onSuggestLocations}
                     disabled={isGeneratingMap}
-                    className="px-3 py-1.5 text-sm rounded-md flex items-center gap-2 disabled:opacity-50"
+                    className="btn-nuanced-primary px-3 py-1.5 text-sm flex items-center gap-2 disabled:opacity-50"
                     style={{ backgroundColor: settings.accentColor, color: getContrastColor(settings.accentColor || '#000000') }}
                     title="AI will analyze your story and suggest locations"
                 >
@@ -245,6 +263,8 @@ const WorldItemCard: React.FC<{
     const [rawNotes, setRawNotes] = useState(item.rawNotes);
     const [description, setDescription] = useState(item.description);
 
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
     const debouncedUpdate = useCallback(
         (updates: Partial<IWorldItem>) => {
             dispatch({ type: 'UPDATE_WORLD_ITEM', payload: { id: item.id, updates } });
@@ -265,6 +285,11 @@ const WorldItemCard: React.FC<{
     
     const handleDelete = (e: React.MouseEvent) => {
         e.stopPropagation();
+        if (!showDeleteConfirm) {
+            setShowDeleteConfirm(true);
+            setTimeout(() => setShowDeleteConfirm(false), 3000);
+            return;
+        }
         dispatch({ type: 'DELETE_WORLD_ITEM', payload: item.id });
     }
 
@@ -290,7 +315,7 @@ const WorldItemCard: React.FC<{
                 <button onClick={(e) => {
                     e.stopPropagation();
                     onToggleExpand();
-                }} className="p-1 rounded-full hover:bg-white/10" style={{ color: settings.toolbarText }}>
+                }} className="btn-nuanced p-1">
                     {isExpanded ? <ChevronUpIcon className="h-5 w-5" /> : <ChevronDownIcon className="h-5 w-5" />}
                 </button>
             </div>
@@ -314,7 +339,7 @@ const WorldItemCard: React.FC<{
                         <button 
                             onClick={handleRefine} 
                             disabled={isGenerating || !rawNotes.trim()} 
-                            className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md disabled:opacity-60" 
+                            className="btn-nuanced-primary flex items-center gap-2 px-3 py-1.5 text-sm disabled:opacity-60" 
                             style={{
                                 backgroundColor: settings.accentColor, 
                                 color: getContrastColor(settings.accentColor || '#000000')
@@ -339,14 +364,11 @@ const WorldItemCard: React.FC<{
                      <div className="flex justify-end">
                         <button 
                             onClick={handleDelete} 
-                            className="p-2 rounded-md" 
-                            style={{
-                                backgroundColor: settings.dangerColor, 
-                                color: getContrastColor(settings.dangerColor || '#000000')
-                            }} 
-                            title="Delete world item"
+                            className="btn-nuanced-danger" 
+                            title={showDeleteConfirm ? "Click again to confirm" : "Delete world item"}
                         >
-                            <TrashIconOutline />
+                            <TrashIconOutline className="h-5 w-5" />
+                            {showDeleteConfirm && <span className="text-[10px] font-bold uppercase tracking-tighter whitespace-nowrap">Sure?</span>}
                         </button>
                     </div>
                 </div>
@@ -442,7 +464,7 @@ export const WorldPanel: React.FC<{ settings: EditorSettings }> = ({ settings })
                         <button
                             onClick={handleDistill}
                             disabled={isDistillingWorld || !worldCrucibleText.trim()}
-                            className="self-end px-6 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50 transition-all active:scale-95"
+                            className="self-end btn-nuanced-lg-primary px-6 py-2 text-sm flex items-center justify-center gap-2 disabled:opacity-50"
                             style={{ backgroundColor: settings.accentColor, color: getContrastColor(settings.accentColor || '#000000') }}
                         >
                             {isDistillingWorld ? <SpinnerIcon /> : <SparklesIconOutline />}

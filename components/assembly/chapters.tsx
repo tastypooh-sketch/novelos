@@ -5,7 +5,7 @@ import type { EditorSettings, ICharacter, IChapter, ISnippet, TileBackgroundStyl
 import { useNovelDispatch, useNovelState } from '../../NovelContext';
 import { useAssemblyAI } from './AssemblyAIContext';
 import MarkdownRenderer from '../common/MarkdownRenderer';
-import { ChevronDownIcon, BookOpenIcon, CameraIcon, LockClosedIconOutline, LockOpenIconOutline, RevertIcon, SparklesIconOutline, TrashIconOutline, StarIcon, XIcon, LinkIcon, ViewGridIcon, ChevronUpIcon, BrushIcon, SpinnerIcon, CheckCircleIcon, PaperAirplaneIcon, UserCircleIcon, FocusIcon, SaveIcon, DocumentTextIcon, ImportIcon, ListBulletIcon, ArchiveIcon, TableIcon } from '../common/Icons';
+import { ChevronDownIcon, BookOpenIcon, CameraIcon, LockClosedIconOutline, LockOpenIconOutline, RevertIcon, SparklesIconOutline, TrashIconOutline, StarIcon, XIcon, LinkIcon, ViewGridIcon, ChevronUpIcon, BrushIcon, SpinnerIcon, CheckCircleIcon, PaperAirplaneIcon, UserCircleIcon, FocusIcon, SaveIcon, DocumentTextIcon, ImportIcon, ListBulletIcon, ArchiveIcon, TableIcon, DownloadIcon } from '../common/Icons';
 import { isColorLight, shadeColor, getImageColor, harmonizeColor, getContrastColor } from '../../utils/colorUtils';
 import { generateBriefingHtml, generateSpreadsheetCSV } from '../../utils/manuscriptUtils';
 import { exportChaptersToMarkdown, importChaptersFromMarkdown } from '../../utils/markdownUtils';
@@ -209,7 +209,7 @@ const ChapterTile: React.FC<ChapterTileProps> = React.memo(({
 }) => {
     const dialog = useDialog();
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const { isGeneratingChapter, errorId, errorMessage, onGenerateChapterDetails, onUpdateChapterFromManuscript } = useAssemblyAI();
+    const { isGeneratingChapter, errorId, errorMessage, onGenerateChapterDetails, onUpdateChapterFromManuscript, onSetError } = useAssemblyAI();
     const dispatch = useNovelDispatch();
     const isGenerating = isGeneratingChapter === chapter.id;
 
@@ -328,9 +328,51 @@ const ChapterTile: React.FC<ChapterTileProps> = React.memo(({
         }
     };
 
-    const handleToggleLock = (e: React.MouseEvent) => {
+    const handleExportScene = async (e: React.MouseEvent) => {
         e.stopPropagation();
-        onUpdate(chapter.id, { isPhotoLocked: !chapter.isPhotoLocked });
+        if (!chapter.photo) return;
+        
+        const fileName = `Chapter_${chapter.chapterNumber}_${chapter.title.replace(/\s+/g, '_')}_scene.jpg`;
+        
+        try {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            
+            const imageLoadPromise = new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = reject;
+            });
+            
+            img.src = chapter.photo;
+            await imageLoadPromise;
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) throw new Error("Canvas context not available");
+            
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+            
+            const jpegUrl = canvas.toDataURL("image/jpeg", 0.95);
+            
+            const link = document.createElement('a');
+            link.href = jpegUrl;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (error) {
+            console.error("Export to JPEG failed, trying direct download:", error);
+            const link = document.createElement('a');
+            link.href = chapter.photo;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
     };
 
     const handleCharacterDrop = (e: React.DragEvent) => {
@@ -478,14 +520,16 @@ const ChapterTile: React.FC<ChapterTileProps> = React.memo(({
                                         </div>
                                     )}
                                 </div>
-                                <div 
-                                    className="absolute top-2 right-2 p-1.5 rounded-full transition-all duration-200 z-20 shadow-md"
-                                    style={{ backgroundColor: chapter.isPhotoLocked ? settings.accentColor : secondaryButtonBg, color: chapter.isPhotoLocked ? 'var(--app-text)' : getContrastColor(secondaryButtonBg) }}
-                                    onClick={handleToggleLock}
-                                    title={chapter.isPhotoLocked ? "Unlock photo" : "Lock photo"}
-                                >
-                                    {chapter.isPhotoLocked ? <LockClosedIconOutline className="h-3 w-3" /> : <LockOpenIconOutline className="h-3 w-3" />}
-                                </div>
+                                {/* Download Icon */}
+                                {chapter.photo && (
+                                    <div 
+                                        className="absolute top-2 right-2 btn-nuanced z-20 shadow-md bg-black/30 hover:bg-black/50"
+                                        onClick={handleExportScene}
+                                        title="Export scene image"
+                                    >
+                                        <DownloadIcon className="h-3 w-3" />
+                                    </div>
+                                )}
                                 <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-2 pt-6 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-b-xl">
                                      <div className="flex items-center gap-1 text-[10px] font-medium" style={{ color: '#FFFFFF' }}>
                                         <CameraIcon className="h-3 w-3"/>
@@ -519,7 +563,7 @@ const ChapterTile: React.FC<ChapterTileProps> = React.memo(({
                                                         const newIds = currentIds.filter(id => id !== char.id);
                                                         onUpdate(chapter.id, { characterIds: newIds }); 
                                                     }}
-                                                    className="ml-2 p-1.5 rounded-full bg-red-500/10 text-red-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white shadow-sm z-30"
+                                                    className="ml-2 btn-nuanced-danger opacity-0 group-hover:opacity-100 p-1"
                                                     title="Remove character from scene"
                                                 >
                                                     <XIcon className="h-3.5 w-3.5" />
@@ -617,7 +661,7 @@ const ChapterTile: React.FC<ChapterTileProps> = React.memo(({
                                                     onUpdate(chapter.id, { linkedSnippetIds: (chapter.linkedSnippetIds || []).filter(id => id !== snippet.id) });
                                                     dispatch({ type: 'UPDATE_SNIPPET', payload: { id: snippet.id, updates: { isUsed: false } } });
                                                 }}
-                                                className="p-2 rounded-full hover:bg-red-500/20 text-red-500 transition-colors"
+                                                className="btn-nuanced p-2"
                                                 title="Unlink snippet"
                                             >
                                                 <RevertIcon className="h-4 w-4" />
@@ -652,7 +696,7 @@ const ChapterTile: React.FC<ChapterTileProps> = React.memo(({
                                         className="px-4 py-2 rounded-lg text-sm font-bold flex items-center transition-colors"
                                         style={{ backgroundColor: actionButtonBg, color: actionButtonText }}
                                     >
-                                        <BrushIcon className="h-4 w-4 mr-2" /> Analyze Manuscript
+                                        <BrushIcon className="h-4 w-4 mr-2" /> Update from Manuscript
                                     </button>
                                     <button
                                         onClick={handleSendBriefToManuscript}
@@ -672,13 +716,13 @@ const ChapterTile: React.FC<ChapterTileProps> = React.memo(({
                             )}
                         </div>
                         <div className="flex items-center gap-2">
-                             <button onClick={handleCycleAccentStyle} className="p-2.5 rounded-lg transition-colors" style={{ backgroundColor: actionButtonBg, color: actionButtonText }} title="Cycle accent style">
+                             <button onClick={handleCycleAccentStyle} className="btn-nuanced p-2.5" title="Cycle accent style">
                                 <BrushIcon className="h-5 w-5" />
                             </button>
-                             <button onClick={() => onToggleExpand(chapter.id)} className="p-2.5 rounded-lg transition-colors" style={{ backgroundColor: actionButtonBg, color: actionButtonText }} title="Collapse">
+                             <button onClick={() => onToggleExpand(chapter.id)} className="btn-nuanced p-2.5" title="Collapse">
                                 <ChevronUpIcon className="h-5 w-5" />
                             </button>
-                            <button onClick={() => onDeleteRequest(chapter)} className="p-2.5 rounded-lg transition-colors" style={{ backgroundColor: settings.dangerColor, color: getContrastColor(settings.dangerColor) }} title="Delete chapter">
+                            <button onClick={() => onDeleteRequest(chapter)} className="btn-nuanced-danger p-2.5" title="Delete chapter">
                                 <TrashIconOutline className="h-5 w-5" />
                             </button>
                         </div>

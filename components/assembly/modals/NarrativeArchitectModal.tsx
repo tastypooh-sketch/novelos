@@ -129,11 +129,7 @@ export const NarrativeArchitectModal: React.FC<NarrativeArchitectModalProps> = (
                 <button 
                     onClick={handleInitiate}
                     disabled={!premise || state.isGenerating}
-                    className="flex items-center gap-2 px-6 py-3 rounded-full font-medium transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
-                    style={{ 
-                        backgroundColor: settings.accentColor,
-                        color: getContrastColor(settings.accentColor)
-                    }}
+                    className="btn-nuanced-lg-primary px-8 py-3 opacity-100 disabled:opacity-50"
                 >
                     {state.isGenerating ? <SpinnerIcon className="h-4 w-4" /> : <SparklesIconOutline className="h-4 w-4" />}
                     Initialise Macro Structure
@@ -168,9 +164,9 @@ export const NarrativeArchitectModal: React.FC<NarrativeArchitectModalProps> = (
                 </div>
                 <button 
                     onClick={handleApply}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all hover:bg-white/10 border border-white/10"
+                    className="btn-nuanced-success px-4 py-2 border border-green-500/10"
                 >
-                    <CheckCircleIcon className="h-4 w-4 text-green-400" />
+                    <CheckCircleIcon className="h-4 w-4" />
                     Apply to Novel
                 </button>
             </div>
@@ -208,8 +204,7 @@ export const NarrativeArchitectModal: React.FC<NarrativeArchitectModalProps> = (
                     <button 
                         onClick={handleExpand}
                         disabled={!feedback || state.isGenerating}
-                        className="px-4 rounded-lg flex items-center justify-center transition-all disabled:opacity-30"
-                        style={{ backgroundColor: settings.accentColor }}
+                        className="btn-nuanced-success px-4 opacity-100 disabled:opacity-50"
                     >
                         {state.isGenerating ? <SpinnerIcon className="h-4 w-4" /> : <ChevronRightIcon className="h-5 w-5" />}
                     </button>
@@ -241,7 +236,7 @@ export const NarrativeArchitectModal: React.FC<NarrativeArchitectModalProps> = (
                     <div className="flex bg-black/20 p-1 rounded-lg self-start">
                         <button 
                             onClick={() => setActiveTab('architect')}
-                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'architect' ? 'shadow-sm shadow-black/20' : 'opacity-50'}`}
+                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${activeTab === 'architect' ? 'opacity-100 shadow-sm shadow-black/20' : 'opacity-40 hover:opacity-60'}`}
                             style={{ 
                                 backgroundColor: activeTab === 'architect' ? settings.toolbarButtonBg : 'transparent',
                                 color: settings.textColor
@@ -251,7 +246,7 @@ export const NarrativeArchitectModal: React.FC<NarrativeArchitectModalProps> = (
                         </button>
                         <button 
                             onClick={() => setActiveTab('chest')}
-                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'chest' ? 'shadow-sm shadow-black/20' : 'opacity-50'}`}
+                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${activeTab === 'chest' ? 'opacity-100 shadow-sm shadow-black/20' : 'opacity-40 hover:opacity-60'}`}
                             style={{ 
                                 backgroundColor: activeTab === 'chest' ? settings.toolbarButtonBg : 'transparent',
                                 color: settings.textColor

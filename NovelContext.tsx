@@ -1,6 +1,6 @@
 import React, { createContext, useReducer, useContext, Dispatch, ReactNode } from 'react';
 import { produce } from 'immer';
-import type { INovelState, ICharacter, IChapter, ISnippet, SocialMediaState, AssemblyPanel, Excerpt, AssemblyViewState, BrainstormHistory, SocialPost, PlotBrainstormState, SynopsisState, IWorldItem, ChekhovsGun, WhatIfState, IMapLocation, Shortcut, LockedChestItem, NarrativeArchitectState, ImportNovelState } from './types';
+import type { INovelState, ICharacter, IChapter, ISnippet, SocialMediaState, AssemblyPanel, Excerpt, AssemblyViewState, BrainstormHistory, SocialPost, PlotBrainstormState, SynopsisState, IWorldItem, ChekhovsGun, WhatIfState, IMapLocation, Shortcut, LockedChestItem, NarrativeArchitectState, ImportNovelState, ConsistencyAuditState, ChronicleState, ChronicleEvent } from './types';
 import { generateId } from './utils/common';
 
 // --- ACTION TYPES ---
@@ -43,8 +43,15 @@ export type Action =
   | { type: 'UPDATE_WHAT_IF_STATE'; payload: Partial<WhatIfState> }
   | { type: 'UPDATE_NARRATIVE_ARCHITECT_FIELDS'; payload: Partial<NarrativeArchitectState> }
   | { type: 'UPDATE_IMPORT_NOVEL_STATE'; payload: Partial<ImportNovelState> }
+  | { type: 'UPDATE_CONSISTENCY_AUDIT_STATE'; payload: Partial<ConsistencyAuditState> }
+  | { type: 'UPDATE_CHRONICLE_STATE'; payload: Partial<ChronicleState> }
+  | { type: 'ADD_CHRONICLE_EVENT'; payload: ChronicleEvent }
+  | { type: 'DELETE_CHRONICLE_EVENT'; payload: string }
   | { type: 'APPLY_POST_VARIATION'; payload: SocialPost }
   | { type: 'ADD_CHARACTER_GROUP'; payload: string }
+  | { type: 'ADD_CHRONICLE_EVENT'; payload: ChronicleEvent }
+  | { type: 'DELETE_CHRONICLE_EVENT'; payload: string }
+  | { type: 'SET_CHRONICLE_YEAR'; payload: number }
   | { type: 'UPDATE_CHARACTER_GROUP'; payload: { id: number; name: string } }
   | { type: 'DELETE_CHARACTER_GROUP'; payload: number }
   | { type: 'ADD_LOCKED_CHEST_ITEM'; payload: Omit<LockedChestItem, 'id' | 'timestamp'> }
@@ -169,7 +176,10 @@ export const initialNovelState: INovelState = {
     },
     chapterZoomLevel: 0,
     characterZoomLevel: 0,
+    isSnippetSpreadsheetView: false,
+    isSnippetDropboxCollapsed: false,
     snippetDropboxText: '',
+    useSnippetTypeColors: false,
   },
   plotBrainstormState: {
     pacingAndStructureAnalysis: null,
@@ -224,6 +234,18 @@ export const initialNovelState: INovelState = {
   importNovelState: {
     text: '',
     splitRegex: `(?:^|\\n)(?:CHAPTER|Chapter|PROLOGUE|Prologue|EPILOGUE|Epilogue)\\s*(?:\\d+|[A-Z]+)?(?:[^\\n]*)(?=\\n|$)`,
+  },
+  consistencyAuditState: {
+    lastAuditTimestamp: null,
+    issues: [],
+    isAuditing: false,
+    error: null,
+    isOpen: false,
+  },
+  chronicleState: {
+    worldEvents: [],
+    currentYear: 0,
+    isOpen: false,
   },
   characterGroups: [
     { id: 0, name: 'Unassigned' },
@@ -511,6 +533,21 @@ const novelReducer = (state: INovelState, action: Action): INovelState => {
         draft.socialMediaState.postVariations = null;
         draft.socialMediaState.variationPlatform = null;
         break;
+      case 'UPDATE_CONSISTENCY_AUDIT_STATE':
+        Object.assign(draft.consistencyAuditState, action.payload);
+        break;
+      case 'UPDATE_CHRONICLE_STATE':
+        Object.assign(draft.chronicleState, action.payload);
+        break;
+      case 'SET_CHRONICLE_YEAR':
+        draft.chronicleState.currentYear = action.payload;
+        break;
+      case 'ADD_CHRONICLE_EVENT':
+        draft.chronicleState.worldEvents.push(action.payload);
+        break;
+      case 'DELETE_CHRONICLE_EVENT':
+        draft.chronicleState.worldEvents = draft.chronicleState.worldEvents.filter(e => e.id !== action.payload);
+        break;
       case 'ADD_CHARACTER_GROUP': {
         const nextId = draft.characterGroups && draft.characterGroups.length > 0 
             ? Math.max(...draft.characterGroups.map(g => g.id)) + 1 
@@ -611,6 +648,17 @@ const novelReducer = (state: INovelState, action: Action): INovelState => {
           importNovelState: {
             ...(isNoveSync ? state.importNovelState : initialNovelState.importNovelState),
             ...(loadedState.importNovelState || {})
+          },
+          consistencyAuditState: {
+            ...(isNoveSync ? (state.consistencyAuditState || initialNovelState.consistencyAuditState) : initialNovelState.consistencyAuditState),
+            ...(loadedState.consistencyAuditState || {}),
+            lastAuditTimestamp: loadedState.consistencyAuditState?.lastAuditTimestamp ?? (isNoveSync ? state.consistencyAuditState?.lastAuditTimestamp : initialNovelState.consistencyAuditState.lastAuditTimestamp) ?? null
+          },
+          chronicleState: {
+            ...(isNoveSync ? (state.chronicleState || initialNovelState.chronicleState) : initialNovelState.chronicleState),
+            worldEvents: loadedState.chronicleState?.worldEvents || (isNoveSync ? state.chronicleState?.worldEvents : initialNovelState.chronicleState.worldEvents) || [],
+            currentYear: loadedState.chronicleState?.currentYear ?? (isNoveSync ? state.chronicleState?.currentYear : initialNovelState.chronicleState.currentYear) ?? 0,
+            isOpen: loadedState.chronicleState?.isOpen ?? (isNoveSync ? state.chronicleState?.isOpen : initialNovelState.chronicleState.isOpen) ?? false
           },
           assemblyState: {
             ...(isNoveSync ? state.assemblyState : initialNovelState.assemblyState),

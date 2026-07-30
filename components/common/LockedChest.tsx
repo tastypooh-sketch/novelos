@@ -20,8 +20,14 @@ export const LockedChestTab: React.FC<LockedChestProps> = ({ modalId, settings }
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editContent, setEditContent] = useState('');
     const [editTag, setEditTag] = useState('');
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
     const handleDelete = (id: string) => {
+        if (deleteConfirmId !== id) {
+            setDeleteConfirmId(id);
+            setTimeout(() => setDeleteConfirmId(null), 3000);
+            return;
+        }
         dispatch({ type: 'DELETE_LOCKED_CHEST_ITEM', payload: id });
     };
 
@@ -122,12 +128,17 @@ export const LockedChestTab: React.FC<LockedChestProps> = ({ modalId, settings }
                             ) : (
                                 <button 
                                     onClick={() => handleDelete(item.id)}
-                                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded transition-opacity"
-                                    style={{ color: settings.dangerColor }}
-                                    onMouseEnter={e => e.currentTarget.style.backgroundColor = settings.toolbarButtonHoverBg || ''}
-                                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                                    className={`p-1.5 rounded transition-all flex items-center gap-1 overflow-hidden ${deleteConfirmId === item.id ? 'opacity-100 px-3' : 'opacity-0 group-hover:opacity-100'}`}
+                                    style={{ 
+                                        color: settings.dangerColor,
+                                        backgroundColor: deleteConfirmId === item.id ? `${settings.dangerColor}20` : 'transparent'
+                                    }}
+                                    onMouseEnter={e => { if (deleteConfirmId !== item.id) e.currentTarget.style.backgroundColor = settings.toolbarButtonHoverBg || '' }}
+                                    onMouseLeave={e => { if (deleteConfirmId !== item.id) e.currentTarget.style.backgroundColor = 'transparent' }}
+                                    title={deleteConfirmId === item.id ? "Click again to confirm" : "Delete item"}
                                 >
                                     <TrashIcon className="h-4 w-4" />
+                                    {deleteConfirmId === item.id && <span className="text-[10px] font-bold uppercase tracking-tighter whitespace-nowrap">Sure?</span>}
                                 </button>
                             )}
                         </div>

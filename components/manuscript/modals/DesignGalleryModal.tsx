@@ -190,19 +190,13 @@ export const DesignGalleryModal: React.FC<DesignGalleryModalProps> = ({ settings
                             />
                             <button 
                                 onClick={handleAddUrl} 
-                                className="px-4 py-1.5 text-sm rounded-md flex-shrink-0" 
-                                style={{ backgroundColor: settings.accentColor, color: 'var(--app-text)' }}
-                                onMouseEnter={e => e.currentTarget.style.backgroundColor = settings.accentColorHover || ''}
-                                onMouseLeave={e => e.currentTarget.style.backgroundColor = settings.accentColor || ''}
+                                className="btn-nuanced-lg-primary px-4 py-1.5 text-sm" 
                             >
                                 Add URL
                             </button>
                             <button 
                                 onClick={() => fileInputRef.current?.click()} 
-                                className="px-4 py-1.5 text-sm rounded-md flex-shrink-0"
-                                style={{ backgroundColor: settings.toolbarButtonBg, color: settings.toolbarText }}
-                                onMouseEnter={e => e.currentTarget.style.backgroundColor = settings.toolbarButtonHoverBg || ''}
-                                onMouseLeave={e => e.currentTarget.style.backgroundColor = settings.toolbarButtonBg || ''}
+                                className="btn-nuanced px-4 py-1.5 text-sm"
                             >
                                 Upload
                             </button>
@@ -246,10 +240,7 @@ export const DesignGalleryModal: React.FC<DesignGalleryModalProps> = ({ settings
                             <button
                                 onClick={() => onSettingsChange({ backgroundImage: null })}
                                 disabled={!settings.backgroundImage}
-                                className="w-full px-4 py-1.5 text-sm rounded-md disabled:opacity-50"
-                                style={{ backgroundColor: settings.toolbarButtonBg, color: settings.toolbarText }}
-                                onMouseEnter={e => { if (e.currentTarget.disabled) return; e.currentTarget.style.backgroundColor = settings.toolbarButtonHoverBg || ''; }}
-                                onMouseLeave={e => { if (e.currentTarget.disabled) return; e.currentTarget.style.backgroundColor = settings.toolbarButtonBg || ''; }}
+                                className="btn-nuanced-lg-danger w-full py-1.5 text-sm opacity-100 disabled:opacity-50"
                             >
                                 Remove Background
                             </button>
@@ -313,7 +304,7 @@ export const DesignGalleryModal: React.FC<DesignGalleryModalProps> = ({ settings
                                     >
                                         <img src={item.url} alt="" className="w-full h-full object-cover" />
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                        <button onClick={(e) => handleDeleteItem(item.id, e)} className="absolute top-1 right-1 p-1 rounded-full bg-red-600/80 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--app-text)' }}>
+                                        <button onClick={(e) => handleDeleteItem(item.id, e)} className="absolute top-1 right-1 btn-nuanced-danger opacity-0 group-hover:opacity-100 p-1">
                                             <TrashIconOutline className="h-3 w-3" />
                                         </button>
                                     </div>

@@ -3,10 +3,11 @@ import type { IChapter, EditorSettings, Palette, WritingGoals, ToolbarVisibility
 import { 
     HistoryIcon, StatsIcon, NoteIcon, SearchIcon, KeyboardIcon, PageTransitionIcon, SpellcheckIcon, 
     SpeakerOnIcon, SpeakerOffIcon, ExitFullscreenIcon, EnterFullscreenIcon, UnfocusIcon, FocusIcon, CogIcon, EarIcon,
-    BrushIcon, JustifyIcon, BookOpenIcon, ProofreadIcon, ImportIcon, SaveIcon, LineHeightIcon, ChevronDownIcon
+    BrushIcon, JustifyIcon, BookOpenIcon, ProofreadIcon, ImportIcon, SaveIcon, LineHeightIcon, ChevronDownIcon,
+    SparklesIconOutline
 } from '../common/Icons';
 
-type ModalType = 'findReplace' | 'shortcuts' | 'stats' | 'customizeToolbar' | 'history' | 'voiceSettings' | 'designGallery' | 'readAloud' | 'spellCheck' | 'userGuide';
+type ModalType = 'findReplace' | 'shortcuts' | 'stats' | 'customizeToolbar' | 'history' | 'voiceSettings' | 'designGallery' | 'readAloud' | 'spellCheck' | 'userGuide' | 'consistencyAudit';
 type TTSStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'error';
 
 
@@ -88,6 +89,7 @@ interface ToolbarProps {
   hasDirectory: boolean;
   onToggleReadAloud: () => void;
   ttsStatus: TTSStatus;
+  isFindReplaceActive?: boolean;
   onExportNove: () => void;
   onExportStandaloneNove: () => void;
   onExportBlankNove: () => void;
@@ -105,6 +107,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     isSoundEnabled, onToggleSound, isFullscreen, onToggleFullscreen,
     isSinglePageView, isSpellcheckEnabled, onToggleSpellcheck, onToggleTransitionStyle,
     hasDirectory, onToggleReadAloud, ttsStatus,
+    isFindReplaceActive = false,
     onExportNove,
     onExportStandaloneNove,
     onExportBlankNove,
@@ -258,12 +261,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
         <ToolbarButton title="Writing Goals & Statistics" onClick={() => onToggleModal('stats')} settings={settings} isVisible={settings.toolbarVisibility?.stats}><StatsIcon /></ToolbarButton>
         <ToolbarButton title="Toggle Notes Panel" onClick={onToggleNotesPanel} settings={settings} isVisible={settings.toolbarVisibility?.notes} isActive={isNotesPanelOpen}><NoteIcon /></ToolbarButton>
-        <ToolbarButton title="Find and Replace (Ctrl+F)" onClick={() => onToggleModal('findReplace')} settings={settings} isVisible={settings.toolbarVisibility?.findReplace}><SearchIcon /></ToolbarButton>
+        <ToolbarButton title="Find and Replace (Ctrl+F)" onClick={() => onToggleModal('findReplace')} settings={settings} isVisible={settings.toolbarVisibility?.findReplace} isActive={isFindReplaceActive}><SearchIcon /></ToolbarButton>
         <ToolbarButton title="Text Shortcuts" onClick={() => onToggleModal('shortcuts')} settings={settings} isVisible={settings.toolbarVisibility?.shortcuts}><KeyboardIcon /></ToolbarButton>
         <ToolbarButton title="Read Aloud (TTS)" onClick={onToggleReadAloud} settings={settings} isVisible={settings.toolbarVisibility?.readAloud} isActive={ttsStatus !== 'idle'}><EarIcon className="h-5 w-5" /></ToolbarButton>
         <ToolbarButton title={`Page Transition: ${settings.transitionStyle === 'scroll' ? 'Scroll' : 'Fade'}`} onClick={onToggleTransitionStyle} settings={settings} isVisible={settings.toolbarVisibility?.pageTransition}><PageTransitionIcon /></ToolbarButton>
         <ToolbarButton title="Toggle Spell Check (Native Browser)" onClick={onToggleSpellcheck} settings={settings} isVisible={settings.toolbarVisibility?.spellcheck} isActive={isSpellcheckEnabled}><SpellcheckIcon /></ToolbarButton>
         <ToolbarButton title="AI Proofreader" onClick={() => onToggleModal('spellCheck')} settings={settings} isVisible={settings.toolbarVisibility?.spellcheck}><ProofreadIcon /></ToolbarButton>
+        <ToolbarButton title="Narrative Consistency Auditor" onClick={() => onToggleModal('consistencyAudit')} settings={settings}><SparklesIconOutline className="h-5 w-5" /></ToolbarButton>
         <div className="flex items-center">
             <ToolbarButton title="Toggle Sound" onClick={onToggleSound} settings={settings} isVisible={settings.toolbarVisibility?.sound} isActive={isSoundEnabled}>{isSoundEnabled ? <SpeakerOnIcon /> : <SpeakerOffIcon />}</ToolbarButton>
             {isSoundEnabled && settings.toolbarVisibility?.sound && (

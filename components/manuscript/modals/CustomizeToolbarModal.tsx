@@ -14,6 +14,7 @@ interface CustomizeToolbarModalProps {
     onSaveProject: () => Promise<boolean>;
     hasContent: boolean;
     appUpdate?: AppUpdate | null;
+    projectPath?: string | null;
 }
 
 const ALL_TOOLBAR_ITEMS: { key: keyof ToolbarVisibility; label: string }[] = [
@@ -34,7 +35,7 @@ const ALL_TOOLBAR_ITEMS: { key: keyof ToolbarVisibility; label: string }[] = [
     { key: 'userGuide', label: 'User Guide' },
 ];
 
-export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ settings, currentVisibility, onSave, onClose, onSaveProject, hasContent, appUpdate: initialUpdate }) => {
+export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ settings, currentVisibility, onSave, onClose, onSaveProject, hasContent, appUpdate: initialUpdate, projectPath }) => {
     const dialog = useDialog();
     const [visibility, setVisibility] = useState(currentVisibility);
     const [geminiApiKey, setGeminiApiKey] = useState(settings.geminiApiKey || '');
@@ -116,14 +117,11 @@ export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ se
         <button
             onClick={handleSaveAndReload}
             disabled={isSaving}
-            className="px-6 py-2 rounded-md flex items-center justify-center gap-2 font-medium min-w-[160px]"
-            style={{ backgroundColor: settings.successColor, color: 'var(--app-text)' }}
-            onMouseEnter={e => { if(!isSaving) e.currentTarget.style.backgroundColor = settings.successColorHover || '' }}
-            onMouseLeave={e => { if(!isSaving) e.currentTarget.style.backgroundColor = settings.successColor || '' }}
+            className="btn-nuanced-lg-success px-8 py-2.5 opacity-100 disabled:opacity-50"
         >
             {isSaving ? (
                 <>
-                    <SpinnerIcon className="h-4 w-4" style={{ color: 'var(--app-text)' }} />
+                    <SpinnerIcon className="h-4 w-4" />
                     {saveStatus}
                 </>
             ) : (
@@ -174,7 +172,7 @@ export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ se
                         <button 
                             onClick={handleCheckUpdate} 
                             disabled={checkingUpdate}
-                            className="px-4 py-1.5 rounded-md text-xs font-medium bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
+                            className="btn-nuanced px-4 py-1.5 text-xs opacity-100 disabled:opacity-50"
                         >
                             {checkingUpdate ? <SpinnerIcon className="h-4 w-4" /> : "Check for Updates"}
                         </button>
@@ -201,6 +199,16 @@ export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ se
                             />
                             <p className="text-[10px] opacity-40 leading-relaxed">This title will be used as a prefix for your exported project files.</p>
                         </div>
+
+                        {projectPath && (
+                            <div className="pt-2 space-y-1.5 border-t border-white/5">
+                                <label className="text-xs font-bold opacity-70 uppercase tracking-tighter">Project Path</label>
+                                <div className="p-2 rounded bg-black/20 font-mono text-[10px] break-all opacity-60 select-all" title="Full Project Location">
+                                    {projectPath}
+                                </div>
+                                <p className="text-[10px] opacity-40 leading-relaxed italic">Confirming all devices are accessing the same directory.</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -262,7 +270,7 @@ export const CustomizeToolbarModal: React.FC<CustomizeToolbarModalProps> = ({ se
                             </div>
                             <button 
                                 onClick={handleFactoryReset}
-                                className="px-4 py-2 rounded-md text-xs font-bold bg-red-900/20 text-red-400 hover:bg-red-900/40 border border-red-500/20 transition-colors"
+                                className="btn-nuanced-danger px-4 py-2 text-xs"
                             >
                                 Reset UI
                             </button>
